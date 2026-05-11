@@ -718,10 +718,13 @@ function renderFooterONE(){
 }
 
 function cargarQRCode(cb) {
-  if(qrLoaded){ cb(); return; }
+  if(typeof window.QRCode!=='undefined'){cb();return;}
+  if(qrLoaded){setTimeout(()=>{if(typeof window.QRCode!=='undefined')cb();},200);return;}
+  qrLoaded=true;
   const s=document.createElement('script');
   s.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-  s.onload=()=>{ qrLoaded=true; cb(); };
+  s.onload=()=>setTimeout(cb,50);
+  s.onerror=()=>{const s2=document.createElement('script');s2.src='https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';s2.onload=()=>setTimeout(cb,50);document.head.appendChild(s2);};
   document.head.appendChild(s);
 }
 
@@ -731,9 +734,10 @@ window.mostrarQRWifi=function(){
   const canvas=document.getElementById('qr-canvas-one');
   const wifiStr=`WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
   cargarQRCode(()=>{
+    if(typeof window.QRCode==='undefined') return;
     const ctx=canvas.getContext('2d');
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    QRCode.toCanvas(canvas,wifiStr,{width:180,margin:2,color:{dark:'#1A1520',light:'#ffffff'}},err=>{if(err)console.error(err);});
+    window.QRCode.toCanvas(canvas,wifiStr,{width:180,margin:2,color:{dark:'#1A1520',light:'#ffffff'}},err=>{if(err)console.error(err);});
   });
 }
 

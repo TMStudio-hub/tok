@@ -143,7 +143,15 @@ select.inp{cursor:pointer;}
       <button class="btn-secondary" onclick="mostrarPin(()=>irA('setup'))">⚙️ Configurar</button>
     </div>
     <div id="splash-setup" style="display:none;">
-      <button class="btn-primary" onclick="irA('setup')">Configurar mi hogar TO-K</button>
+      <div style="margin-bottom:20px;">
+        <div style="font-size:0.72rem;font-family:var(--mono);letter-spacing:0.15em;color:rgba(255,255,255,0.4);margin-bottom:12px;">CÓDIGO DE ACTIVACIÓN</div>
+        <input id="codigo-activacion" type="text" placeholder="TOK-XXXX-XXXX"
+          style="width:100%;padding:13px;border-radius:12px;border:1.5px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.08);color:#fff;font-family:var(--mono);font-size:1rem;text-align:center;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;"
+          oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9-]/g,'')">
+        <div id="codigo-error" style="display:none;color:#FF6B6B;font-size:0.75rem;font-family:var(--mono);text-align:center;margin-bottom:8px;"></div>
+        <button onclick="activarCodigo()" style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.15);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Activar mi TO-K →</button>
+      </div>
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;">El código está en la tarjeta kraft de tu caja TO-K.<br>¿Problemas? <a href="https://linktr.ee/tallermemoriasstudio" style="color:var(--gold);text-decoration:none;">Contacta con nosotros</a></div>
     </div>
   </div>
 </div>
@@ -319,12 +327,23 @@ let CFG = {};
 let pinInput = '', pinCB = null;
 let qrLoaded = false;
 
-// Cargar QRCode dinámicamente
+// Cargar QRCode dinámicamente — compatible con módulos ES
+let qrLoaded = false;
 function cargarQRCode(cb) {
-  if(qrLoaded) { cb(); return; }
+  // Si ya está disponible globalmente
+  if(typeof window.QRCode !== 'undefined') { cb(); return; }
+  if(qrLoaded) { setTimeout(()=>{ if(typeof window.QRCode!=='undefined') cb(); }, 200); return; }
+  qrLoaded = true;
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-  s.onload = () => { qrLoaded = true; cb(); };
+  s.onload = () => { setTimeout(cb, 50); }; // pequeño delay para asegurar que QRCode está en window
+  s.onerror = () => {
+    // Fallback: intentar con unpkg
+    const s2 = document.createElement('script');
+    s2.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
+    s2.onload = () => setTimeout(cb, 50);
+    document.head.appendChild(s2);
+  };
   document.head.appendChild(s);
 }
 
@@ -380,6 +399,38 @@ function renderFooter() {
   const html = `<div style="text-align:center;padding:8px 0;"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias</a></div>`;
   const el = document.getElementById('tok-footer');
   if(el) el.innerHTML = html;
+}
+
+window.activarCodigo = async function() {
+  const codigo = document.getElementById('codigo-activacion').value.trim().toUpperCase();
+  const errEl = document.getElementById('codigo-error');
+  errEl.style.display = 'none';
+
+  if(!codigo || codigo.length < 12) {
+    errEl.textContent = 'Introduce el código completo (TOK-XXXX-XXXX)';
+    errEl.style.display = 'block'; return;
+  }
+
+  try {
+    const snap = await get(ref(db, `activaciones/${codigo}`));
+    if(!snap.exists()) {
+      errEl.textContent = '❌ Código no encontrado. Comprueba que lo has escrito bien.';
+      errEl.style.display = 'block'; return;
+    }
+    const data = snap.val();
+    if(data.usado) {
+      errEl.textContent = '❌ Este código ya fue activado. Contacta con El Taller de Memorias.';
+      errEl.style.display = 'block'; return;
+    }
+    // Código válido → ir a setup
+    window._codigoActivacion = codigo;
+    irA('setup');
+  } catch(e) {
+    // Si Firebase falla, permitir continuar en modo beta sin código
+    console.warn('Firebase check failed, allowing anyway:', e);
+    window._codigoActivacion = codigo || 'BETA';
+    irA('setup');
+  }
 }
 
 async function init() {
@@ -544,8 +595,14 @@ window.guardarConfig = async function() {
     const newRef = push(ref(db, 'familias'));
     FID = newRef.key;
     await set(ref(db, `familias/${FID}/hogar`), CFG);
-    // Actualizar URL sin recargar
-    const newUrl = location.origin + location.pathname + '?fid=' + FID;
+    // Marcar código de activación como usado
+    if(window._codigoActivacion && window._codigoActivacion !== 'BETA') {
+      await set(ref(db, `activaciones/${window._codigoActivacion}`), {
+        usado: true,
+        familia_id: FID,
+        fecha_activacion: new Date().toISOString()
+      });
+    }
     history.replaceState(null, '', '?fid=' + FID);
     toast('✓ Hogar creado');
     setTimeout(() => alert('✅ ¡Hogar creado!\n\nTu código de familia es:\n' + FID + '\n\nGuárdalo para conectar tus llaveros TO-K.\n\nURL completa:\n' + newUrl), 400);
@@ -566,12 +623,16 @@ window.mostrarQR = function() {
   const canvas = document.getElementById('qr-canvas');
   const wifiStr = `WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
   cargarQRCode(() => {
-    // Limpiar canvas antes
+    if(typeof window.QRCode === 'undefined') {
+      canvas.getContext('2d').fillText('QR no disponible', 10, 100);
+      return;
+    }
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    QRCode.toCanvas(canvas, wifiStr, {width:200, margin:2, color:{dark:'#1A2018', light:'#ffffff'}}, err => {
-      if(err) console.error('QR error:', err);
-    });
+    window.QRCode.toCanvas(canvas, wifiStr, {
+      width:200, margin:2,
+      color:{ dark:'#1A2018', light:'#ffffff' }
+    }, err => { if(err) console.error('QR error:', err); });
   });
 }
 
