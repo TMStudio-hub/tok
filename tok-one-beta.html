@@ -161,6 +161,22 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
   <div style="font-family:var(--mono);font-size:0.75rem;color:var(--muted);">Cargando perfil...</div>
 </div>
 
+<!-- PRIMERA VEZ — pedir código familiar -->
+<div class="screen" id="screen-setup-fid" style="background:var(--paper);align-items:center;justify-content:center;padding:30px;">
+  <div style="max-width:340px;width:100%;text-align:center;">
+    <div style="font-size:3rem;margin-bottom:16px;">👋</div>
+    <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">Bienvenido a TO-K ONE</div>
+    <div style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Para empezar necesitas el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong> — toca el marco y configura el hogar primero.</div>
+    <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+      <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--violet);margin-bottom:12px;">Código del hogar</div>
+      <input id="fid-input" type="text" placeholder="Pega aquí tu código familiar" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--mono);color:var(--ink);text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim()">
+      <button onclick="conectarFID()" style="width:100%;padding:14px;border-radius:12px;background:var(--violet);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-style:italic;cursor:pointer;touch-action:manipulation;">Conectar mi hogar →</button>
+    </div>
+    <div style="font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.6;">¿No tienes código aún?<br>Toca primero el <strong>marco TO-K HOME</strong> y crea tu hogar.</div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:0.6rem;color:rgba(0,0,0,0.2);letter-spacing:0.1em;">TO-K ONE BETA · El Taller de Memorias</div>
+  </div>
+</div>
+
 <!-- Session timer -->
 <div class="session-timer" id="session-timer"></div>
 
@@ -453,15 +469,42 @@ const T = {
 async function init() {
   lang = (navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang = 'es';
-  if(FID) {
-    try {
-      const snap = await get(ref(db, `familias/${FID}/miembros/${MID}`));
-      if(snap.exists()) CFG = { ...CFG, ...snap.val() };
-    } catch(e) { console.error(e); }
+
+  // Si no hay FID en URL — mostrar pantalla de código familiar
+  if(!FID) {
+    // Comprobar si hay FID guardado localmente
+    const fidLocal = localStorage.getItem('tok_fid');
+    if(fidLocal) {
+      location.href = location.pathname + '?fid=' + fidLocal + '&mid=' + MID;
+      return;
+    }
+    document.getElementById('loading').style.display = 'none';
+    irA('setup-fid');
+    return;
   }
+
+  try {
+    const snap = await get(ref(db, `familias/${FID}/miembros/${MID}`));
+    if(snap.exists()) CFG = { ...CFG, ...snap.val() };
+    // Guardar FID localmente para no pedirlo otra vez
+    localStorage.setItem('tok_fid', FID);
+  } catch(e) { console.error(e); }
   document.getElementById('loading').style.display = 'none';
   if(!CFG.nombre) { irA('config'); return; }
   irA('public');
+}
+
+window.conectarFID = async function() {
+  const fid = document.getElementById('fid-input').value.trim();
+  if(!fid) { alert('Introduce el código del hogar'); return; }
+  // Verificar que existe en Firebase
+  try {
+    const snap = await get(ref(db, `familias/${fid}/hogar`));
+    if(!snap.exists()) { alert('Código no encontrado. Comprueba que has copiado bien el código del TO-K HOME.'); return; }
+    // Guardar y redirigir con el FID
+    localStorage.setItem('tok_fid', fid);
+    location.href = location.pathname + '?fid=' + fid + '&mid=' + MID;
+  } catch(e) { alert('Error de conexión. Comprueba internet.'); }
 }
 
 window.irA = function(s) {

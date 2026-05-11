@@ -168,6 +168,16 @@ select.inp{cursor:pointer;}
     <button class="dash-wifi-btn" onclick="mostrarQR()">📶 WiFi para visitas</button>
   </div>
   <div class="dash-body">
+    <!-- Código del hogar -->
+    <div class="dash-card" id="fid-card" style="display:none;">
+      <div class="dash-card-title">🔑 Código del hogar</div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div style="font-family:var(--mono);font-size:0.78rem;background:var(--gsoft);color:var(--green);padding:10px 14px;border-radius:10px;flex:1;word-break:break-all;" id="fid-display">—</div>
+        <button onclick="copiarFID()" style="padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.8rem;flex-shrink:0;touch-action:manipulation;">Copiar</button>
+      </div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-top:8px;font-style:italic;">Comparte este código con los miembros de tu familia para que conecten sus llaveros TO-K ONE y TO-K KIDS.</div>
+    </div>
+
     <!-- Notas familiares -->
     <div class="dash-card">
       <div class="dash-card-title">📝 Notas de la familia</div>
@@ -307,12 +317,22 @@ function renderDash() {
     document.getElementById('wifi-info').style.display = 'block';
     document.getElementById('wifi-ssid-disp').textContent = CFG.wifi.ssid;
   }
+  // Mostrar código del hogar
+  if(FID) {
+    document.getElementById('fid-card').style.display = 'block';
+    document.getElementById('fid-display').textContent = FID;
+  }
   renderNotas();
-  // Escuchar notas en tiempo real
   if(FID) {
     onValue(ref(db, `familias/${FID}/notas`), snap => {
       renderNotasData(snap.val());
     });
+  }
+}
+
+window.copiarFID = function() {
+  if(FID) {
+    navigator.clipboard?.writeText(FID).then(()=>toast('✓ Código copiado'));
   }
 }
 

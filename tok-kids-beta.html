@@ -110,6 +110,22 @@ body{font-family:var(--font);background:var(--bg);min-height:100vh;}
   <div style="font-size:0.75rem;color:var(--muted);">Cargando...</div>
 </div>
 
+<!-- PRIMERA VEZ -->
+<div class="screen" id="screen-setup-fid" style="background:var(--bg);align-items:center;justify-content:center;padding:30px;">
+  <div style="max-width:340px;width:100%;text-align:center;">
+    <div style="font-size:3rem;margin-bottom:16px;">👋</div>
+    <div style="font-size:1.4rem;font-weight:700;color:var(--c3);margin-bottom:8px;">Bienvenido a TO-K KIDS</div>
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Para empezar necesitas el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong> — toca el marco primero.</div>
+    <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+      <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;font-weight:700;">Código del hogar</div>
+      <input id="fid-input" type="text" placeholder="Pega aquí tu código familiar" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-size:0.82rem;font-family:monospace;color:#333;text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim()">
+      <button onclick="conectarFID()" style="width:100%;padding:14px;border-radius:12px;background:var(--c1);color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Conectar mi hogar →</button>
+    </div>
+    <div style="font-size:0.72rem;color:var(--muted);line-height:1.6;">¿No tienes código aún?<br>Toca primero el <strong>marco TO-K HOME</strong> y crea tu hogar.</div>
+    <div style="margin-top:24px;font-size:0.6rem;color:#ccc;letter-spacing:0.1em;">TO-K KIDS BETA · El Taller de Memorias</div>
+  </div>
+</div>
+
 <!-- SELECTOR -->
 <div class="screen" id="screen-selector">
   <div class="sel-wrap">
@@ -307,15 +323,39 @@ const T = {
 async function init() {
   lang = (navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang = 'es';
+
+  if(!FID) {
+    const fidLocal = localStorage.getItem('tok_fid');
+    if(fidLocal) {
+      location.href = location.pathname + '?fid=' + fidLocal + '&mid=' + MID;
+      return;
+    }
+    document.getElementById('loading').style.display = 'none';
+    irA('setup-fid');
+    return;
+  }
+
   if(FID) {
     try {
       const snap = await get(ref(db, `familias/${FID}/miembros/${MID}`));
       if(snap.exists()) CFG = { ...CFG, ...snap.val() };
+      localStorage.setItem('tok_fid', FID);
     } catch(e) { console.error(e); }
   }
   document.getElementById('loading').style.display = 'none';
   if(!CFG.nombre) { irA('config'); return; }
   irA('selector');
+}
+
+window.conectarFID = async function() {
+  const fid = document.getElementById('fid-input').value.trim();
+  if(!fid) { alert('Introduce el código del hogar'); return; }
+  try {
+    const snap = await get(ref(db, `familias/${fid}/hogar`));
+    if(!snap.exists()) { alert('Código no encontrado. Comprueba que has copiado bien el código del TO-K HOME.'); return; }
+    localStorage.setItem('tok_fid', fid);
+    location.href = location.pathname + '?fid=' + fid + '&mid=' + MID;
+  } catch(e) { alert('Error de conexión. Comprueba internet.'); }
 }
 
 window.irA = function(s) {
