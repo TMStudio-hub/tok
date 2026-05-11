@@ -186,7 +186,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
   <div id="pub-content">
     <div class="pub-wrap">
       <div class="pub-header">
-        <div class="tok-badge">TO-K ONE · BETA</div>
+        <div style="text-align:center;margin-bottom:12px;"><img src="https://tmstudio-hub.github.io/tok/Logos-To-k/one.svg" alt="TO-K ONE" style="height:48px;" onerror="this.style.display='none'"></div><div class="tok-badge">TO-K ONE · BETA</div>
         <div class="photo-ring">
           <div class="photo-inner">
             <span class="photo-ph" id="pub-photo-ph">👤</span>
@@ -276,7 +276,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
       <div class="pub-footer">
         <button class="footer-priv" onclick="mostrarPin(()=>irA('config'))">🔒 <span id="priv-btn-txt">Mi perfil privado</span></button>
         <div class="footer-brand">TO-K ONE · by <a href="https://tallerdememorias.es" target="_blank">El Taller de Memorias</a><br><span style="opacity:0.7;">¿Quieres el tuyo?</span></div>
-        <div class="tok-footer-one" style="margin-top:4px;"></div>
+        <div class="tok-footer-one" data-logo="https://tmstudio-hub.github.io/tok/Logos-To-k/tok.svg" style="margin-top:4px;"></div>
       </div>
     </div>
   </div>
@@ -442,7 +442,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -472,6 +472,7 @@ let CFG = {
 let lang = 'es';
 let sesTimer = null, sesSegs = 0;
 let pinInput = '', pinCB = null;
+let qrLoaded = false;
 
 const T = {
   es:{ wifi:'Red WiFi del hogar', connect:'Conectar', vcard_title:'Guardar en contactos', vcard_sub:'Teléfono, email y redes — todo de una vez', priv:'Mi perfil privado', exp_title:'Sesión expirada', exp_msg:'Por seguridad esta información ya no está disponible. Escanea de nuevo para verla.' },
@@ -515,6 +516,8 @@ async function init() {
 
   document.getElementById('loading').style.display = 'none';
   if(!CFG.nombre) { irA('config'); return; }
+  // Registrar escaneo en HOME
+  if(FID) registrarAlertaONE();
   irA('public');
 }
 
@@ -713,7 +716,7 @@ function esNFC(){
 // ── FOOTER ──
 function renderFooterONE(){
   const url = CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="text-align:center;padding:8px 0;"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--violet);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/Logos-To-k/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--violet);">TO-K</span> · by El Taller de Memorias</a></div>`;
   document.querySelectorAll('.tok-footer-one').forEach(el=>el.innerHTML=html);
 }
 
@@ -853,6 +856,14 @@ window.pinKey=function(k){
 }
 function actualizarDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
 window.toast=function(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+async function registrarAlertaONE() {
+  try {
+    const hora = new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const fecha = new Date().toLocaleDateString('es-ES');
+    await push(ref(db, `familias/${FID}/alertas`), {tipo:'scan', nombre:CFG.nombre||'', hora, fecha, ts:Date.now()});
+  } catch(e) {}
+}
 
 init();
 </script>

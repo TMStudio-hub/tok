@@ -11,12 +11,11 @@
 body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;}
 .screen{display:none;min-height:100vh;flex-direction:column;}
 .screen.active{display:flex;}
-
 /* SPLASH */
 #screen-splash{background:linear-gradient(160deg,var(--gdark),var(--green));align-items:center;justify-content:center;padding:30px;text-align:center;}
 .splash-wrap{max-width:340px;width:100%;}
 .splash-badge{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.3em;color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1);padding:4px 14px;border-radius:20px;display:inline-block;margin-bottom:24px;}
-.splash-icon{font-size:4rem;margin-bottom:12px;animation:float 3s ease-in-out infinite;}
+.splash-icon{margin-bottom:16px;}
 @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
 .splash-title{font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:6px;}
 .splash-sub{font-size:0.85rem;color:rgba(255,255,255,0.5);margin-bottom:32px;line-height:1.6;}
@@ -25,7 +24,6 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
 .btn-secondary{padding:13px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);font-size:0.88rem;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
 .spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
 @keyframes spin{to{transform:rotate(360deg)}}
-
 /* SETUP */
 #screen-setup{background:var(--paper);overflow-y:auto;}
 .setup-header{background:var(--green);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
@@ -40,17 +38,14 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
 .inp:last-child{margin-bottom:0;}
 select.inp{cursor:pointer;}
 .save-btn{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
-
 /* DASHBOARD */
 #screen-dash{background:var(--paper);overflow-y:auto;}
 .dash-header{background:linear-gradient(160deg,var(--gdark),var(--green));padding:24px 20px 20px;}
 .dash-hogar{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);margin-bottom:4px;}
-.dash-title{font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:16px;}
+.dash-title{font-size:1.5rem;font-weight:800;color:#fff;}
 .dash-body{padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:80px;}
 .dash-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--line);box-shadow:0 2px 12px rgba(74,103,65,0.06);}
 .dash-card-title{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
-
-/* WiFi card mejorada */
 .wifi-big-card{background:linear-gradient(135deg,rgba(74,103,65,0.08),rgba(201,168,76,0.04));border:1.5px solid rgba(74,103,65,0.2);border-radius:18px;padding:16px;}
 .wifi-ssid-big{font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
 .wifi-pass-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
@@ -59,21 +54,16 @@ select.inp{cursor:pointer;}
 .wifi-actions-row{display:flex;gap:8px;}
 .wifi-qr-btn{flex:1;padding:11px;border-radius:12px;background:var(--green);color:#fff;border:none;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:var(--font);touch-action:manipulation;}
 .wifi-share-btn{padding:11px 16px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:0.85rem;cursor:pointer;touch-action:manipulation;}
-
-/* Alertas / escaneos */
 .alerta-item{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);}
 .alerta-item:last-child{border-bottom:none;}
 .alerta-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
 .alerta-icon.scan{background:rgba(74,103,65,0.1);}
 .alerta-icon.estoy{background:rgba(201,168,76,0.1);}
 .alerta-icon.ubi{background:rgba(64,145,108,0.1);}
-.alerta-icon.sos{background:rgba(220,53,69,0.1);}
 .alerta-info{flex:1;}
 .alerta-txt{font-size:0.82rem;color:var(--ink);}
 .alerta-hora{font-family:var(--mono);font-size:0.65rem;color:var(--muted);}
 .empty-state{font-style:italic;color:var(--muted);font-size:0.82rem;text-align:center;padding:10px 0;}
-
-/* Notas */
 .nota-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);}
 .nota-item:last-child{border-bottom:none;}
 .nota-autor{font-family:var(--mono);font-size:0.65rem;color:var(--green);width:50px;flex-shrink:0;padding-top:2px;}
@@ -85,8 +75,13 @@ select.inp{cursor:pointer;}
 .nota-add-inp:focus{outline:none;border-color:var(--green);}
 .nota-autor-inp{width:80px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--font);color:var(--ink);}
 .nota-add-btn{padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.85rem;touch-action:manipulation;}
-
-/* QR Modal */
+.fid-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--line);}
+.fid-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.fid-val{font-family:var(--mono);font-size:0.72rem;background:var(--gsoft);color:var(--green);padding:10px 12px;border-radius:10px;flex:1;word-break:break-all;}
+.fid-copy{padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.78rem;flex-shrink:0;touch-action:manipulation;}
+.fid-hint{font-size:0.7rem;color:var(--muted);font-style:italic;line-height:1.5;}
+.tok-footer-home{text-align:center;padding:12px 16px 8px;display:flex;align-items:center;justify-content:center;gap:8px;}
+/* QR */
 .qr-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,0.75);backdrop-filter:blur(8px);z-index:100;align-items:flex-end;justify-content:center;}
 .qr-overlay.show{display:flex;}
 .qr-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:420px;text-align:center;}
@@ -97,7 +92,6 @@ select.inp{cursor:pointer;}
 .qr-pass-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:16px;}
 .qr-pass-val{font-family:var(--mono);font-size:0.85rem;color:var(--ink);}
 .qr-close{padding:12px 28px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font);}
-
 /* PIN */
 .pin-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,0.75);backdrop-filter:blur(10px);z-index:200;align-items:flex-end;justify-content:center;}
 .pin-overlay.show{display:flex;}
@@ -110,14 +104,6 @@ select.inp{cursor:pointer;}
 .pin-key{padding:15px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:1.1rem;font-family:var(--font);font-weight:600;cursor:pointer;touch-action:manipulation;}
 .pin-key:active{background:var(--gsoft);}
 .pin-error{color:#c44;font-size:0.78rem;margin-top:10px;display:none;}
-
-/* Código del hogar */
-.fid-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--line);}
-.fid-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.fid-val{font-family:var(--mono);font-size:0.72rem;background:var(--gsoft);color:var(--green);padding:10px 12px;border-radius:10px;flex:1;word-break:break-all;}
-.fid-copy{padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.78rem;flex-shrink:0;touch-action:manipulation;}
-.fid-hint{font-size:0.7rem;color:var(--muted);font-style:italic;line-height:1.5;}
-
 .fab{position:fixed;bottom:20px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--green);color:#fff;border:none;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 16px rgba(74,103,65,0.4);z-index:10;touch-action:manipulation;}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:rgba(255,255,255,0.9);padding:10px 20px;border-radius:20px;font-size:0.82rem;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;font-family:var(--mono);}
 .toast.show{opacity:1;}
@@ -133,10 +119,17 @@ select.inp{cursor:pointer;}
 <div class="screen active" id="screen-splash">
   <div class="splash-wrap">
     <div class="splash-badge">TO-K HOME · BETA</div>
-    <div class="splash-icon">🏠</div>
+    <div class="splash-icon">
+      <img src="https://tmstudio-hub.github.io/tok/Logos-To-k/home.svg" alt="TO-K HOME"
+        style="height:80px;filter:brightness(0) invert(1);animation:float 3s ease-in-out infinite;"
+        onerror="this.style.display='none'">
+    </div>
     <div class="splash-title" id="splash-title">Cargando...</div>
     <div class="splash-sub" id="splash-sub">Conectando con tu hogar</div>
-    <div id="splash-loading"><div class="spinner"></div><p style="font-family:var(--mono);font-size:0.8rem;color:rgba(255,255,255,0.4);">Cargando datos...</p></div>
+    <div id="splash-loading">
+      <div class="spinner"></div>
+      <p style="font-family:var(--mono);font-size:0.8rem;color:rgba(255,255,255,0.4);">Cargando datos...</p>
+    </div>
     <div class="splash-btns" id="splash-btns" style="display:none;">
       <button class="btn-primary" onclick="irA('dash')">Entrar al hogar</button>
       <button class="btn-secondary" onclick="mostrarQR()">📶 WiFi para visitas</button>
@@ -191,7 +184,7 @@ select.inp{cursor:pointer;}
     <div class="setup-section">
       <h3>🎨 Tema de color</h3>
       <div class="tema-grid" id="tema-grid"></div>
-      <span class="tema-label" id="tema-label-actual" style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;"></span>
+      <span class="tema-label" id="tema-label-actual"></span>
     </div>
     <div class="setup-section">
       <h3>🔗 Redirección si no es NFC</h3>
@@ -210,7 +203,6 @@ select.inp{cursor:pointer;}
   </div>
   <div class="dash-body">
 
-    <!-- WiFi prominente arriba -->
     <div class="wifi-big-card" id="wifi-big-card" style="display:none;">
       <div class="dash-card-title">📶 WiFi del hogar</div>
       <div class="wifi-ssid-big" id="wifi-ssid-big">—</div>
@@ -224,7 +216,6 @@ select.inp{cursor:pointer;}
       </div>
     </div>
 
-    <!-- Alertas y escaneos en tiempo real -->
     <div class="dash-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="dash-card-title" style="margin:0;">🔔 Actividad familiar</div>
@@ -233,7 +224,6 @@ select.inp{cursor:pointer;}
       <div id="alertas-list"><div class="empty-state">Sin actividad reciente</div></div>
     </div>
 
-    <!-- Notas familiares -->
     <div class="dash-card">
       <div class="dash-card-title">📝 Notas de la familia</div>
       <div id="notas-list"><div class="empty-state">Sin notas aún — ¡deja el primer mensaje!</div></div>
@@ -244,21 +234,24 @@ select.inp{cursor:pointer;}
       </div>
     </div>
 
-    <!-- Código del hogar — al final -->
     <div class="fid-card" id="fid-card" style="display:none;">
       <div class="dash-card-title">🔑 Código del hogar</div>
       <div class="fid-row">
         <div class="fid-val" id="fid-display">—</div>
         <button class="fid-copy" onclick="copiarFID()">Copiar</button>
       </div>
-      <div class="fid-hint">Comparte este código con los miembros de tu familia para que conecten sus llaveros TO-K ONE, KIDS y PETS.</div>
+      <div class="fid-hint">Comparte este código con tu familia para conectar sus llaveros TO-K ONE, KIDS y PETS.</div>
     </div>
 
-    <div style="text-align:center;padding:6px 0 16px;">
-      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">TO-K HOME BETA · El Taller de Memorias</div>
+    <div class="tok-footer-home">
+      <img src="https://tmstudio-hub.github.io/tok/Logos-To-k/tok.svg" alt="TO-K"
+        style="height:22px;opacity:0.4;" onerror="this.style.display='none'">
+      <a id="footer-link" href="https://linktr.ee/tallermemoriasstudio" target="_blank"
+        style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-decoration:none;letter-spacing:0.1em;">
+        <span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias
+      </a>
     </div>
-  </div>
-    <div id="tok-footer"></div>
+
   </div>
   <button class="fab" onclick="mostrarPin(()=>irA('setup'))">⚙️</button>
 </div>
@@ -326,28 +319,25 @@ let FID = params.get('fid');
 let CFG = {};
 let pinInput = '', pinCB = null;
 let qrLoaded = false;
+// ← CLAVE: flags para registrar onValue solo UNA VEZ
+let alertasListener = false, notasListener = false;
 
-// Cargar QRCode dinámicamente — compatible con módulos ES
-let qrLoaded = false;
 function cargarQRCode(cb) {
-  // Si ya está disponible globalmente
   if(typeof window.QRCode !== 'undefined') { cb(); return; }
-  if(qrLoaded) { setTimeout(()=>{ if(typeof window.QRCode!=='undefined') cb(); }, 200); return; }
+  if(qrLoaded) { setTimeout(()=>{ if(typeof window.QRCode!=='undefined') cb(); else cb(); }, 300); return; }
   qrLoaded = true;
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-  s.onload = () => { setTimeout(cb, 50); }; // pequeño delay para asegurar que QRCode está en window
+  s.onload = () => setTimeout(cb, 60);
   s.onerror = () => {
-    // Fallback: intentar con unpkg
     const s2 = document.createElement('script');
     s2.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
-    s2.onload = () => setTimeout(cb, 50);
+    s2.onload = () => setTimeout(cb, 60);
     document.head.appendChild(s2);
   };
   document.head.appendChild(s);
 }
 
-// ── TEMAS HOME ──
 const TEMAS = {
   dia:     { name:'☀️ Día',      c1:'#4A6741', c2:'#EBF2E9', c3:'#1E3A1A', bg:'#F5F7F4', dark:false },
   noche:   { name:'🌙 Noche',    c1:'#52B788', c2:'#1A2E23', c3:'#A8D5BA', bg:'#0D1F17', dark:true  },
@@ -359,86 +349,34 @@ const TEMAS = {
 function aplicarTema(t) {
   const tema = TEMAS[t] || TEMAS.dia;
   const r = document.documentElement.style;
-  r.setProperty('--green', tema.c1);
-  r.setProperty('--gsoft', tema.c2);
-  r.setProperty('--gdark', tema.c3);
-  r.setProperty('--paper', tema.bg);
+  r.setProperty('--green', tema.c1); r.setProperty('--gsoft', tema.c2);
+  r.setProperty('--gdark', tema.c3); r.setProperty('--paper', tema.bg);
   if(tema.dark) {
-    r.setProperty('--card', '#1A2E23');
-    r.setProperty('--ink', '#E8F5E8');
-    r.setProperty('--muted', '#6A8A6A');
-    r.setProperty('--line', 'rgba(255,255,255,0.08)');
+    r.setProperty('--card','#1A2E23'); r.setProperty('--ink','#E8F5E8');
+    r.setProperty('--muted','#6A8A6A'); r.setProperty('--line','rgba(255,255,255,0.08)');
   } else {
-    r.setProperty('--card', '#FFFFFF');
-    r.setProperty('--ink', '#1A2018');
-    r.setProperty('--muted', '#8A9E86');
-    r.setProperty('--line', 'rgba(74,103,65,0.12)');
+    r.setProperty('--card','#FFFFFF'); r.setProperty('--ink','#1A2018');
+    r.setProperty('--muted','#8A9E86'); r.setProperty('--line','rgba(74,103,65,0.12)');
   }
 }
 
 function renderTemaGrid() {
-  const grid = document.getElementById('tema-grid');
-  if(!grid) return;
-  grid.innerHTML = Object.entries(TEMAS).map(([k,t]) => `
-    <button class="tema-btn ${CFG.tema===k?'active':''}" style="background:${t.c1};" onclick="selTema('${k}')" title="${t.name}"></button>`).join('');
+  const grid = document.getElementById('tema-grid'); if(!grid) return;
+  grid.innerHTML = Object.entries(TEMAS).map(([k,t]) =>
+    `<button class="tema-btn ${CFG.tema===k?'active':''}" style="background:${t.c1};" onclick="selTema('${k}')" title="${t.name}"></button>`
+  ).join('');
   const lbl = document.getElementById('tema-label-actual');
   if(lbl) lbl.textContent = TEMAS[CFG.tema]?.name || '';
 }
+window.selTema = function(k){ CFG.tema=k; aplicarTema(k); renderTemaGrid(); }
 
-window.selTema = function(k) { CFG.tema=k; aplicarTema(k); renderTemaGrid(); }
-
-// ── NFC DETECTION ──
 function esNFC() {
   if(params.get('nfc')==='1') return true;
   return /Android|iPhone|iPad/i.test(navigator.userAgent) && !document.referrer;
 }
 
-// ── FOOTER ──
-function renderFooter() {
-  const url = CFG.redirect || 'https://linktr.ee/tallermemoriasstudio';
-  const html = `<div style="text-align:center;padding:8px 0;"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias</a></div>`;
-  const el = document.getElementById('tok-footer');
-  if(el) el.innerHTML = html;
-}
-
-window.activarCodigo = async function() {
-  const codigo = document.getElementById('codigo-activacion').value.trim().toUpperCase();
-  const errEl = document.getElementById('codigo-error');
-  errEl.style.display = 'none';
-
-  if(!codigo || codigo.length < 12) {
-    errEl.textContent = 'Introduce el código completo (TOK-XXXX-XXXX)';
-    errEl.style.display = 'block'; return;
-  }
-
-  try {
-    const snap = await get(ref(db, `activaciones/${codigo}`));
-    if(!snap.exists()) {
-      errEl.textContent = '❌ Código no encontrado. Comprueba que lo has escrito bien.';
-      errEl.style.display = 'block'; return;
-    }
-    const data = snap.val();
-    if(data.usado) {
-      errEl.textContent = '❌ Este código ya fue activado. Contacta con El Taller de Memorias.';
-      errEl.style.display = 'block'; return;
-    }
-    // Código válido → ir a setup
-    window._codigoActivacion = codigo;
-    irA('setup');
-  } catch(e) {
-    // Si Firebase falla, permitir continuar en modo beta sin código
-    console.warn('Firebase check failed, allowing anyway:', e);
-    window._codigoActivacion = codigo || 'BETA';
-    irA('setup');
-  }
-}
-
 async function init() {
-  // NFC check
-  if(!esNFC() && !FID) {
-    window.location.replace('https://linktr.ee/tallermemoriasstudio');
-    return;
-  }
+  if(!esNFC() && !FID) { window.location.replace('https://linktr.ee/tallermemoriasstudio'); return; }
   if(!FID) {
     document.getElementById('splash-loading').style.display = 'none';
     document.getElementById('splash-setup').style.display = 'block';
@@ -451,7 +389,8 @@ async function init() {
     if(snap.exists()) {
       CFG = snap.val();
       aplicarTema(CFG.tema||'dia');
-      renderFooter();
+      // Actualizar footer link si hay redirect personalizado
+      if(CFG.redirect) document.getElementById('footer-link').href = CFG.redirect;
       document.getElementById('splash-loading').style.display = 'none';
       document.getElementById('splash-btns').style.display = 'flex';
       document.getElementById('splash-title').textContent = (CFG.emoji||'🏠') + ' ' + CFG.nombre;
@@ -463,33 +402,35 @@ async function init() {
       document.getElementById('splash-sub').textContent = 'Configura tu TO-K HOME';
     }
   } catch(e) {
-    document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;font-family:monospace;font-size:0.8rem;">Error de conexión</p>';
+    document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;font-family:monospace;font-size:0.8rem;">Error de conexión. Comprueba internet.</p>';
   }
 }
 
 window.irA = function(s) {
   document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
   document.getElementById('screen-'+s).classList.add('active');
-  if(s === 'dash') renderDash();
+  if(s === 'dash') iniciarDash();
   if(s === 'setup') renderSetup();
 }
 
-function renderDash() {
+function iniciarDash() {
   document.getElementById('dash-title').textContent = (CFG.emoji||'🏠') + ' ' + (CFG.nombre||'Mi Hogar');
-  // WiFi prominente
   if(CFG.wifi?.ssid) {
     document.getElementById('wifi-big-card').style.display = 'block';
     document.getElementById('wifi-ssid-big').textContent = CFG.wifi.ssid;
     document.getElementById('wifi-pass-val').textContent = CFG.wifi.pass || '(sin contraseña)';
   }
-  // FID
   if(FID) {
     document.getElementById('fid-card').style.display = 'block';
     document.getElementById('fid-display').textContent = FID;
   }
-  // Escuchar alertas en tiempo real
-  if(FID) {
+  // onValue una sola vez — si ya están registrados no se repite
+  if(FID && !alertasListener) {
+    alertasListener = true;
     onValue(ref(db, `familias/${FID}/alertas`), snap => renderAlertas(snap.val()));
+  }
+  if(FID && !notasListener) {
+    notasListener = true;
     onValue(ref(db, `familias/${FID}/notas`), snap => renderNotasData(snap.val()));
   }
 }
@@ -501,33 +442,33 @@ function renderSetup() {
   document.getElementById('cfg-pass').value = CFG.wifi?.pass || '';
   document.getElementById('cfg-wtype').value = CFG.wifi?.type || 'WPA';
   document.getElementById('cfg-pin').value = '';
-  if(document.getElementById('cfg-redirect')) document.getElementById('cfg-redirect').value = CFG.redirect||'';
+  document.getElementById('cfg-redirect').value = CFG.redirect || '';
   renderTemaGrid();
 }
 
-// ALERTAS
 const ALERTA_ICONS = {
-  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑', contacto_wa:'💬', contacto_sms:'✉️'
+  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑',
+  contacto_wa:'💬', contacto_sms:'✉️', contacto_telegram:'✈️'
 };
 const ALERTA_TEXTOS = {
-  scan: n => `Se escaneó el chip de ${n||'tu familiar'}`,
-  estoy: n => `Alguien está con ${n||'tu familiar'} y ha avisado`,
-  ubicacion: n => `Ubicación enviada para ${n||'tu familiar'}`,
-  llavero: n => `Llavero de ${n||'tu familiar'} encontrado`,
-  contacto_wa: n => `Contacto vía WhatsApp para ${n||'tu familiar'}`,
-  contacto_sms: n => `Contacto vía SMS para ${n||'tu familiar'}`,
+  scan:              n => `Chip escaneado · ${n||'familiar'}`,
+  estoy:             n => `Alguien está con ${n||'tu familiar'} y ha avisado`,
+  ubicacion:         n => `Ubicación enviada para ${n||'tu familiar'}`,
+  llavero:           n => `Llavero de ${n||'tu familiar'} encontrado`,
+  contacto_wa:       n => `WhatsApp enviado para ${n||'tu familiar'}`,
+  contacto_sms:      n => `SMS enviado para ${n||'tu familiar'}`,
+  contacto_telegram: n => `Telegram enviado para ${n||'tu familiar'}`,
 };
 
 function renderAlertas(data) {
   const list = document.getElementById('alertas-list');
   if(!data) { list.innerHTML = '<div class="empty-state">Sin actividad reciente</div>'; return; }
-  const alertas = Object.entries(data).sort((a,b) => (b[1].ts||0)-(a[1].ts||0)).slice(0,10);
+  const alertas = Object.entries(data).sort((a,b) => (b[1].ts||0)-(a[1].ts||0)).slice(0,15);
   list.innerHTML = alertas.map(([id,a]) => {
     const tipo = a.tipo || 'scan';
-    const base = tipo.startsWith('contacto') ? 'contacto_'+tipo.split('_')[1] : tipo;
-    const icon = ALERTA_ICONS[base] || '🔔';
-    const cls = tipo==='estoy'?'estoy':tipo==='ubicacion'?'ubi':tipo.includes('contacto')?'scan':'scan';
-    const txt = (ALERTA_TEXTOS[base]||((n)=>`Actividad: ${tipo}`))(a.nombre||'');
+    const icon = ALERTA_ICONS[tipo] || '🔔';
+    const cls  = tipo==='estoy'?'estoy':tipo==='ubicacion'?'ubi':'scan';
+    const txt  = (ALERTA_TEXTOS[tipo]||(n=>`Actividad: ${tipo}`))(a.nombre||'');
     return `<div class="alerta-item">
       <div class="alerta-icon ${cls}">${icon}</div>
       <div class="alerta-info">
@@ -544,7 +485,6 @@ window.limpiarAlertas = async function() {
   toast('Actividad limpiada');
 }
 
-// NOTAS
 function renderNotasData(data) {
   const list = document.getElementById('notas-list');
   if(!data) { list.innerHTML = '<div class="empty-state">Sin notas aún — ¡deja el primer mensaje!</div>'; return; }
@@ -579,30 +519,47 @@ window.delNota = async function(id) {
   await remove(ref(db, `familias/${FID}/notas/${id}`));
 }
 
-// CONFIG
+window.activarCodigo = async function() {
+  const codigo = document.getElementById('codigo-activacion').value.trim().toUpperCase();
+  const errEl = document.getElementById('codigo-error');
+  errEl.style.display = 'none';
+  if(!codigo || codigo.length < 12) {
+    errEl.textContent = 'Introduce el código completo (TOK-XXXX-XXXX)';
+    errEl.style.display = 'block'; return;
+  }
+  try {
+    const snap = await get(ref(db, `activaciones/${codigo}`));
+    if(!snap.exists()) { errEl.textContent='❌ Código no encontrado.'; errEl.style.display='block'; return; }
+    if(snap.val().usado) { errEl.textContent='❌ Código ya activado. Contacta con El Taller de Memorias.'; errEl.style.display='block'; return; }
+    window._codigoActivacion = codigo;
+    irA('setup');
+  } catch(e) {
+    window._codigoActivacion = codigo || 'BETA';
+    irA('setup');
+  }
+}
+
 window.guardarConfig = async function() {
-  const nombre = document.getElementById('cfg-nombre').value.trim() || 'Mi Hogar';
-  const emoji  = document.getElementById('cfg-emoji').value.trim() || '🏠';
-  const ssid   = document.getElementById('cfg-ssid').value.trim();
-  const pass   = document.getElementById('cfg-pass').value;
-  const wtype  = document.getElementById('cfg-wtype').value;
-  const pin    = document.getElementById('cfg-pin').value || CFG.pin || '1234';
-  const redirect = document.getElementById('cfg-redirect')?.value.trim() || '';
+  const nombre   = document.getElementById('cfg-nombre').value.trim() || 'Mi Hogar';
+  const emoji    = document.getElementById('cfg-emoji').value.trim() || '🏠';
+  const ssid     = document.getElementById('cfg-ssid').value.trim();
+  const pass     = document.getElementById('cfg-pass').value;
+  const wtype    = document.getElementById('cfg-wtype').value;
+  const pin      = document.getElementById('cfg-pin').value || CFG.pin || '1234';
+  const redirect = document.getElementById('cfg-redirect').value.trim();
   CFG = {...CFG, nombre, emoji, pin, redirect, tema:CFG.tema||'dia', wifi:{ssid,pass,type:wtype}};
   aplicarTema(CFG.tema);
-  renderFooter();
+  if(CFG.redirect) document.getElementById('footer-link').href = CFG.redirect;
   if(!FID) {
     const newRef = push(ref(db, 'familias'));
     FID = newRef.key;
     await set(ref(db, `familias/${FID}/hogar`), CFG);
-    // Marcar código de activación como usado
     if(window._codigoActivacion && window._codigoActivacion !== 'BETA') {
       await set(ref(db, `activaciones/${window._codigoActivacion}`), {
-        usado: true,
-        familia_id: FID,
-        fecha_activacion: new Date().toISOString()
+        usado: true, familia_id: FID, fecha_activacion: new Date().toISOString()
       });
     }
+    const newUrl = location.origin + location.pathname + '?fid=' + FID;
     history.replaceState(null, '', '?fid=' + FID);
     toast('✓ Hogar creado');
     setTimeout(() => alert('✅ ¡Hogar creado!\n\nTu código de familia es:\n' + FID + '\n\nGuárdalo para conectar tus llaveros TO-K.\n\nURL completa:\n' + newUrl), 400);
@@ -613,7 +570,6 @@ window.guardarConfig = async function() {
   irA('dash');
 }
 
-// QR WIFI
 window.mostrarQR = function() {
   if(!CFG.wifi?.ssid) { toast('Configura el WiFi primero'); return; }
   document.getElementById('qr-title').textContent = (CFG.nombre||'Hogar') + ' · WiFi';
@@ -623,43 +579,23 @@ window.mostrarQR = function() {
   const canvas = document.getElementById('qr-canvas');
   const wifiStr = `WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
   cargarQRCode(() => {
-    if(typeof window.QRCode === 'undefined') {
-      canvas.getContext('2d').fillText('QR no disponible', 10, 100);
-      return;
-    }
+    if(typeof window.QRCode === 'undefined') { toast('QR no disponible'); return; }
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    window.QRCode.toCanvas(canvas, wifiStr, {
-      width:200, margin:2,
-      color:{ dark:'#1A2018', light:'#ffffff' }
-    }, err => { if(err) console.error('QR error:', err); });
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    window.QRCode.toCanvas(canvas, wifiStr, {width:200,margin:2,color:{dark:'#1A2018',light:'#ffffff'}}, err=>{if(err) console.error(err);});
   });
 }
 
-window.copiarPass = function() {
-  const pass = CFG.wifi?.pass || '';
-  navigator.clipboard?.writeText(pass).then(() => toast('✓ Contraseña copiada'));
+window.copiarPass = function(){ navigator.clipboard?.writeText(CFG.wifi?.pass||'').then(()=>toast('✓ Contraseña copiada')); }
+window.compartirWifi = function(){
+  if(navigator.share && CFG.wifi?.ssid) navigator.share({title:'WiFi de casa',text:`Red: ${CFG.wifi.ssid}\nContraseña: ${CFG.wifi.pass}`});
+  else copiarPass();
 }
+window.copiarFID = function(){ if(FID) navigator.clipboard?.writeText(FID).then(()=>toast('✓ Código copiado')); }
 
-window.compartirWifi = function() {
-  if(navigator.share && CFG.wifi?.ssid) {
-    navigator.share({title:'WiFi de casa', text:`Red: ${CFG.wifi.ssid}\nContraseña: ${CFG.wifi.pass}`});
-  } else { copiarPass(); }
-}
-
-window.copiarFID = function() {
-  if(FID) navigator.clipboard?.writeText(FID).then(() => toast('✓ Código copiado'));
-}
-
-// PIN
-window.mostrarPin = function(cb) {
-  pinCB=cb; pinInput='';
-  actualizarDots();
-  document.getElementById('pin-error').style.display='none';
-  document.getElementById('pin-overlay').classList.add('show');
-}
-window.cerrarPin = function() { document.getElementById('pin-overlay').classList.remove('show'); pinInput=''; }
-window.pinKey = function(k) {
+window.mostrarPin = function(cb){ pinCB=cb; pinInput=''; actualizarDots(); document.getElementById('pin-error').style.display='none'; document.getElementById('pin-overlay').classList.add('show'); }
+window.cerrarPin = function(){ document.getElementById('pin-overlay').classList.remove('show'); pinInput=''; }
+window.pinKey = function(k){
   if(k==='del'){pinInput=pinInput.slice(0,-1);actualizarDots();return;}
   if(pinInput.length>=4) return;
   pinInput+=k; actualizarDots();
@@ -668,7 +604,7 @@ window.pinKey = function(k) {
     else{document.getElementById('pin-error').style.display='block';pinInput='';actualizarDots();}
   },200);
 }
-function actualizarDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
+function actualizarDots(){for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
 window.toast = function(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
 init();

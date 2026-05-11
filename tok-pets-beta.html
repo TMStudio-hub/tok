@@ -138,7 +138,7 @@ body{font-family:var(--font);background:var(--bg);min-height:100vh;}
 <!-- PRIMERA VEZ -->
 <div class="screen" id="screen-setup-fid">
   <div style="max-width:340px;width:100%;text-align:center;">
-    <div style="font-size:3rem;margin-bottom:16px;">🐾</div>
+    <div style="margin-bottom:16px;"><img src="https://tmstudio-hub.github.io/tok/Logos-To-k/pets.svg" alt="TO-K PETS" style="height:60px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">🐾</div></div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--c3);margin-bottom:8px;">TO-K PETS</div>
     <div style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
     <div style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
@@ -169,6 +169,7 @@ body{font-family:var(--font);background:var(--bg);min-height:100vh;}
       </div>
     </div>
     <button class="sel-llavero-btn" onclick="irA('llavero')">🔑 Solo encontré el collar/llavero</button>
+    <div class="tok-footer-pets" style="margin-top:20px;text-align:center;"></div>
   </div>
 </div>
 
@@ -191,7 +192,7 @@ body{font-family:var(--font);background:var(--bg);min-height:100vh;}
     <div style="text-align:center;padding:12px 20px 0;">
       <button class="fam-access-btn" onclick="mostrarPin(()=>irA('bitacora'))">🔒 Acceso familiar</button>
     </div>
-    <div class="footer-brand">TO-K PETS BETA · El Taller de Memorias</div>
+    <div class="tok-footer-pets" style="text-align:center;padding:8px 0 4px;"></div>
   </div>
 </div>
 
@@ -209,6 +210,7 @@ body{font-family:var(--font);background:var(--bg);min-height:100vh;}
       <button class="btn-sos btn-loc" onclick="enviarUbicacion()" style="border-radius:14px;">📍 Enviar mi ubicación</button>
     </div>
     <button class="fam-access-btn" onclick="mostrarPin(()=>irA('bitacora'))" style="margin-top:12px;width:100%;">🔒 Acceso familiar</button>
+    <div class="tok-footer-pets" style="margin-top:16px;text-align:center;"></div>
   </div>
 </div>
 
@@ -416,7 +418,7 @@ window.selTema=function(k){CFG.tema=k;aplicarTemaP(k);renderTemaGridP();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterP(){
   const url=CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="text-align:center;padding:8px;"><a href="${url}" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.6rem;font-family:monospace;text-decoration:none;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/Logos-To-k/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
   document.querySelectorAll('.tok-footer-pets').forEach(el=>el.innerHTML=html);
 }
 

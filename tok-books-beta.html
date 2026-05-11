@@ -131,7 +131,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
 <!-- PRIMERA VEZ -->
 <div class="screen" id="screen-setup-fid">
   <div class="fid-setup-box">
-    <div style="font-size:3rem;margin-bottom:16px;">📚</div>
+    <div style="margin-bottom:16px;"><img src="https://tmstudio-hub.github.io/tok/Logos-To-k/books.svg" alt="TO-K BOOKS" style="height:60px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">📚</div></div>
     <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">TO-K BOOKS</div>
     <div style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
     <div style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
@@ -215,7 +215,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
   </div>
 
   <div id="tok-footer-books" style="margin-top:4px;"></div>
-  <button class="fab-cfg" onclick="irA('main')">📚</button>
+  <button class="fab-cfg" onclick="document.getElementById('cfg-redirect-books').scrollIntoView({behavior:'smooth'})" title="Configuración">⚙️</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -279,7 +279,7 @@ window.selTemaB=function(k){DATA.tema=k;aplicarTemaB(k);renderTemaGridB();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterB(){
   const url=DATA.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="text-align:center;padding:8px;"><a href="${url}" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.6rem;font-family:monospace;text-decoration:none;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/Logos-To-k/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
   const el=document.getElementById('tok-footer-books');if(el)el.innerHTML=html;
 }
 
