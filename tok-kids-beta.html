@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>TO-K KIDS</title>
+<style>
+:root{--c1:#E8845A;--c2:#FFD6C2;--c3:#7A3316;--bg:#FFF8F5;--card:#fff;--muted:#9A8490;--line:rgba(232,132,90,0.15);--font:system-ui,sans-serif;--mono:'Courier New',monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--bg);min-height:100vh;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* SOS */
+#screen-sos{background:var(--bg);}
+.sos-wrap{max-width:420px;margin:0 auto;width:100%;padding:0 0 40px;}
+.sos-badge-row{text-align:center;padding:20px 20px 0;}
+.sos-badge{display:inline-block;background:rgba(232,132,90,0.15);color:var(--c3);font-size:0.7rem;font-weight:700;letter-spacing:0.15em;padding:5px 16px;border-radius:20px;border:1px solid rgba(232,132,90,0.3);}
+.lang-row{display:flex;justify-content:center;gap:6px;padding:10px 20px;}
+.lang-btn{padding:4px 10px;border-radius:20px;border:1px solid var(--line);background:transparent;cursor:pointer;font-size:0.72rem;color:var(--muted);}
+.lang-btn.active{background:var(--c1);color:#fff;border-color:var(--c1);}
+.timer-row{text-align:center;margin-bottom:4px;}
+.sos-timer{display:inline-block;font-family:var(--mono);font-size:1rem;color:var(--muted);background:rgba(232,132,90,0.08);padding:4px 14px;border-radius:20px;border:1px solid var(--line);}
+.sos-timer.urgent{color:#c00;border-color:rgba(200,0,0,0.3);animation:pulse 1s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.photo-wrap{width:110px;height:110px;border-radius:50%;margin:10px auto;overflow:hidden;border:4px solid var(--c2);background:var(--c2);display:flex;align-items:center;justify-content:center;font-size:3rem;}
+.photo-wrap img{width:100%;height:100%;object-fit:cover;}
+.sos-name{font-size:1.8rem;font-weight:700;color:var(--c3);text-align:center;margin-bottom:4px;}
+.sos-age{font-size:0.85rem;color:var(--muted);text-align:center;margin-bottom:10px;}
+.sos-msg{background:white;border-radius:14px;padding:12px 16px;margin:0 20px 12px;font-size:0.9rem;font-style:italic;color:var(--c3);line-height:1.5;border:1px solid var(--line);text-align:center;}
+.home-alert{display:none;margin:0 20px 8px;padding:8px 12px;background:rgba(64,145,108,0.1);border-radius:10px;font-size:0.75rem;color:#40916C;text-align:center;}
+.estoy-btn{margin:0 20px 8px;}
+.estoy-btn button{width:100%;padding:14px;border-radius:14px;background:#FFF3CD;color:#856404;border:2px solid #FFECB5;font-size:0.9rem;font-weight:700;cursor:pointer;touch-action:manipulation;}
+.sos-actions{padding:0 20px;display:flex;flex-direction:column;gap:8px;}
+.btn-sos{width:100%;padding:14px;border-radius:14px;border:none;font-size:0.9rem;font-weight:600;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;}
+.btn-call{background:var(--c1);color:#fff;}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-sms{background:#5856D6;color:#fff;}
+.btn-loc{background:#40916C;color:#fff;}
+.fam-access-btn{width:100%;padding:10px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:0.78rem;cursor:pointer;margin-top:8px;}
+.footer-brand{text-align:center;font-size:0.6rem;color:#ccc;letter-spacing:0.1em;margin-top:12px;}
+
+/* Llavero solo */
+#screen-llavero{background:var(--bg);align-items:center;justify-content:center;padding:30px 20px;text-align:center;}
+.llavero-wrap{max-width:340px;width:100%;}
+
+/* Selector */
+#screen-selector{background:linear-gradient(160deg,#1a1a2e,var(--c3));align-items:center;justify-content:center;padding:30px 20px;text-align:center;}
+.sel-wrap{max-width:340px;width:100%;}
+.sel-photo{width:100px;height:100px;border-radius:50%;border:4px solid rgba(255,255,255,0.2);margin:0 auto 12px;overflow:hidden;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:3rem;}
+.sel-photo img{width:100%;height:100%;object-fit:cover;}
+.sel-name{font-size:1.4rem;font-weight:700;color:#fff;margin-bottom:6px;}
+.sel-sub{font-size:0.82rem;color:rgba(255,255,255,0.5);margin-bottom:28px;}
+.sel-cards{display:flex;gap:14px;}
+.sel-card{flex:1;border-radius:18px;padding:20px 12px;text-align:center;cursor:pointer;border:1px solid rgba(255,255,255,0.1);touch-action:manipulation;transition:all 0.2s;}
+.sel-card:active{transform:scale(0.97);}
+.sel-card.familia{background:rgba(64,145,108,0.3);border-color:rgba(64,145,108,0.5);}
+.sel-card.encontrado{background:rgba(232,132,90,0.25);border-color:rgba(232,132,90,0.4);}
+.sel-card .sc-emoji{font-size:2rem;display:block;margin-bottom:8px;}
+.sel-card .sc-label{font-size:0.82rem;font-weight:700;color:#fff;margin-bottom:3px;}
+.sel-card .sc-sub{font-size:0.65rem;color:rgba(255,255,255,0.45);}
+.sel-llavero-btn{margin-top:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.4);padding:8px 20px;border-radius:20px;cursor:pointer;font-size:0.75rem;}
+
+/* Config familiar */
+#screen-config{background:var(--bg);overflow-y:auto;}
+.cfg-header{background:var(--c1);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+.cfg-header h1{font-size:1rem;font-weight:700;}
+.back-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;cursor:pointer;font-size:1rem;}
+.cfg-body{padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:80px;max-width:480px;margin:0 auto;width:100%;}
+.cfg-section{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--line);}
+.cfg-section h3{font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:14px;font-weight:700;}
+.lbl{font-size:0.78rem;color:var(--muted);margin-bottom:5px;display:block;}
+.inp{width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:#333;font-size:0.9rem;font-family:var(--font);margin-bottom:10px;transition:border-color 0.15s;}
+.inp:focus{outline:none;border-color:var(--c1);}
+.inp:last-child{margin-bottom:0;}
+.photo-upload{display:flex;align-items:center;gap:14px;margin-bottom:10px;}
+.photo-thumb{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid var(--line);flex-shrink:0;}
+.photo-ph{width:64px;height:64px;border-radius:50%;background:var(--c2);border:2px solid var(--c1);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;}
+.photo-upload-lbl{flex:1;padding:11px 14px;border-radius:12px;border:1.5px dashed rgba(232,132,90,0.3);background:rgba(232,132,90,0.05);color:var(--c1);font-size:0.82rem;cursor:pointer;text-align:center;}
+.save-btn{width:100%;padding:15px;background:var(--c1);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;}
+
+/* PIN */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:100;align-items:flex-end;justify-content:center;}
+.pin-overlay.show{display:flex;}
+.pin-sheet{background:#fff;border-radius:24px 24px 0 0;padding:24px 24px 40px;width:100%;max-width:420px;text-align:center;}
+.pin-handle{width:40px;height:4px;border-radius:2px;background:#eee;margin:0 auto 20px;}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:20px;}
+.pin-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid #aaa;transition:all 0.15s;}
+.pin-dot.filled{background:var(--c1);border-color:var(--c1);transform:scale(1.2);}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto;}
+.pin-key{padding:15px;border-radius:12px;border:1px solid #eee;background:#fafafa;color:#333;font-size:1.1rem;font-weight:600;cursor:pointer;touch-action:manipulation;}
+.pin-key:active{background:var(--c2);}
+.pin-error{color:#c44;font-size:0.78rem;margin-top:10px;display:none;}
+
+/* Ubicación prompt */
+.ubi-prompt{display:none;position:fixed;bottom:80px;left:16px;right:16px;background:#fff;border:2px solid var(--c1);border-radius:16px;padding:16px;z-index:200;box-shadow:0 4px 20px rgba(0,0,0,0.15);text-align:center;max-width:380px;margin:0 auto;}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:0.82rem;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* Loading */
+.loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:12px;}
+.spinner{width:32px;height:32px;border:3px solid var(--c2);border-top-color:var(--c1);border-radius:50%;animation:spin 0.8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div style="font-size:0.75rem;color:var(--muted);">Cargando...</div>
+</div>
+
+<!-- SELECTOR -->
+<div class="screen" id="screen-selector">
+  <div class="sel-wrap">
+    <div class="sel-photo" id="sel-photo">👶</div>
+    <div class="sel-name" id="sel-name">—</div>
+    <div class="sel-sub">¿Qué necesitas?</div>
+    <div class="sel-cards">
+      <div class="sel-card familia" onclick="elegir('familia')">
+        <span class="sc-emoji">🏠</span>
+        <div class="sc-label">Soy de la familia</div>
+        <div class="sc-sub">Acceso familiar</div>
+      </div>
+      <div class="sel-card encontrado" onclick="elegir('encontrado')">
+        <span class="sc-emoji">🆘</span>
+        <div class="sc-label" id="encontrado-label">Lo he encontrado</div>
+        <div class="sc-sub">Emergencia</div>
+      </div>
+    </div>
+    <button class="sel-llavero-btn" onclick="irA('llavero')" style="margin-top:10px;width:100%;">🔑 Solo encontré el llavero</button>
+  </div>
+</div>
+
+<!-- SOS -->
+<div class="screen" id="screen-sos">
+  <div class="sos-wrap">
+    <div class="sos-badge-row">
+      <div class="sos-badge" id="sos-badge">🚨 EMERGENCIA</div>
+    </div>
+    <div class="lang-row">
+      <button class="lang-btn active" onclick="setLang('es',event)">🇪🇸 ES</button>
+      <button class="lang-btn" onclick="setLang('en',event)">🇬🇧 EN</button>
+      <button class="lang-btn" onclick="setLang('de',event)">🇩🇪 DE</button>
+    </div>
+    <div class="timer-row"><div class="sos-timer" id="sos-timer">5:00</div></div>
+    <div class="photo-wrap" id="sos-photo-wrap">👶</div>
+    <div class="sos-name" id="sos-name">—</div>
+    <div class="sos-age" id="sos-age"></div>
+    <div class="sos-msg" id="sos-msg"></div>
+    <div class="home-alert" id="home-alert">✓ Familia notificada · están al tanto</div>
+    <div class="estoy-btn">
+      <button id="btn-estoy" onclick="estoyCon()">🙋 <span id="btn-estoy-txt">Estoy con el niño — avisando a la familia</span></button>
+    </div>
+    <div class="sos-actions" id="sos-actions"></div>
+    <div style="text-align:center;padding:12px 20px 0;">
+      <button class="fam-access-btn" onclick="mostrarPin(()=>irA('config'))">🔒 <span id="fam-access-txt">Acceso familiar</span></button>
+    </div>
+    <div class="footer-brand">TO-K KIDS BETA · El Taller de Memorias</div>
+  </div>
+</div>
+
+<!-- LLAVERO SOLO -->
+<div class="screen" id="screen-llavero">
+  <div class="llavero-wrap" style="max-width:340px;margin:0 auto;text-align:center;padding:40px 20px;">
+    <div style="font-size:3rem;margin-bottom:12px;">🔑</div>
+    <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.15em;color:var(--c1);border:1px solid rgba(232,132,90,0.3);padding:5px 16px;border-radius:20px;display:inline-block;margin-bottom:16px;" id="llavero-badge">LLAVERO TO-K ENCONTRADO</div>
+    <div style="font-size:1.3rem;font-weight:700;color:var(--c3);margin-bottom:8px;" id="llavero-title">Llavero TO-K</div>
+    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;" id="llavero-msg">Contacta con el dueño para devolvérselo.</div>
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <button class="btn-sos btn-call" onclick="llamar()" style="border-radius:14px;">📞 <span id="llavero-call">Llamar al dueño</span></button>
+      <button class="btn-sos btn-wa" onclick="enviarMsg('wa')" style="border-radius:14px;">💬 <span id="llavero-wa">WhatsApp al dueño</span></button>
+      <button class="btn-sos btn-sms" onclick="enviarMsg('sms')" style="border-radius:14px;">✉️ <span id="llavero-sms">Enviar SMS</span></button>
+      <button class="btn-sos btn-loc" onclick="enviarUbicacion()" style="border-radius:14px;">📍 <span id="llavero-loc">Enviar mi ubicación</span></button>
+    </div>
+    <div style="display:flex;justify-content:center;gap:6px;margin-top:16px;">
+      <button class="lang-btn" onclick="setLang('es',event);actualizarLlavero()">🇪🇸</button>
+      <button class="lang-btn" onclick="setLang('en',event);actualizarLlavero()">🇬🇧</button>
+      <button class="lang-btn" onclick="setLang('de',event);actualizarLlavero()">🇩🇪</button>
+    </div>
+    <button class="fam-access-btn" onclick="mostrarPin(()=>irA('config'))" style="margin-top:12px;width:100%;">🔒 Acceso familiar</button>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="screen" id="screen-config">
+  <div class="cfg-header">
+    <button class="back-btn" onclick="irA('selector')">←</button>
+    <h1>Configurar TO-K KIDS</h1>
+  </div>
+  <div class="cfg-body">
+    <div class="cfg-section">
+      <h3>Foto e identidad</h3>
+      <div class="photo-upload">
+        <div class="photo-ph" id="cfg-ph">👶</div>
+        <img id="cfg-photo-prev" class="photo-thumb" style="display:none;" alt="">
+        <label class="photo-upload-lbl">📷 Subir foto<input type="file" accept="image/*" style="display:none;" onchange="subirFoto(this)"></label>
+      </div>
+      <span class="lbl">Nombre</span>
+      <input class="inp" id="cfg-nombre" placeholder="Chloe">
+      <span class="lbl">Edad</span>
+      <input class="inp" id="cfg-edad" placeholder="3 años" style="margin-bottom:0;">
+    </div>
+    <div class="cfg-section">
+      <h3>Mensajes de emergencia</h3>
+      <span class="lbl">Mensaje en español</span>
+      <input class="inp" id="cfg-msg-es" placeholder="Hola, soy Chloe. Por favor llama a mis papás.">
+      <span class="lbl">Message in English</span>
+      <input class="inp" id="cfg-msg-en" placeholder="Hi, I am Chloe. Please call my parents.">
+      <span class="lbl">Nachricht auf Deutsch</span>
+      <input class="inp" id="cfg-msg-de" placeholder="Hallo, ich bin Chloe. Bitte ruf meine Eltern an." style="margin-bottom:0;">
+    </div>
+    <div class="cfg-section">
+      <h3>Contactos de emergencia</h3>
+      <span class="lbl">Teléfono principal (llamada directa)</span>
+      <input class="inp" id="cfg-tel" type="tel" placeholder="+34 600 000 000">
+      <span class="lbl">WhatsApp (puede ser distinto)</span>
+      <input class="inp" id="cfg-wa" type="tel" placeholder="+34 600 000 000">
+      <span class="lbl">Telegram</span>
+      <input class="inp" id="cfg-tg" placeholder="@usuario">
+      <span class="lbl">Email de alerta</span>
+      <input class="inp" id="cfg-email" type="email" placeholder="familia@email.com">
+      <span class="lbl">Nombre en el llavero</span>
+      <input class="inp" id="cfg-llavero-nombre" placeholder="Chloe, hija de Víctor" style="margin-bottom:0;">
+    </div>
+    <div class="cfg-section">
+      <h3>PIN familiar</h3>
+      <span class="lbl">4 dígitos para acceder a esta configuración</span>
+      <input class="inp" id="cfg-pin" type="password" maxlength="4" placeholder="••••" style="text-align:center;letter-spacing:0.4em;font-size:1.3rem;margin-bottom:0;">
+    </div>
+    <button class="save-btn" onclick="guardarConfig()">Guardar configuración</button>
+  </div>
+</div>
+
+<!-- PIN -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-sheet">
+    <div class="pin-handle"></div>
+    <div style="font-size:1rem;font-weight:700;margin-bottom:4px;">Acceso familiar</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:18px;">PIN de 4 dígitos</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button><button class="pin-key" onclick="pinKey('2')">2</button><button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button><button class="pin-key" onclick="pinKey('5')">5</button><button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button><button class="pin-key" onclick="pinKey('8')">8</button><button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('del')" style="color:#c44;">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="cerrarPin()" style="color:var(--muted);font-size:0.8rem;">✕</button>
+    </div>
+    <div class="pin-error" id="pin-error">PIN incorrecto</div>
+  </div>
+</div>
+
+<!-- Ubicación prompt -->
+<div class="ubi-prompt" id="ubi-prompt">
+  <div style="font-size:0.9rem;font-weight:700;color:var(--c3);margin-bottom:8px;">📍 ¿Enviamos tu ubicación a la familia?</div>
+  <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Les ayudará a encontrarte más rápido</div>
+  <div style="display:flex;gap:8px;">
+    <button onclick="confirmarUbicacion()" style="flex:1;padding:10px;border-radius:10px;background:var(--c1);color:#fff;border:none;font-weight:700;cursor:pointer;touch-action:manipulation;">Sí, enviar</button>
+    <button onclick="document.getElementById('ubi-prompt').style.display='none'" style="flex:1;padding:10px;border-radius:10px;background:#f5f5f5;color:#666;border:none;cursor:pointer;">Ahora no</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
+  authDomain: "tok-familiar.firebaseapp.com",
+  databaseURL: "https://tok-familiar-default-rtdb.firebaseio.com",
+  projectId: "tok-familiar",
+  storageBucket: "tok-familiar.firebasestorage.app",
+  messagingSenderId: "530434764197",
+  appId: "1:530434764197:web:32a8ca1b42e09131dacc4c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const params = new URLSearchParams(location.search);
+const FID = params.get('fid');
+const MID = params.get('mid') || 'kids_1';
+
+let CFG = {
+  tipo:'kids', nombre:'', edad:'', foto:'', pin:'1234',
+  msg_es:'Hola, soy [NOMBRE]. Por favor llama a mis papás.',
+  msg_en:'Hi, I am [NOMBRE]. Please call my parents.',
+  msg_de:'Hallo, ich bin [NOMBRE]. Bitte ruf meine Eltern an.',
+  tel:'', wa:'', tg:'', email:'', llavero_nombre:'',
+};
+let lang = 'es';
+let sosTimer = null, sosSegs = 300;
+let pinInput = '', pinCB = null;
+
+const T = {
+  es:{ badge_kids:'🚨 HE ENCONTRADO A UN NIÑO', badge_pets:'🐾 HE ENCONTRADO A UNA MASCOTA', call:'Contactar con la familia', wa:'WhatsApp', sms:'Enviar SMS', loc:'Enviar mi ubicación', loc_sent:'✓ Ubicación enviada', loc_copy:'Ubicación copiada', estoy:'🙋 Estoy con el niño — avisando a la familia', estoy_sent:'✓ Familia avisada — gracias por ayudar', fam:'🔒 Acceso familiar', encontrado:'Lo he encontrado', llavero_badge:'LLAVERO TO-K ENCONTRADO', llavero_title:'Llavero TO-K', llavero_msg:'Contacta con el dueño para devolvérselo.', llavero_call:'Llamar al dueño', llavero_wa:'WhatsApp al dueño', llavero_sms:'Enviar SMS', llavero_loc:'Enviar mi ubicación' },
+  en:{ badge_kids:'🚨 I FOUND A CHILD', badge_pets:'🐾 I FOUND A PET', call:'Contact the family', wa:'WhatsApp', sms:'Send SMS', loc:'Send my location', loc_sent:'✓ Location sent', loc_copy:'Location copied', estoy:"🙋 I'm with the child — notifying family", estoy_sent:'✓ Family notified — thank you', fam:'🔒 Family access', encontrado:'I found them', llavero_badge:'TO-K KEYCHAIN FOUND', llavero_title:'TO-K Keychain', llavero_msg:'Contact the owner to return it.', llavero_call:'Call the owner', llavero_wa:'WhatsApp the owner', llavero_sms:'Send SMS', llavero_loc:'Send my location' },
+  de:{ badge_kids:'🚨 ICH HABE EIN KIND GEFUNDEN', badge_pets:'🐾 ICH HABE EIN HAUSTIER GEFUNDEN', call:'Familie kontaktieren', wa:'WhatsApp', sms:'SMS senden', loc:'Meinen Standort senden', loc_sent:'✓ Standort gesendet', loc_copy:'Standort kopiert', estoy:'🙋 Ich bin beim Kind — Familie benachrichtigen', estoy_sent:'✓ Familie benachrichtigt', fam:'🔒 Familienzugang', encontrado:'Gefunden', llavero_badge:'TO-K SCHLÜSSELANHÄNGER GEFUNDEN', llavero_title:'TO-K Schlüsselanhänger', llavero_msg:'Kontaktieren Sie den Besitzer.', llavero_call:'Besitzer anrufen', llavero_wa:'WhatsApp an Besitzer', llavero_sms:'SMS senden', llavero_loc:'Meinen Standort senden' },
+};
+
+async function init() {
+  lang = (navigator.language||'es').slice(0,2);
+  if(!['es','en','de'].includes(lang)) lang = 'es';
+  if(FID) {
+    try {
+      const snap = await get(ref(db, `familias/${FID}/miembros/${MID}`));
+      if(snap.exists()) CFG = { ...CFG, ...snap.val() };
+    } catch(e) { console.error(e); }
+  }
+  document.getElementById('loading').style.display = 'none';
+  if(!CFG.nombre) { irA('config'); return; }
+  irA('selector');
+}
+
+window.irA = function(s) {
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.getElementById('screen-'+s).classList.add('active');
+  if(s==='sos') iniciarSOS();
+  if(s==='selector') renderSelector();
+  if(s==='llavero') actualizarLlavero();
+  if(s==='config') renderConfig();
+}
+
+window.setLang = function(l,e) {
+  lang=l;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.remove('active'));
+  if(e) e.target.classList.add('active');
+  actualizarLang();
+}
+
+function renderSelector() {
+  const wrap = document.getElementById('sel-photo');
+  if(CFG.foto) wrap.innerHTML=`<img src="${CFG.foto}" alt="">`;
+  else wrap.textContent = CFG.tipo==='pets'?(CFG.animalEmoji||'🐾'):'👶';
+  document.getElementById('sel-name').textContent = CFG.nombre||'—';
+  document.getElementById('encontrado-label').textContent = CFG.tipo==='pets'?'La encontré':'Lo encontré';
+}
+
+window.elegir = function(tipo) {
+  if(tipo==='encontrado') { irA('sos'); return; }
+  mostrarPin(()=>irA('config'));
+}
+
+function iniciarSOS() {
+  // Foto y nombre
+  const pw = document.getElementById('sos-photo-wrap');
+  if(CFG.foto) pw.innerHTML=`<img src="${CFG.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" alt="">`;
+  else pw.textContent = CFG.tipo==='pets'?'🐾':'👶';
+  document.getElementById('sos-name').textContent = CFG.nombre||'—';
+  document.getElementById('sos-age').textContent = CFG.edad||'';
+  // Timer
+  sosSegs = 300;
+  clearInterval(sosTimer);
+  actualizarTimer();
+  sosTimer = setInterval(()=>{ sosSegs--; actualizarTimer(); if(sosSegs<=0){ clearInterval(sosTimer); expirarSOS(); } }, 1000);
+  // Vibrar
+  if(navigator.vibrate) navigator.vibrate([300,100,300]);
+  // Wake lock
+  if('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
+  actualizarLang();
+  // Registrar en Firebase
+  registrarAlerta('scan');
+  // Banner familia notificada
+  document.getElementById('home-alert').style.display = 'block';
+}
+
+function actualizarTimer() {
+  const m=Math.floor(sosSegs/60), s=sosSegs%60;
+  const el=document.getElementById('sos-timer');
+  el.textContent=m+':'+String(s).padStart(2,'0');
+  el.classList.toggle('urgent',sosSegs<=60);
+}
+
+function expirarSOS() {
+  document.getElementById('screen-sos').innerHTML=`
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:40px;text-align:center;gap:16px;">
+      <div style="font-size:3rem;opacity:0.3;">🔒</div>
+      <h2 style="font-size:1.4rem;font-weight:700;color:var(--c3);">Sesión expirada</h2>
+      <p style="font-size:0.85rem;color:var(--muted);line-height:1.6;">Por seguridad esta información ya no está disponible. Escanea el chip de nuevo.</p>
+    </div>`;
+}
+
+function actualizarLang() {
+  const t = T[lang]||T.es;
+  const esPets = CFG.tipo==='pets';
+  document.getElementById('sos-badge').textContent = esPets ? t.badge_pets : t.badge_kids;
+  // Mensaje con nombre dinámico
+  const msgs = {
+    es: (CFG.msg_es||'').replace(/\[NOMBRE\]/g, CFG.nombre||''),
+    en: (CFG.msg_en||'').replace(/\[NOMBRE\]/g, CFG.nombre||''),
+    de: (CFG.msg_de||'').replace(/\[NOMBRE\]/g, CFG.nombre||''),
+  };
+  document.getElementById('sos-msg').textContent = msgs[lang]||msgs.es||'';
+  document.getElementById('btn-estoy-txt').textContent = esPets ? t.estoy.replace('niño','mascota') : t.estoy;
+  document.getElementById('fam-access-txt').textContent = t.fam;
+  // Botones de contacto
+  generarBotones();
+}
+
+function generarBotones() {
+  const t = T[lang]||T.es;
+  const tel=(CFG.tel||'').replace(/\s+/g,'');
+  const wa=(CFG.wa||CFG.tel||'').replace(/\s+/g,'').replace('+','');
+  const tg=(CFG.tg||'').replace('@','');
+  const btns=[];
+  if(tel) btns.push(`<button class="btn-sos btn-call" onclick="llamar()">📞 ${t.call}</button>`);
+  if(wa) btns.push(`<button class="btn-sos btn-wa" onclick="enviarMsg('wa')">💬 ${t.wa}</button>`);
+  if(tg) btns.push(`<button class="btn-sos" onclick="enviarMsg('telegram')" style="background:#229ED9;color:#fff;border-radius:14px;">✈️ Telegram</button>`);
+  btns.push(`<button class="btn-sos btn-sms" onclick="enviarMsg('sms')">✉️ ${t.sms}</button>`);
+  btns.push(`<button class="btn-sos btn-loc" id="btn-loc" onclick="enviarUbicacion()">📍 <span id="btn-loc-txt">${t.loc}</span></button>`);
+  document.getElementById('sos-actions').innerHTML = btns.join('');
+}
+
+window.llamar = function() {
+  const tel=(CFG.tel||'').replace(/\s+/g,'');
+  if(tel) window.location.href='tel:'+tel;
+  else toast('No hay teléfono configurado');
+}
+
+window.enviarMsg = function(tipo) {
+  const t = T[lang]||T.es;
+  const nombre=CFG.nombre||'';
+  const wa=(CFG.wa||CFG.tel||'').replace(/\s+/g,'').replace('+','');
+  const tg=(CFG.tg||'').replace('@','');
+  const tel=(CFG.tel||'').replace(/\s+/g,'');
+  const msgs={
+    es:`🚨 He encontrado a ${nombre} y necesito contactar con su familia.`,
+    en:`🚨 I found ${nombre} and need to contact their family.`,
+    de:`🚨 Ich habe ${nombre} gefunden und muss die Familie kontaktieren.`,
+  };
+  const msg=encodeURIComponent(msgs[lang]||msgs.es);
+  if(tipo==='wa'&&wa) window.open('https://wa.me/'+wa+'?text='+msg,'_blank');
+  else if(tipo==='telegram'&&tg) window.open('https://t.me/'+tg,'_blank');
+  else if(tipo==='sms'&&tel) window.location.href='sms:'+tel+'?body='+msg;
+  registrarAlerta('contacto_'+tipo);
+}
+
+window.estoyCon = function() {
+  const t=T[lang]||T.es;
+  const btn=document.getElementById('btn-estoy');
+  btn.textContent='✓ '+t.estoy_sent;
+  btn.style.background='#D4EDDA';
+  btn.style.color='#155724';
+  btn.style.border='2px solid #C3E6CB';
+  btn.onclick=null;
+  sosSegs=Math.max(sosSegs,300);
+  registrarAlerta('estoy');
+  // Pedir ubicación
+  setTimeout(()=>{ document.getElementById('ubi-prompt').style.display='block'; }, 800);
+}
+
+window.confirmarUbicacion = function() {
+  document.getElementById('ubi-prompt').style.display='none';
+  enviarUbicacion();
+}
+
+window.enviarUbicacion = function() {
+  const t=T[lang]||T.es;
+  const btnLoc=document.getElementById('btn-loc');
+  const txt=document.getElementById('btn-loc-txt');
+  if(!navigator.geolocation){toast('GPS no disponible');return;}
+  if(txt) txt.textContent='...';
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const lat=pos.coords.latitude.toFixed(6), lon=pos.coords.longitude.toFixed(6);
+    const url=`https://www.google.com/maps?q=${lat},${lon}`;
+    const nombre=CFG.nombre||'';
+    const msgs={
+      es:`📍 He encontrado a ${nombre}. Mi ubicación: ${url}`,
+      en:`📍 I found ${nombre}. My location: ${url}`,
+      de:`📍 Ich habe ${nombre} gefunden. Mein Standort: ${url}`,
+    };
+    const wa=(CFG.wa||CFG.tel||'').replace(/\s+/g,'').replace('+','');
+    if(wa) window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(msgs[lang]||msgs.es),'_blank');
+    else navigator.clipboard?.writeText(msgs[lang]||msgs.es).then(()=>toast(t.loc_copy));
+    if(btnLoc){btnLoc.style.background='#40916C';}
+    if(txt) txt.textContent=t.loc_sent;
+    registrarAlerta('ubicacion');
+  },()=>{toast('Activa el GPS e inténtalo de nuevo');if(txt)txt.textContent=T[lang]?.loc||'Enviar ubicación';},{timeout:10000,enableHighAccuracy:true});
+}
+
+window.actualizarLlavero = function() {
+  const t=T[lang]||T.es;
+  const nombre=CFG.llavero_nombre||CFG.nombre||'';
+  document.getElementById('llavero-badge').textContent=t.llavero_badge;
+  document.getElementById('llavero-title').textContent=nombre?`Llavero de ${nombre}`:t.llavero_title;
+  document.getElementById('llavero-msg').textContent=t.llavero_msg;
+  document.getElementById('llavero-call').textContent=t.llavero_call;
+  document.getElementById('llavero-wa').textContent=t.llavero_wa;
+  document.getElementById('llavero-sms').textContent=t.llavero_sms;
+  document.getElementById('llavero-loc').textContent=t.llavero_loc;
+}
+
+async function registrarAlerta(tipo) {
+  if(!FID) return;
+  try {
+    const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+    const fecha=new Date().toLocaleDateString('es-ES');
+    const { push } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js");
+    await push(ref(db,`familias/${FID}/alertas`),{ tipo, nombre:CFG.nombre||'', hora, fecha, ts:Date.now() });
+  } catch(e){}
+}
+
+// CONFIG
+function renderConfig() {
+  document.getElementById('cfg-nombre').value=CFG.nombre||'';
+  document.getElementById('cfg-edad').value=CFG.edad||'';
+  document.getElementById('cfg-msg-es').value=CFG.msg_es||'';
+  document.getElementById('cfg-msg-en').value=CFG.msg_en||'';
+  document.getElementById('cfg-msg-de').value=CFG.msg_de||'';
+  document.getElementById('cfg-tel').value=CFG.tel||'';
+  document.getElementById('cfg-wa').value=CFG.wa||'';
+  document.getElementById('cfg-tg').value=CFG.tg||'';
+  document.getElementById('cfg-email').value=CFG.email||'';
+  document.getElementById('cfg-llavero-nombre').value=CFG.llavero_nombre||'';
+  document.getElementById('cfg-pin').value='';
+  if(CFG.foto){
+    document.getElementById('cfg-photo-prev').src=CFG.foto;
+    document.getElementById('cfg-photo-prev').style.display='block';
+    document.getElementById('cfg-ph').style.display='none';
+  }
+}
+
+window.subirFoto = function(input) {
+  const f=input.files[0];if(!f) return;
+  const r=new FileReader();
+  r.onload=e=>{CFG.foto=e.target.result;document.getElementById('cfg-photo-prev').src=CFG.foto;document.getElementById('cfg-photo-prev').style.display='block';document.getElementById('cfg-ph').style.display='none';};
+  r.readAsDataURL(f);
+}
+
+window.guardarConfig = async function() {
+  try {
+    CFG.nombre=document.getElementById('cfg-nombre').value.trim();
+    CFG.edad=document.getElementById('cfg-edad').value.trim();
+    CFG.msg_es=document.getElementById('cfg-msg-es').value;
+    CFG.msg_en=document.getElementById('cfg-msg-en').value;
+    CFG.msg_de=document.getElementById('cfg-msg-de').value;
+    CFG.tel=document.getElementById('cfg-tel').value.trim();
+    CFG.wa=document.getElementById('cfg-wa').value.trim();
+    CFG.tg=document.getElementById('cfg-tg').value.trim();
+    CFG.email=document.getElementById('cfg-email').value.trim();
+    CFG.llavero_nombre=document.getElementById('cfg-llavero-nombre').value.trim();
+    const newPin=document.getElementById('cfg-pin').value;
+    if(newPin) CFG.pin=newPin;
+    if(FID) {
+      await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);
+      toast('✓ Configuración guardada');
+    } else {
+      toast('Sin código de familia — configura el HOME primero');
+    }
+    setTimeout(()=>irA('selector'),600);
+  } catch(e){toast('Error al guardar');console.error(e);}
+}
+
+// PIN
+window.mostrarPin=function(cb){pinCB=cb;pinInput='';actualizarDots();document.getElementById('pin-error').style.display='none';document.getElementById('pin-overlay').classList.add('show');}
+window.cerrarPin=function(){document.getElementById('pin-overlay').classList.remove('show');pinInput='';}
+window.pinKey=function(k){
+  if(k==='del'){pinInput=pinInput.slice(0,-1);actualizarDots();return;}
+  if(pinInput.length>=4) return;
+  pinInput+=k;actualizarDots();
+  if(pinInput.length===4) setTimeout(()=>{
+    if(pinInput===(CFG.pin||'1234')){cerrarPin();if(pinCB)pinCB();}
+    else{document.getElementById('pin-error').style.display='block';pinInput='';actualizarDots();}
+  },200);
+}
+function actualizarDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
+window.toast=function(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
+
+init();
+</script>
+</body>
+</html>

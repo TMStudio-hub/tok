@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>TO-K HOME</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+:root{--green:#4A6741;--gsoft:#EBF2E9;--gdark:#1E3A1A;--gold:#C9A84C;--ink:#1A2018;--paper:#F5F7F4;--card:#fff;--muted:#8A9E86;--line:rgba(74,103,65,0.12);--font:'Syne',system-ui,sans-serif;--mono:'DM Mono',monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;}
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+
+/* SPLASH */
+#screen-splash{background:linear-gradient(160deg,var(--gdark),var(--green));align-items:center;justify-content:center;padding:30px;text-align:center;}
+.splash-wrap{max-width:340px;width:100%;}
+.splash-badge{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.3em;color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1);padding:4px 14px;border-radius:20px;display:inline-block;margin-bottom:24px;}
+.splash-icon{font-size:4rem;margin-bottom:12px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.splash-title{font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:6px;}
+.splash-sub{font-size:0.85rem;color:rgba(255,255,255,0.5);margin-bottom:32px;line-height:1.6;}
+.splash-btns{display:flex;flex-direction:column;gap:10px;}
+.btn-primary{padding:15px;border-radius:14px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:0.95rem;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
+.btn-secondary{padding:13px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);font-size:0.88rem;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
+.loading-wrap{text-align:center;padding:40px;}
+.loading-wrap p{font-family:var(--mono);font-size:0.8rem;color:rgba(255,255,255,0.4);margin-top:12px;}
+.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* SETUP */
+#screen-setup{background:var(--paper);overflow-y:auto;}
+.setup-header{background:var(--green);color:#fff;padding:20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
+.setup-header h1{font-size:1rem;font-weight:700;}
+.back-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;cursor:pointer;font-size:1rem;}
+.setup-body{padding:20px;display:flex;flex-direction:column;gap:14px;padding-bottom:30px;max-width:480px;margin:0 auto;width:100%;}
+.setup-section{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--line);}
+.setup-section h3{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--green);margin-bottom:14px;}
+.lbl{font-size:0.78rem;color:var(--muted);margin-bottom:5px;display:block;}
+.inp{width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:0.9rem;font-family:var(--font);margin-bottom:10px;transition:border-color 0.15s;}
+.inp:focus{outline:none;border-color:var(--green);}
+.inp:last-child{margin-bottom:0;}
+select.inp{cursor:pointer;}
+.save-btn{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
+
+/* DASHBOARD */
+#screen-dash{background:var(--paper);overflow-y:auto;}
+.dash-header{background:linear-gradient(160deg,var(--gdark),var(--green));padding:24px 20px 20px;}
+.dash-hogar{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);margin-bottom:4px;}
+.dash-title{font-size:1.5rem;font-weight:800;color:#fff;margin-bottom:16px;}
+.dash-wifi-btn{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;padding:10px 16px;border-radius:20px;font-size:0.8rem;cursor:pointer;font-family:var(--mono);touch-action:manipulation;border:none;}
+.dash-body{padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:80px;}
+.dash-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--line);box-shadow:0 2px 12px rgba(74,103,65,0.06);}
+.dash-card-title{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+
+/* Notas */
+.nota-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);}
+.nota-item:last-child{border-bottom:none;}
+.nota-autor{font-family:var(--mono);font-size:0.65rem;color:var(--green);width:50px;flex-shrink:0;padding-top:2px;}
+.nota-texto{font-size:0.85rem;color:var(--ink);flex:1;line-height:1.4;}
+.nota-ts{font-family:var(--mono);font-size:0.6rem;color:var(--muted);flex-shrink:0;}
+.nota-del{color:var(--muted);cursor:pointer;background:none;border:none;font-size:0.85rem;padding:2px 4px;}
+.nota-add-row{display:flex;gap:8px;margin-top:10px;}
+.nota-add-inp{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--font);color:var(--ink);}
+.nota-add-inp:focus{outline:none;border-color:var(--green);}
+.nota-autor-inp{width:80px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--font);color:var(--ink);}
+.nota-add-btn{padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.85rem;touch-action:manipulation;}
+
+/* QR Modal */
+.qr-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,0.75);backdrop-filter:blur(8px);z-index:100;align-items:flex-end;justify-content:center;}
+.qr-overlay.show{display:flex;}
+.qr-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:420px;text-align:center;}
+.qr-handle{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
+.qr-title{font-size:1.1rem;font-weight:700;margin-bottom:4px;}
+.qr-ssid{font-family:var(--mono);font-size:0.8rem;background:var(--gsoft);color:var(--green);padding:8px 16px;border-radius:8px;margin:12px 0;}
+#qr-canvas{border-radius:12px;margin:0 auto 16px;display:block;}
+.qr-close{padding:12px 28px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font);}
+
+/* PIN */
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,0.75);backdrop-filter:blur(10px);z-index:200;align-items:flex-end;justify-content:center;}
+.pin-overlay.show{display:flex;}
+.pin-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:24px 24px 40px;width:100%;max-width:420px;text-align:center;}
+.pin-handle{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
+.pin-title{font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
+.pin-sub{font-size:0.78rem;color:var(--muted);margin-bottom:18px;}
+.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:20px;}
+.pin-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--muted);transition:all 0.15s;}
+.pin-dot.filled{background:var(--green);border-color:var(--green);transform:scale(1.2);}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto;}
+.pin-key{padding:15px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:1.1rem;font-family:var(--font);font-weight:600;cursor:pointer;touch-action:manipulation;}
+.pin-key:active{background:var(--gsoft);}
+.pin-error{color:#c44;font-size:0.78rem;margin-top:10px;display:none;}
+
+.fab{position:fixed;bottom:20px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--green);color:#fff;border:none;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 16px rgba(74,103,65,0.4);z-index:10;touch-action:manipulation;}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:rgba(255,255,255,0.9);padding:10px 20px;border-radius:20px;font-size:0.82rem;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;font-family:var(--mono);}
+.toast.show{opacity:1;}
+.empty-notas{font-style:italic;color:var(--muted);font-size:0.82rem;text-align:center;padding:10px 0;}
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-wrap">
+    <div class="splash-badge">TO-K HOME · BETA</div>
+    <div class="splash-icon">🏠</div>
+    <div class="splash-title" id="splash-title">Cargando...</div>
+    <div class="splash-sub" id="splash-sub">Conectando con tu hogar</div>
+    <div class="loading-wrap" id="splash-loading">
+      <div class="spinner"></div>
+      <p>Cargando datos...</p>
+    </div>
+    <div class="splash-btns" id="splash-btns" style="display:none;">
+      <button class="btn-primary" onclick="irA('dash')">Entrar al hogar</button>
+      <button class="btn-secondary" onclick="mostrarQR()">📶 WiFi para visitas</button>
+      <button class="btn-secondary" onclick="mostrarPin(()=>irA('setup'))">⚙️ Configurar</button>
+    </div>
+    <div id="splash-setup" style="display:none;">
+      <div class="splash-btns">
+        <button class="btn-primary" onclick="irA('setup')">Configurar mi hogar TO-K</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SETUP -->
+<div class="screen" id="screen-setup">
+  <div class="setup-header">
+    <button class="back-btn" onclick="irA('splash')">←</button>
+    <h1>Configurar TO-K HOME</h1>
+  </div>
+  <div class="setup-body">
+    <div class="setup-section">
+      <h3>Tu hogar</h3>
+      <span class="lbl">Nombre del hogar</span>
+      <input class="inp" id="cfg-nombre" type="text" placeholder="Casa García · El Nido · Familia Martínez">
+      <span class="lbl">Emoji del hogar</span>
+      <input class="inp" id="cfg-emoji" type="text" placeholder="🏠" style="font-size:1.4rem;text-align:center;margin-bottom:0;">
+    </div>
+    <div class="setup-section">
+      <h3>WiFi para visitas</h3>
+      <span class="lbl">Nombre de la red (SSID)</span>
+      <input class="inp" id="cfg-ssid" type="text" placeholder="NombreDetuRed">
+      <span class="lbl">Contraseña</span>
+      <input class="inp" id="cfg-pass" type="text" placeholder="Contraseña WiFi">
+      <span class="lbl">Tipo de seguridad</span>
+      <select class="inp" id="cfg-wtype" style="margin-bottom:0;">
+        <option value="WPA">WPA/WPA2</option>
+        <option value="WEP">WEP</option>
+        <option value="nopass">Sin contraseña</option>
+      </select>
+    </div>
+    <div class="setup-section">
+      <h3>Acceso privado</h3>
+      <span class="lbl">PIN de 4 dígitos para editar</span>
+      <input class="inp" id="cfg-pin" type="password" maxlength="4" placeholder="••••" style="text-align:center;letter-spacing:0.4em;font-size:1.3rem;margin-bottom:0;">
+    </div>
+    <button class="save-btn" onclick="guardarConfig()">Guardar configuración</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="screen" id="screen-dash">
+  <div class="dash-header">
+    <div class="dash-hogar">TO-K HOME · BETA</div>
+    <div class="dash-title" id="dash-title">🏠 Mi Hogar</div>
+    <button class="dash-wifi-btn" onclick="mostrarQR()">📶 WiFi para visitas</button>
+  </div>
+  <div class="dash-body">
+    <!-- Notas familiares -->
+    <div class="dash-card">
+      <div class="dash-card-title">📝 Notas de la familia</div>
+      <div id="notas-list"></div>
+      <div class="nota-add-row">
+        <input class="nota-autor-inp" id="nota-autor" placeholder="Tu nombre" maxlength="20">
+        <input class="nota-add-inp" id="nota-texto" placeholder="Deja un mensaje..." maxlength="200" onkeydown="if(event.key==='Enter')addNota()">
+        <button class="nota-add-btn" onclick="addNota()">+</button>
+      </div>
+    </div>
+    <!-- Info WiFi -->
+    <div class="dash-card" id="wifi-info" style="display:none;">
+      <div class="dash-card-title">📶 WiFi del hogar</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:1.8rem;">📶</div>
+        <div>
+          <div style="font-size:0.95rem;font-weight:700;" id="wifi-ssid-disp">—</div>
+          <div style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);margin-top:2px;">Toca el botón WiFi arriba para el QR</div>
+        </div>
+      </div>
+    </div>
+    <!-- Footer marca -->
+    <div style="text-align:center;padding:10px 0 20px;">
+      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">TO-K HOME BETA · El Taller de Memorias · tallerdememorias.es</div>
+    </div>
+  </div>
+  <button class="fab" onclick="mostrarPin(()=>irA('setup'))">⚙️</button>
+</div>
+
+<!-- QR WiFi -->
+<div class="qr-overlay" id="qr-overlay">
+  <div class="qr-sheet">
+    <div class="qr-handle"></div>
+    <div class="qr-title" id="qr-title">WiFi del Hogar</div>
+    <div style="font-size:0.78rem;color:var(--muted);margin-bottom:8px;">Escanea con la cámara para conectarte</div>
+    <canvas id="qr-canvas" width="200" height="200"></canvas>
+    <div class="qr-ssid" id="qr-ssid-disp">—</div>
+    <button class="qr-close" onclick="document.getElementById('qr-overlay').classList.remove('show')">Cerrar</button>
+  </div>
+</div>
+
+<!-- PIN -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-sheet">
+    <div class="pin-handle"></div>
+    <div class="pin-title">Configuración</div>
+    <div class="pin-sub">PIN de 4 dígitos</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinKey('1')">1</button>
+      <button class="pin-key" onclick="pinKey('2')">2</button>
+      <button class="pin-key" onclick="pinKey('3')">3</button>
+      <button class="pin-key" onclick="pinKey('4')">4</button>
+      <button class="pin-key" onclick="pinKey('5')">5</button>
+      <button class="pin-key" onclick="pinKey('6')">6</button>
+      <button class="pin-key" onclick="pinKey('7')">7</button>
+      <button class="pin-key" onclick="pinKey('8')">8</button>
+      <button class="pin-key" onclick="pinKey('9')">9</button>
+      <button class="pin-key" onclick="pinKey('del')" style="color:#c44;">⌫</button>
+      <button class="pin-key" onclick="pinKey('0')">0</button>
+      <button class="pin-key" onclick="cerrarPin()" style="color:var(--muted);font-size:0.8rem;">✕</button>
+    </div>
+    <div class="pin-error" id="pin-error">PIN incorrecto</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, get, set, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
+  authDomain: "tok-familiar.firebaseapp.com",
+  databaseURL: "https://tok-familiar-default-rtdb.firebaseio.com",
+  projectId: "tok-familiar",
+  storageBucket: "tok-familiar.firebasestorage.app",
+  messagingSenderId: "530434764197",
+  appId: "1:530434764197:web:32a8ca1b42e09131dacc4c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+// ── FAMILIA ID desde URL ──
+const params = new URLSearchParams(location.search);
+let FID = params.get('fid');
+let CFG = {};
+let pinInput = '', pinCB = null;
+
+// ── INIT ──
+async function init() {
+  if (!FID) {
+    // Primera vez — crear familia nueva
+    document.getElementById('splash-loading').style.display = 'none';
+    document.getElementById('splash-setup').style.display = 'block';
+    document.getElementById('splash-title').textContent = 'Bienvenido a TO-K';
+    document.getElementById('splash-sub').textContent = 'Configura tu hogar familiar';
+    return;
+  }
+  try {
+    const snap = await get(ref(db, `familias/${FID}/hogar`));
+    if (snap.exists()) {
+      CFG = snap.val();
+      document.getElementById('splash-loading').style.display = 'none';
+      document.getElementById('splash-btns').style.display = 'flex';
+      document.getElementById('splash-title').textContent = CFG.emoji + ' ' + CFG.nombre;
+      document.getElementById('splash-sub').textContent = 'Tu hogar TO-K familiar';
+    } else {
+      document.getElementById('splash-loading').style.display = 'none';
+      document.getElementById('splash-setup').style.display = 'block';
+      document.getElementById('splash-title').textContent = 'Hogar sin configurar';
+      document.getElementById('splash-sub').textContent = 'Configura tu TO-K HOME';
+    }
+  } catch(e) {
+    document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;">Error de conexión. Comprueba internet.</p>';
+  }
+}
+
+// ── NAVEGACIÓN ──
+window.irA = function(s) {
+  document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
+  document.getElementById('screen-'+s).classList.add('active');
+  if(s==='dash') renderDash();
+  if(s==='setup') renderSetup();
+}
+
+// ── DASHBOARD ──
+function renderDash() {
+  document.getElementById('dash-title').textContent = (CFG.emoji||'🏠') + ' ' + (CFG.nombre||'Mi Hogar');
+  if(CFG.wifi?.ssid) {
+    document.getElementById('wifi-info').style.display = 'block';
+    document.getElementById('wifi-ssid-disp').textContent = CFG.wifi.ssid;
+  }
+  renderNotas();
+  // Escuchar notas en tiempo real
+  if(FID) {
+    onValue(ref(db, `familias/${FID}/notas`), snap => {
+      renderNotasData(snap.val());
+    });
+  }
+}
+
+function renderSetup() {
+  document.getElementById('cfg-nombre').value = CFG.nombre || '';
+  document.getElementById('cfg-emoji').value = CFG.emoji || '🏠';
+  document.getElementById('cfg-ssid').value = CFG.wifi?.ssid || '';
+  document.getElementById('cfg-pass').value = CFG.wifi?.pass || '';
+  document.getElementById('cfg-wtype').value = CFG.wifi?.type || 'WPA';
+  document.getElementById('cfg-pin').value = '';
+}
+
+// ── NOTAS ──
+async function renderNotas() {
+  if(!FID) return;
+  const snap = await get(ref(db, `familias/${FID}/notas`));
+  renderNotasData(snap.val());
+}
+
+function renderNotasData(data) {
+  const list = document.getElementById('notas-list');
+  if(!data) {
+    list.innerHTML = '<div class="empty-notas">Sin notas aún — ¡deja el primer mensaje!</div>';
+    return;
+  }
+  const notas = Object.entries(data).sort((a,b)=>b[1].ts-a[1].ts);
+  list.innerHTML = notas.map(([id,n])=>`
+    <div class="nota-item">
+      <div class="nota-autor">${n.autor||'—'}</div>
+      <div class="nota-texto">${n.texto}</div>
+      <div class="nota-ts">${formatHora(n.ts)}</div>
+      <button class="nota-del" onclick="delNota('${id}')">✕</button>
+    </div>`).join('');
+}
+
+function formatHora(ts) {
+  const d = new Date(ts);
+  const hoy = new Date();
+  const esHoy = d.toDateString()===hoy.toDateString();
+  if(esHoy) return d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
+}
+
+window.addNota = async function() {
+  const texto = document.getElementById('nota-texto').value.trim();
+  const autor = document.getElementById('nota-autor').value.trim() || 'Anónimo';
+  if(!texto) return;
+  if(!FID) { toast('Sin conexión — recarga la página con el código del hogar'); return; }
+  await push(ref(db, `familias/${FID}/notas`), { texto, autor, ts: Date.now() });
+  document.getElementById('nota-texto').value = '';
+  toast('✓ Nota publicada');
+}
+
+window.delNota = async function(id) {
+  if(!FID) return;
+  await remove(ref(db, `familias/${FID}/notas/${id}`));
+}
+
+// ── CONFIG ──
+window.guardarConfig = async function() {
+  const nombre = document.getElementById('cfg-nombre').value.trim() || 'Mi Hogar';
+  const emoji  = document.getElementById('cfg-emoji').value.trim() || '🏠';
+  const ssid   = document.getElementById('cfg-ssid').value.trim();
+  const pass   = document.getElementById('cfg-pass').value;
+  const wtype  = document.getElementById('cfg-wtype').value;
+  const pin    = document.getElementById('cfg-pin').value || '1234';
+
+  CFG = { nombre, emoji, pin, wifi: { ssid, pass, type: wtype } };
+
+  if(!FID) {
+    // Crear familia nueva en Firebase
+    const newRef = push(ref(db, 'familias'));
+    FID = newRef.key;
+    const newUrl = location.origin + location.pathname + '?fid=' + FID;
+    await set(ref(db, `familias/${FID}/hogar`), CFG);
+    toast('✓ Hogar creado');
+    // Mostrar el código de la familia
+    setTimeout(()=>{
+      alert(`✅ ¡Hogar creado!\n\nTu código de familia es:\n${FID}\n\nGuárdalo — es el que va en los chips NFC.\n\nURL completa:\n${newUrl}`);
+    }, 500);
+  } else {
+    await set(ref(db, `familias/${FID}/hogar`), CFG);
+    toast('✓ Guardado');
+  }
+  irA('dash');
+}
+
+// ── WIFI QR ──
+window.mostrarQR = function() {
+  if(!CFG.wifi?.ssid) { toast('Configura el WiFi primero'); return; }
+  document.getElementById('qr-title').textContent = (CFG.nombre||'Hogar') + ' · WiFi';
+  document.getElementById('qr-ssid-disp').textContent = CFG.wifi.ssid;
+  const canvas = document.getElementById('qr-canvas');
+  const wifiStr = `WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
+  if(typeof QRCode!=='undefined') {
+    QRCode.toCanvas(canvas, wifiStr, { width:200, margin:2, color:{dark:'#1A2018',light:'#ffffff'} });
+  }
+  document.getElementById('qr-overlay').classList.add('show');
+}
+
+// ── PIN ──
+window.mostrarPin = function(cb) {
+  pinCB=cb; pinInput='';
+  actualizarDots();
+  document.getElementById('pin-error').style.display='none';
+  document.getElementById('pin-overlay').classList.add('show');
+}
+window.cerrarPin = function() { document.getElementById('pin-overlay').classList.remove('show'); pinInput=''; }
+window.pinKey = function(k) {
+  if(k==='del'){pinInput=pinInput.slice(0,-1);actualizarDots();return;}
+  if(pinInput.length>=4) return;
+  pinInput+=k; actualizarDots();
+  if(pinInput.length===4) setTimeout(()=>{
+    if(pinInput===(CFG.pin||'1234')){cerrarPin();if(pinCB)pinCB();}
+    else{document.getElementById('pin-error').style.display='block';pinInput='';actualizarDots();}
+  },200);
+}
+function actualizarDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
+
+// ── TOAST ──
+window.toast = function(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+init();
+</script>
+</body>
+</html>
