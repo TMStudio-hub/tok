@@ -276,6 +276,7 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
       <div class="pub-footer">
         <button class="footer-priv" onclick="mostrarPin(()=>irA('config'))">🔒 <span id="priv-btn-txt">Mi perfil privado</span></button>
         <div class="footer-brand">TO-K ONE · by <a href="https://tallerdememorias.es" target="_blank">El Taller de Memorias</a><br><span style="opacity:0.7;">¿Quieres el tuyo?</span></div>
+        <div class="tok-footer-one" style="margin-top:4px;"></div>
       </div>
     </div>
   </div>
@@ -381,6 +382,18 @@ body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height
         <button class="sesion-btn" id="ses-30" onclick="setSesion(30)">30 min</button>
       </div>
     </div>
+    <!-- Tema -->
+    <div class="cfg-section">
+      <div class="cfg-sec-title">🎨 Tema de color</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tema-grid-one"></div>
+      <span id="tema-label-one" style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;"></span>
+    </div>
+    <!-- Redirect -->
+    <div class="cfg-section">
+      <div class="cfg-sec-title">🔗 Si no se escanea por NFC</div>
+      <span class="cfg-label">URL de redirección</span>
+      <input class="cfg-input" id="cfg-redirect" type="url" placeholder="https://tuinstagram.com/..." style="margin-bottom:0;">
+    </div>
     <!-- PIN -->
     <div class="cfg-section">
       <div class="cfg-sec-title">PIN privado</div>
@@ -470,25 +483,36 @@ async function init() {
   lang = (navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang = 'es';
 
-  // Si no hay FID en URL — mostrar pantalla de código familiar
-  if(!FID) {
-    // Comprobar si hay FID guardado localmente
-    const fidLocal = localStorage.getItem('tok_fid');
-    if(fidLocal) {
-      location.href = location.pathname + '?fid=' + fidLocal + '&mid=' + MID;
-      return;
-    }
-    document.getElementById('loading').style.display = 'none';
-    irA('setup-fid');
+  // NFC check
+  if(!esNFC() && !FID) {
+    window.location.replace('https://linktr.ee/tallermemoriasstudio');
     return;
+  }
+
+  if(!FID) {
+    const fidLocal = localStorage.getItem('tok_fid');
+    if(fidLocal) { location.href = location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
+    document.getElementById('loading').style.display = 'none';
+    irA('setup-fid'); return;
   }
 
   try {
     const snap = await get(ref(db, `familias/${FID}/miembros/${MID}`));
     if(snap.exists()) CFG = { ...CFG, ...snap.val() };
-    // Guardar FID localmente para no pedirlo otra vez
     localStorage.setItem('tok_fid', FID);
+    aplicarTemaONE(CFG.tema||'dia');
+    renderFooterONE();
+
+    // Heredar WiFi del HOME si el ONE no tiene configurado
+    if(!CFG.wifi?.ssid) {
+      const snapHome = await get(ref(db, `familias/${FID}/hogar`));
+      if(snapHome.exists() && snapHome.val().wifi?.ssid) {
+        CFG.wifi = snapHome.val().wifi;
+        CFG.mostrar.wifi = true;
+      }
+    }
   } catch(e) { console.error(e); }
+
   document.getElementById('loading').style.display = 'none';
   if(!CFG.nombre) { irA('config'); return; }
   irA('public');
@@ -549,7 +573,12 @@ function renderPublic() {
   if(CFG.mostrar.ig&&CFG.redes.ig) redes.push({emoji:'📸',label:'Instagram',url:`https://instagram.com/${CFG.redes.ig.replace('@','')}`});
   if(CFG.mostrar.tt&&CFG.redes.tt) redes.push({emoji:'🎵',label:'TikTok',url:`https://tiktok.com/@${CFG.redes.tt.replace('@','')}`});
   if(CFG.mostrar.web&&CFG.redes.web) redes.push({emoji:'🌐',label:'Web',url:CFG.redes.web});
-  if(redes.length){redesRow.style.display='flex';redesRow.innerHTML=redes.map(r=>`<a class="red-pill" href="${r.url}" target="_blank"><span>${r.emoji}</span><span>${r.label}</span></a>`).join('');}
+  if(redes.length){redesRow.style.display='flex';redesRow.innerHTML=redes.map(r=>{
+    // Fix URL — asegurar que tenga protocolo
+    let url = r.url;
+    if(!url.startsWith('http')) url = 'https://' + url;
+    return `<a class="red-pill" href="${url}" target="_blank" rel="noopener"><span>${r.emoji}</span><span>${r.label}</span></a>`;
+  }).join('');}
   else redesRow.style.display='none';
   // ICE
   renderICE();
@@ -640,12 +669,72 @@ window.conectarWifi=function(){
   setTimeout(()=>mostrarQRWifi(),600);
   toast('📶 Abriendo configuración WiFi...');
 }
+// ── TEMAS ONE ──
+const TEMAS = {
+  dia:     { name:'☀️ Día',      c1:'#7B6FBB', c2:'#EAE7F8', c3:'#2E2575', bg:'#F7F4EF', dark:false },
+  noche:   { name:'🌙 Noche',    c1:'#9B8FDB', c2:'#1E1A35', c3:'#D4CCFF', bg:'#120F25', dark:true  },
+  galaxia: { name:'🌌 Galaxia',  c1:'#6C63FF', c2:'#0D0B1E', c3:'#C8C5FF', bg:'#080612', dark:true  },
+  rosa:    { name:'🌸 Rosa',     c1:'#C06B8A', c2:'#FCE8EF', c3:'#8B3A5A', bg:'#FDF4F7', dark:false },
+  dorado:  { name:'✨ Dorado',   c1:'#C9A84C', c2:'#FBF6E8', c3:'#7A5C1E', bg:'#FDFAF2', dark:false },
+};
+
+function aplicarTemaONE(t) {
+  const tema = TEMAS[t]||TEMAS.dia;
+  const r = document.documentElement.style;
+  r.setProperty('--violet', tema.c1);
+  r.setProperty('--vsoft',  tema.c2);
+  r.setProperty('--paper',  tema.bg);
+  if(tema.dark){
+    r.setProperty('--card','#1A1728');r.setProperty('--ink','#EAE7F8');
+    r.setProperty('--muted','#6A6480');r.setProperty('--line','rgba(255,255,255,0.08)');
+  } else {
+    r.setProperty('--card','#FFFFFF');r.setProperty('--ink','#1A1520');
+    r.setProperty('--muted','#9A94B0');r.setProperty('--line','rgba(123,111,187,0.12)');
+  }
+}
+
+function renderTemaGrid() {
+  const grid = document.getElementById('tema-grid-one');
+  if(!grid) return;
+  grid.innerHTML = Object.entries(TEMAS).map(([k,t])=>`
+    <button style="width:32px;height:32px;border-radius:50%;background:${t.c1};cursor:pointer;border:3px solid ${CFG.tema===k?'var(--ink)':'transparent'};transition:all 0.15s;touch-action:manipulation;" onclick="selTema('${k}')" title="${t.name}"></button>`).join('');
+  const lbl = document.getElementById('tema-label-one');
+  if(lbl) lbl.textContent = TEMAS[CFG.tema]?.name||'';
+}
+
+window.selTema = function(k){ CFG.tema=k; aplicarTemaONE(k); renderTemaGrid(); }
+
+// ── NFC DETECTION ──
+function esNFC(){
+  if(params.get('nfc')==='1') return true;
+  return /Android|iPhone|iPad/i.test(navigator.userAgent) && !document.referrer;
+}
+
+// ── FOOTER ──
+function renderFooterONE(){
+  const url = CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
+  const html=`<div style="text-align:center;padding:8px 0;"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--violet);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  document.querySelectorAll('.tok-footer-one').forEach(el=>el.innerHTML=html);
+}
+
+function cargarQRCode(cb) {
+  if(qrLoaded){ cb(); return; }
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+  s.onload=()=>{ qrLoaded=true; cb(); };
+  document.head.appendChild(s);
+}
+
 window.mostrarQRWifi=function(){
   document.getElementById('qr-ssid-one-disp').textContent=CFG.wifi.ssid;
+  document.getElementById('qr-overlay').classList.add('show');
   const canvas=document.getElementById('qr-canvas-one');
   const wifiStr=`WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
-  if(typeof QRCode!=='undefined') QRCode.toCanvas(canvas,wifiStr,{width:180,margin:2,color:{dark:'#1A1520',light:'#ffffff'}});
-  document.getElementById('qr-overlay').classList.add('show');
+  cargarQRCode(()=>{
+    const ctx=canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    QRCode.toCanvas(canvas,wifiStr,{width:180,margin:2,color:{dark:'#1A1520',light:'#ffffff'}},err=>{if(err)console.error(err);});
+  });
 }
 
 // CONFIG
@@ -668,6 +757,8 @@ function renderConfig(){
   document.getElementById('cfg-ice-alergias').value=CFG.ice?.alergias||'';
   document.getElementById('cfg-ice-condiciones').value=CFG.ice?.condiciones||'';
   document.getElementById('cfg-ice-tel').value=CFG.ice?.tel_emergencia||'';
+  if(document.getElementById('cfg-redirect')) document.getElementById('cfg-redirect').value=CFG.redirect||'';
+  renderTemaGrid();
   if(CFG.foto){document.getElementById('cfg-photo-prev').src=CFG.foto;document.getElementById('cfg-photo-prev').style.display='block';document.getElementById('cfg-photo-ph').style.display='none';}
   ['wifi','tel','wa','tg','email','ig','tt','web'].forEach(k=>{
     const tog=document.getElementById('tog-'+k);
@@ -707,6 +798,10 @@ window.guardarConfig=async function(){
   try{
     CFG.nombre=document.getElementById('cfg-nombre').value.trim();
     CFG.bio=document.getElementById('cfg-bio').value.trim();
+    CFG.redirect=document.getElementById('cfg-redirect')?.value.trim()||'';
+    CFG.tema=CFG.tema||'dia';
+    aplicarTemaONE(CFG.tema);
+    renderFooterONE();
     const newPin=document.getElementById('cfg-pin').value;
     if(newPin) CFG.pin=newPin;
     CFG.wifi.ssid=document.getElementById('cfg-ssid').value.trim();

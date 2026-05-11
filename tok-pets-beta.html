@@ -295,6 +295,16 @@ body{font-family:var(--font);background:var(--bg);min-height:100vh;}
       <input class="inp" id="cfg-llavero-nombre" placeholder="Kovu, mascota de los García" style="margin-bottom:0;">
     </div>
     <div class="cfg-section">
+      <h3>🎨 Tema de color</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tema-grid-pets"></div>
+      <span id="tema-label-pets" style="font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;font-family:monospace;"></span>
+    </div>
+    <div class="cfg-section">
+      <h3>🔗 Si no se escanea por NFC</h3>
+      <span class="lbl">URL de redirección</span>
+      <input class="inp" id="cfg-redirect" type="url" placeholder="https://tuinstagram.com/..." style="margin-bottom:0;">
+    </div>
+    <div class="cfg-section">
       <h3>PIN familiar</h3>
       <span class="lbl">4 dígitos para acceder a la bitácora</span>
       <input class="inp" id="cfg-pin" type="password" maxlength="4" placeholder="••••" style="text-align:center;letter-spacing:0.4em;font-size:1.3rem;margin-bottom:0;">
@@ -382,19 +392,50 @@ const T = {
   de:{badge:'🐾 ICH HABE EIN HAUSTIER GEFUNDEN',estoy:'Ich bin beim Haustier — Besitzer benachrichtigen',estoy_sent:'✓ Besitzer benachrichtigt',loc:'Meinen Standort senden',loc_sent:'✓ Standort gesendet',loc_copy:'Standort kopiert'},
 };
 
+// ── TEMAS PETS ──
+const TEMAS={
+  ambar: {name:'🐕 Ámbar',  c1:'#C8986A',c2:'#FFF3E0',c3:'#5C3D1E',bg:'#FDF8F3',dark:false},
+  gato:  {name:'🐈 Malva',  c1:'#9B7FBB',c2:'#F0EAF8',c3:'#4A2A7A',bg:'#F8F4FC',dark:false},
+  verde: {name:'🌿 Bosque', c1:'#6A9E6A',c2:'#E8F5E8',c3:'#2A5A2A',bg:'#F4FCF4',dark:false},
+  rosa:  {name:'🩷 Rosa',   c1:'#E06FA0',c2:'#FDEAF3',c3:'#8B2A5A',bg:'#FDF4F8',dark:false},
+  noche: {name:'🌙 Noche',  c1:'#C8986A',c2:'#1E1610',c3:'#F0D0A8',bg:'#120E08',dark:true },
+};
+function aplicarTemaP(t){
+  const tema=TEMAS[t]||TEMAS.ambar;
+  const r=document.documentElement.style;
+  r.setProperty('--c1',tema.c1);r.setProperty('--c2',tema.c2);r.setProperty('--c3',tema.c3);r.setProperty('--bg',tema.bg);
+  if(tema.dark){r.setProperty('--card','#1E1610');r.setProperty('--ink','#F0D0A8');r.setProperty('--muted','#6A5040');r.setProperty('--line','rgba(255,255,255,0.08)');}
+  else{r.setProperty('--card','#FFFFFF');r.setProperty('--ink','#2A1510');r.setProperty('--muted','#9A8490');r.setProperty('--line','rgba(200,152,106,0.15)');}
+}
+function renderTemaGridP(){
+  const g=document.getElementById('tema-grid-pets');if(!g)return;
+  g.innerHTML=Object.entries(TEMAS).map(([k,t])=>`<button style="width:32px;height:32px;border-radius:50%;background:${t.c1};cursor:pointer;border:3px solid ${CFG.tema===k?'#333':'transparent'};touch-action:manipulation;" onclick="selTema('${k}')" title="${t.name}"></button>`).join('');
+  const lbl=document.getElementById('tema-label-pets');if(lbl)lbl.textContent=TEMAS[CFG.tema]?.name||'';
+}
+window.selTema=function(k){CFG.tema=k;aplicarTemaP(k);renderTemaGridP();}
+function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
+function renderFooterP(){
+  const url=CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
+  const html=`<div style="text-align:center;padding:8px;"><a href="${url}" target="_blank" rel="noopener" style="color:var(--muted);font-size:0.6rem;font-family:monospace;text-decoration:none;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  document.querySelectorAll('.tok-footer-pets').forEach(el=>el.innerHTML=html);
+}
+
 async function init() {
   lang=(navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang='es';
-  if(!FID) {
+  if(!esNFC()&&!FID){window.location.replace(CFG.redirect||'https://linktr.ee/tallermemoriasstudio');return;}
+  if(!FID){
     const fidLocal=localStorage.getItem('tok_fid');
-    if(fidLocal){location.href=location.pathname+'?fid='+fidLocal+'&mid='+MID;return;}
+    if(fidLocal){ location.href=location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
     document.getElementById('loading').style.display='none';
-    irA('setup-fid');return;
+    irA('setup-fid'); return;
   }
   try {
     const snap=await get(ref(db,`familias/${FID}/miembros/${MID}`));
     if(snap.exists()) CFG={...CFG,...snap.val()};
     localStorage.setItem('tok_fid',FID);
+    aplicarTemaP(CFG.tema||'ambar');
+    renderFooterP();
   } catch(e){console.error(e);}
   document.getElementById('loading').style.display='none';
   if(!CFG.nombre){irA('config');return;}
@@ -595,8 +636,9 @@ function renderConfig(){
   document.getElementById('cfg-wa').value=CFG.wa||'';
   document.getElementById('cfg-llavero-nombre').value=CFG.llavero_nombre||'';
   document.getElementById('cfg-pin').value='';
+  if(document.getElementById('cfg-redirect')) document.getElementById('cfg-redirect').value=CFG.redirect||'';
+  renderTemaGridP();
   if(CFG.foto){document.getElementById('cfg-photo-prev').src=CFG.foto;document.getElementById('cfg-photo-prev').style.display='block';document.getElementById('cfg-ph').style.display='none';}
-  // Animal activo
   document.querySelectorAll('.animal-btn').forEach(b=>b.classList.toggle('active',b.dataset.animal===CFG.animalEmoji));
 }
 
@@ -623,8 +665,11 @@ window.guardarConfig=async function(){
     CFG.tel=document.getElementById('cfg-tel').value.trim();
     CFG.wa=document.getElementById('cfg-wa').value.trim();
     CFG.llavero_nombre=document.getElementById('cfg-llavero-nombre').value.trim();
+    CFG.redirect=document.getElementById('cfg-redirect')?.value.trim()||'';
     const newPin=document.getElementById('cfg-pin').value;
     if(newPin) CFG.pin=newPin;
+    aplicarTemaP(CFG.tema||'ambar');
+    renderFooterP();
     if(FID){await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);toast('✓ Guardado');}
     else toast('Sin código de familia — configura el HOME primero');
     setTimeout(()=>irA('selector'),600);
