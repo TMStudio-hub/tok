@@ -174,9 +174,12 @@ select.inp{cursor:pointer;}
 </div>
 
 <script>
-// PIN de acceso admin (hardcoded, no conectado a Firebase)
+// PIN de acceso admin — se carga desde Firebase (admin/config/pin), fallback '2810'
 let _pinBuf = '';
-const _PIN = '2810';
+let _PIN = '2810'; // valor por defecto hasta que Firebase responda
+// El módulo ES llama a _setAdminPin() cuando lee Firebase
+window._setAdminPin = function(p) { if(p) _PIN = String(p); };
+
 function pinAdminKey(k) {
   const err = document.getElementById('pin-admin-error');
   if(k === 'del') {
@@ -451,6 +454,21 @@ function _checkPin() {
     <div class="card">
       <h2>Ventas por canal</h2>
       <div id="stats-canales"></div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h2>⚙️ Configuración del panel</h2>
+      <div class="card-sub">Ajustes almacenados en Firebase bajo <code style="font-family:var(--mono);font-size:0.78rem;">admin/config</code></div>
+      <div class="form-row" style="align-items:flex-end;">
+        <div class="form-group" style="flex:0 0 160px;">
+          <span class="lbl">Nuevo PIN de acceso</span>
+          <input class="inp" id="nuevo-pin-input" type="password" inputmode="numeric" maxlength="4" placeholder="4 dígitos" style="font-family:var(--mono);font-size:1.1rem;letter-spacing:0.2em;text-align:center;">
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:0;">
+          <button class="btn btn-primary" onclick="guardarPin()">🔒 Guardar PIN</button>
+        </div>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:4px;">El PIN actual se carga desde Firebase al abrir el panel. Si no existe, el fallback es <strong>2810</strong>.</div>
     </div>
   </div>
 
@@ -850,6 +868,28 @@ function renderStats() {
 // ── TOAST ──
 window.toast = function(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
+// ── PIN DESDE FIREBASE ──
+async function cargarPinFirebase() {
+  try {
+    const snap = await get(ref(db, 'admin/config/pin'));
+    if(snap.exists()) window._setAdminPin(snap.val());
+  } catch(e) {
+    console.warn('[Admin] No se pudo leer PIN de Firebase, usando fallback:', e);
+  }
+}
+
+window.guardarPin = async function() {
+  const inp = document.getElementById('nuevo-pin-input');
+  const pin = inp?.value.trim();
+  if(!/^\d{4}$/.test(pin)) { toast('El PIN debe ser exactamente 4 dígitos'); return; }
+  try {
+    await set(ref(db, 'admin/config/pin'), pin);
+    window._setAdminPin(pin);
+    inp.value = '';
+    toast('✓ PIN actualizado en Firebase');
+  } catch(e) { toast('Error al guardar el PIN en Firebase'); }
+}
+
 // ── SINCRONIZACIÓN HISTORIAL FIREBASE ──
 async function cargarHistorialFirebase() {
   try {
@@ -880,6 +920,7 @@ async function cargarHistorialFirebase() {
 window.onload = function() {
   const next = pedidoCounter + 1;
   document.getElementById('num-pedido').value = padNum(next);
+  cargarPinFirebase();       // carga PIN desde Firebase (no bloquea la pantalla)
   cargarHistorialFirebase();
 }
 </script>

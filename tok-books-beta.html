@@ -491,7 +491,7 @@ body::before{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -508,6 +508,10 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 let FID = params.get('fid');
 const MID = params.get('mid') || 'books_1';
+
+// Server key — solo uso privado/beta. Reemplazar antes de producción.
+// Obtener en Firebase Console → Project Settings → Cloud Messaging → Server key (legacy)
+const FCM_SERVER_KEY = 'REEMPLAZA_CON_TU_FCM_SERVER_KEY';
 
 const FRASES = [
   '"Para viajar lejos, no hay mejor nave que un libro." — Emily Dickinson',
@@ -550,6 +554,53 @@ function renderFooterB(){
   const url=DATA.redirect||'https://linktr.ee/tallermemoriasstudio';
   const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
   const el=document.getElementById('tok-footer-books');if(el)el.innerHTML=html;
+}
+
+// ── FCM PUSH ─────────────────────────────────────────────────────────────────
+async function enviarPushFCM(tipo, texto) {
+  if(FCM_SERVER_KEY.startsWith('REEMPLAZA')) return;
+  if(!FID) return;
+  try {
+    const snap = await get(ref(db, `familias/${FID}/hogar/fcm_token`));
+    if(!snap.exists()) return;
+    const token = snap.val();
+    const nombre = DATA.nombre || MID;
+    await fetch('https://fcm.googleapis.com/fcm/send', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'key='+FCM_SERVER_KEY},
+      body: JSON.stringify({
+        to: token,
+        notification: {
+          title: `TO-K BOOKS · ${nombre}`,
+          body: texto,
+          icon: 'https://tmstudio-hub.github.io/tok/books.svg',
+        },
+        data: { tipo, nombre, texto },
+      }),
+    });
+  } catch(e) { console.warn('[FCM] Error al enviar push:', e); }
+}
+
+// ── ALERTAS FIREBASE ─────────────────────────────────────────────────────────
+async function registrarAlerta(tipo, titulo, paginas) {
+  if(!FID) return;
+  const nombre = DATA.nombre || MID;
+  let texto = '';
+  if(tipo === 'lectura')          texto = `${nombre} lleva ${paginas} páginas en "${titulo}"`;
+  else if(tipo === 'libro_terminado') texto = `${nombre} terminó "${titulo}"`;
+  else if(tipo === 'libro_nuevo')     texto = `${nombre} empezó a leer "${titulo}"`;
+  const alerta = {
+    tipo,
+    nombre,
+    texto,
+    ts: Date.now(),
+    fecha: new Date().toLocaleString('es-ES',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}),
+  };
+  if(DATA.foto) alerta.foto = DATA.foto;
+  try {
+    await push(ref(db, `familias/${FID}/alertas`), alerta);
+    enviarPushFCM(tipo, texto);
+  } catch(e) { console.warn('[Alerta] Error al registrar:', e); }
 }
 
 async function init() {
@@ -649,6 +700,7 @@ window.seleccionarLibro = function(idx) {
   libro.id=Date.now();
   DATA.libros = [...(DATA.libros||[]), libro];
   guardar();
+  registrarAlerta('libro_nuevo', libro.title);
   document.getElementById('search-results').style.display='none';
   document.getElementById('search-input').value='';
   renderLibros();
@@ -703,14 +755,20 @@ window.guardarProgreso = function(li) {
   const libro=DATA.libros[li]; if(!libro) return;
   const pag=parseInt(document.getElementById('pag-'+li)?.value||'0');
   const total=libro.pages||0, pct=total>0?Math.min(Math.round(pag/total*100),100):0;
-  const nuevas=Math.max(0,pag-(libro.pagBase||0)), ptsGanados=Math.floor(nuevas/10);
+  const pagAnterior = libro.pagBase || 0;
+  const nuevas=Math.max(0,pag-pagAnterior), ptsGanados=Math.floor(nuevas/10);
   DATA.libros[li].pagActual=pag;
   if(ptsGanados>0) { DATA.libros[li].pagBase=pag; DATA.puntos=(DATA.puntos||0)+ptsGanados; sumarPuntos(ptsGanados,'páginas leídas'); }
+  // Alerta lectura: si se ha cruzado al menos un múltiplo de 10 nuevo
+  if(Math.floor(pag/10) > Math.floor(pagAnterior/10) && pag > 0) {
+    registrarAlerta('lectura', libro.title, pag);
+  }
   if(pct>=100&&total>0) {
     if(typeof confetti!=='undefined') confetti({particleCount:160,spread:80,origin:{y:0.5},colors:['#8B3A52','#C9A84C','#4A1828']});
     DATA.total=(DATA.total||0)+1; DATA.anual=(DATA.anual||0)+1;
     DATA.puntos=(DATA.puntos||0)+50; sumarPuntos(50,'¡libro terminado!');
     DATA.listaDone=[{title:libro.title,author:libro.author,cover:libro.cover,pages:libro.pages,fecha:new Date().toLocaleDateString('es-ES')},...(DATA.listaDone||[])];
+    registrarAlerta('libro_terminado', libro.title);
     DATA.libros.splice(li,1);
     const fraseBox=document.getElementById('frase-box');
     fraseBox.textContent=FRASES[Math.floor(Math.random()*FRASES.length)];

@@ -891,7 +891,8 @@ function renderSetup() {
 
 // ALERTAS
 const ALERTA_ICONS = {
-  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑', contacto_wa:'💬', contacto_sms:'✉️'
+  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑', contacto_wa:'💬', contacto_sms:'✉️',
+  lectura:'📖', libro_terminado:'🏆', libro_nuevo:'📚',
 };
 const ALERTA_TEXTOS = {
   scan: n => `Se escaneó el chip de ${n||'tu familiar'}`,
@@ -900,6 +901,9 @@ const ALERTA_TEXTOS = {
   llavero: n => `Llavero de ${n||'tu familiar'} encontrado`,
   contacto_wa: n => `Contacto vía WhatsApp para ${n||'tu familiar'}`,
   contacto_sms: n => `Contacto vía SMS para ${n||'tu familiar'}`,
+  lectura: (n,a) => a?.texto || `${n||'Tu familiar'} ha avanzado en su lectura`,
+  libro_terminado: (n,a) => a?.texto || `${n||'Tu familiar'} terminó un libro`,
+  libro_nuevo: (n,a) => a?.texto || `${n||'Tu familiar'} empezó a leer un nuevo libro`,
 };
 
 // ── TIEMPO RELATIVO ──
@@ -952,7 +956,7 @@ function renderAlertas(data) {
     const base = tipo.startsWith('contacto') ? 'contacto_'+tipo.split('_')[1] : tipo;
     const icon = ALERTA_ICONS[base] || '🔔';
     const cls = tipo==='estoy'?'estoy':tipo==='ubicacion'?'ubi':tipo.includes('contacto')?'scan':'scan';
-    const txt = (ALERTA_TEXTOS[base]||((n)=>`Actividad: ${tipo}`))(a.nombre||'');
+    const txt = (ALERTA_TEXTOS[base]||((n)=>`Actividad: ${tipo}`))(a.nombre||'', a);
     const mapaLink = a.url
       ? `<a href="${a.url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;font-size:11px;color:var(--green);font-family:var(--mono);text-decoration:none;letter-spacing:0.04em;">📍 Ver en mapa</a>`
       : '';
