@@ -263,6 +263,81 @@ body::before{
   box-shadow:0 4px 20px rgba(92,61,30,.3);
 }
 .toast.show{opacity:1;}
+
+/* ── BITÁCORA ── */
+.bit-header{
+  background:var(--c3);padding:18px 20px;color:#f5f0e8;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;
+}
+.bit-header h1{font-family:var(--cinzel);font-size:13px;font-weight:500;letter-spacing:.12em;color:#f5f0e8;}
+.bit-back{
+  width:34px;height:34px;border-radius:50%;border:1px solid rgba(245,240,232,.2);
+  background:transparent;color:rgba(245,240,232,.7);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.bit-body{padding:16px;display:flex;flex-direction:column;gap:14px;padding-bottom:40px;max-width:480px;margin:0 auto;width:100%;}
+.bit-card{
+  background:var(--card);border:1px solid var(--line);border-radius:3px;
+  padding:18px;box-shadow:0 2px 14px var(--sombra);position:relative;overflow:hidden;
+}
+.bit-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;}
+.bit-card h3{font-family:var(--cinzel);font-size:8.5px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+.bit-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line);}
+.bit-item:last-child{border-bottom:none;}
+.bit-dot{width:7px;height:7px;border-radius:50%;background:var(--c1);flex-shrink:0;}
+.bit-txt{font-size:15px;color:var(--ink);flex:1;line-height:1.3;}
+.bit-hora{font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;}
+
+/* ── ACCIONES (bitácora cuidados) ── */
+.accion-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:4px;}
+.accion-btn{
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  padding:14px 8px;border-radius:3px;border:1px solid var(--line);
+  background:var(--card);cursor:pointer;touch-action:manipulation;transition:all .15s;
+}
+.accion-btn:active{background:var(--c2);border-color:var(--c1);}
+.accion-emoji{font-size:1.5rem;line-height:1;}
+.accion-label{font-family:var(--cinzel);font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-align:center;line-height:1.3;}
+.accion-pts{font-family:var(--mono);font-size:9px;color:var(--c1);}
+
+/* ── SALUD ── */
+.salud-item{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
+.salud-item:last-child{border-bottom:none;}
+.salud-txt{font-size:14px;color:var(--ink);flex:1;line-height:1.4;}
+.salud-fecha{font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;}
+
+/* ── SELECTOR ANIMAL ── */
+.animal-grid{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.animal-btn{
+  width:44px;height:44px;border-radius:2px;border:1.5px solid var(--line);
+  background:rgba(255,255,255,.5);font-size:1.4rem;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.animal-btn.active{border-color:var(--c1);background:var(--c2);}
+
+/* ── FOTO UPLOAD (config) ── */
+.photo-upload{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.photo-ph{
+  width:64px;height:64px;border-radius:50%;border:1.5px solid var(--line);
+  background:var(--c2);display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;flex-shrink:0;
+}
+.photo-thumb{width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0;}
+.photo-upload-lbl{
+  display:inline-block;padding:8px 14px;border-radius:2px;
+  border:1px solid var(--line);background:transparent;
+  font-family:var(--cinzel);font-size:9px;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--muted);cursor:pointer;transition:all .15s;
+}
+.photo-upload-lbl:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ── UBI PROMPT ── */
+.ubi-prompt{
+  display:none;position:fixed;bottom:0;left:0;right:0;z-index:150;
+  background:var(--card);border-top:1px solid var(--line);
+  padding:20px 24px 36px;max-width:420px;margin:0 auto;
+  box-shadow:0 -8px 32px rgba(92,61,30,.15);border-radius:3px 3px 0 0;
+}
 </style>
 </head>
 <body>
@@ -566,8 +641,18 @@ async function init() {
   if(!FID){
     const fidLocal=localStorage.getItem('tok_fid');
     if(fidLocal){ location.href=location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
-    document.getElementById('loading').style.display='none';
-    irA('setup-fid'); return;
+    // Resolución automática: buscar FID por MID en el índice inverso (chip sin ?fid= en URL)
+    try {
+      const idxSnap = await get(ref(db, `midIndex/${MID}`));
+      if(idxSnap.exists()) {
+        FID = idxSnap.val();
+        localStorage.setItem('tok_fid', FID);
+      }
+    } catch(e) {}
+    if(!FID) {
+      document.getElementById('loading').style.display='none';
+      irA('setup-fid'); return;
+    }
   }
   try {
     const snap=await get(ref(db,`familias/${FID}/miembros/${MID}`));
@@ -706,11 +791,19 @@ window.enviarUbicacion=function(){
 }
 
 async function registrarAlerta(tipo){
-  if(!FID) return;
+  let fid = FID;
+  // Resolución de emergencia: si FID no está en contexto, buscarlo por MID en el índice inverso
+  if(!fid) {
+    try {
+      const idxSnap = await get(ref(db, `midIndex/${MID}`));
+      if(idxSnap.exists()) fid = idxSnap.val();
+    } catch(e) {}
+  }
+  if(!fid) return;
   try{
     const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     const fecha=new Date().toLocaleDateString('es-ES');
-    await push(ref(db,`familias/${FID}/alertas`),{tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()});
+    await push(ref(db,`familias/${fid}/alertas`),{tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()});
   }catch(e){}
 }
 
@@ -809,8 +902,12 @@ window.guardarConfig=async function(){
     if(newPin) CFG.pin=newPin;
     aplicarTemaP(CFG.tema||'ambar');
     renderFooterP();
-    if(FID){await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);toast('✓ Guardado');}
-    else toast('Sin código de familia — configura el HOME primero');
+    if(FID){
+      await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);
+      // Índice inverso MID→FID: permite resolver el FID cuando el chip no lleva ?fid= en la URL
+      await set(ref(db,`midIndex/${MID}`),FID);
+      toast('✓ Guardado');
+    } else toast('Sin código de familia — configura el HOME primero');
     setTimeout(()=>irA('selector'),600);
   }catch(e){toast('Error al guardar');}
 }

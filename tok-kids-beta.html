@@ -535,8 +535,18 @@ async function init() {
   if(!FID) {
     const fidLocal = localStorage.getItem('tok_fid');
     if(fidLocal) { location.href=location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
-    document.getElementById('loading').style.display='none';
-    irA('setup-fid'); return;
+    // Resolución automática: buscar FID por MID en el índice inverso (chip sin ?fid= en URL)
+    try {
+      const idxSnap = await get(ref(db, `midIndex/${MID}`));
+      if(idxSnap.exists()) {
+        FID = idxSnap.val();
+        localStorage.setItem('tok_fid', FID);
+      }
+    } catch(e) {}
+    if(!FID) {
+      document.getElementById('loading').style.display='none';
+      irA('setup-fid'); return;
+    }
   }
   try {
     const snap = await get(ref(db,`familias/${FID}/miembros/${MID}`));
@@ -697,11 +707,19 @@ window.enviarUbicacion=function(){
 }
 
 async function registrarAlerta(tipo){
-  if(!FID) return;
+  let fid = FID;
+  // Resolución de emergencia: si FID no está en contexto, buscarlo por MID en el índice inverso
+  if(!fid) {
+    try {
+      const idxSnap = await get(ref(db, `midIndex/${MID}`));
+      if(idxSnap.exists()) fid = idxSnap.val();
+    } catch(e) {}
+  }
+  if(!fid) return;
   try{
     const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     const fecha=new Date().toLocaleDateString('es-ES');
-    await push(ref(db,`familias/${FID}/alertas`),{tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()});
+    await push(ref(db,`familias/${fid}/alertas`),{tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()});
   }catch(e){}
 }
 
@@ -743,8 +761,12 @@ window.guardarConfig=async function(){
     CFG.redirect=document.getElementById('cfg-redirect').value.trim();
     const newPin=document.getElementById('cfg-pin').value;
     if(newPin) CFG.pin=newPin;
-    if(FID){await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);toast('✓ Configuración guardada');}
-    else toast('Sin código de familia — configura el HOME primero');
+    if(FID){
+      await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);
+      // Índice inverso MID→FID: permite resolver el FID cuando el chip no lleva ?fid= en la URL
+      await set(ref(db,`midIndex/${MID}`),FID);
+      toast('✓ Configuración guardada');
+    } else toast('Sin código de familia — configura el HOME primero');
     renderFooters();
     setTimeout(()=>irA('selector'),600);
   }catch(e){toast('Error al guardar');}

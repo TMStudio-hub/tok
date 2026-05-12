@@ -269,8 +269,8 @@ select.inp{cursor:pointer;}
       <!-- Cabecera recibo -->
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--green);">
         <div style="display:flex;align-items:center;gap:10px;">
-          <img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="TO-K"
-            style="height:32px;" onerror="this.style.display='none'">
+          <img src="tok.svg" alt="TO-K"
+            style="height:32px;" onerror="this.src='https://tmstudio-hub.github.io/tok/tok.svg'">
           <div>
             <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.2em;color:var(--muted);">EL TALLER DE MEMORIAS</div>
             <div style="font-size:1.2rem;font-weight:800;color:var(--ink);" id="print-titulo">Pedido #001</div>
@@ -550,8 +550,21 @@ window.imprimirHoja = function() {
     }, err => { if(err) console.error('QR error:', err); });
   }
 
-  // Dar tiempo al QR a renderizarse y luego imprimir solo el recibo
-  setTimeout(() => window.print(), 400);
+  // Mover #print-card al <body> para evitar el display:none del tab padre durante impresión
+  const printCard = document.getElementById('print-card');
+  const originalParent = printCard.parentNode;
+  const nextSibling = printCard.nextSibling;
+  document.body.appendChild(printCard);
+
+  setTimeout(() => {
+    window.print();
+    // Devolver #print-card a su posición original tras imprimir
+    if(nextSibling) {
+      originalParent.insertBefore(printCard, nextSibling);
+    } else {
+      originalParent.appendChild(printCard);
+    }
+  }, 400);
 }
 
 // ── GUARDAR EN FIREBASE ──
