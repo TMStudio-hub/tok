@@ -443,7 +443,10 @@ select.inp{cursor:pointer;}
     <div class="dash-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="dash-card-title" style="margin:0;">🔔 Actividad familiar</div>
-        <button onclick="limpiarAlertas()" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:0.08em;">LIMPIAR</button>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <button id="btn-ver-todo" onclick="toggleVerTodo()" style="font-family:var(--mono);font-size:0.6rem;color:var(--green);background:none;border:none;cursor:pointer;letter-spacing:0.08em;display:none;">VER TODO</button>
+          <button onclick="limpiarAlertas()" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);background:none;border:none;cursor:pointer;letter-spacing:0.08em;">LIMPIAR</button>
+        </div>
       </div>
       <div id="alertas-list"><div class="empty-state">Sin actividad reciente</div></div>
     </div>
@@ -522,6 +525,7 @@ select.inp{cursor:pointer;}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -534,7 +538,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
+// Messaging — se inicializa solo si el navegador lo soporta
+let messaging = null;
+try { messaging = getMessaging(app); } catch(e) { console.warn('[FCM] Messaging no soportado:', e); }
+
+// VAPID key pública — obtener en Firebase Console → Project Settings → Cloud Messaging → Web push certificates
+const VAPID_KEY = 'REEMPLAZA_CON_TU_VAPID_KEY'; // ← reemplazar antes de producción
+// Server key — para envío desde KIDS/PETS (legacy FCM API). SOLO para uso privado/beta.
+// Obtener en Firebase Console → Project Settings → Cloud Messaging → Server key (legacy)
+window.FCM_SERVER_KEY = 'REEMPLAZA_CON_TU_FCM_SERVER_KEY'; // ← reemplazar antes de producción
 
 const params = new URLSearchParams(location.search);
 let FID = params.get('fid') || localStorage.getItem('tok_home_fid') || null;
@@ -593,6 +606,50 @@ function cargarQRCode(cb) {
     document.head.appendChild(s2);
   };
   document.head.appendChild(s);
+}
+
+// ── FCM MESSAGING ──
+async function initMessaging() {
+  if(!messaging || !FID) return;
+  if(window._fcmInited) return;
+  window._fcmInited = true;
+
+  // Registrar el service worker
+  if(!('serviceWorker' in navigator)) {
+    console.warn('[FCM] Service Worker no soportado');
+    return;
+  }
+  try {
+    await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    console.log('[FCM] Service Worker registrado');
+  } catch(e) {
+    console.warn('[FCM] Error registrando SW:', e);
+    return;
+  }
+
+  // Pedir permiso
+  const perm = await Notification.requestPermission();
+  if(perm === 'granted') {
+    try {
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+      if(token) {
+        await set(ref(db, `familias/${FID}/hogar/fcm_token`), token);
+        window.FCM_TOKEN = token;
+        console.log('[FCM] Token guardado:', token.slice(0,20)+'...');
+        toast('🔔 Notificaciones activadas');
+        // Escuchar mensajes en foreground
+        onMessage(messaging, payload => {
+          const { title, body } = payload.notification || {};
+          toast(`${title||'TO-K'}: ${body||''}`);
+        });
+      }
+    } catch(e) {
+      console.warn('[FCM] Error obteniendo token:', e);
+    }
+  } else {
+    console.log('[FCM] Permiso denegado:', perm);
+    if(perm === 'denied') toast('🔕 Notificaciones bloqueadas en ajustes del navegador');
+  }
 }
 
 // ── TEMAS HOME ──
@@ -801,6 +858,8 @@ function renderDash() {
     window._alertasListener = true;
     onValue(ref(db, `familias/${FID}/alertas`), snap => renderAlertas(snap.val()));
   }
+  // FCM — pedir permiso de notificaciones al entrar al dashboard
+  initMessaging();
   if(FID && !window._notasListener) {
     window._notasListener = true;
     onValue(ref(db, `familias/${FID}/notas`), snap => renderNotasData(snap.val()));
@@ -831,10 +890,51 @@ const ALERTA_TEXTOS = {
   contacto_sms: n => `Contacto vía SMS para ${n||'tu familiar'}`,
 };
 
+// ── TIEMPO RELATIVO ──
+function tiempoRelativo(ts) {
+  if(!ts) return '';
+  const seg = Math.floor((Date.now() - ts) / 1000);
+  if(seg < 60)  return 'Ahora mismo';
+  if(seg < 3600) {
+    const m = Math.floor(seg/60);
+    return `Hace ${m} min${m>1?'s':''}`;
+  }
+  if(seg < 86400) {
+    const h = Math.floor(seg/3600);
+    return `Hace ${h} hora${h>1?'s':''}`;
+  }
+  const d = Math.floor(seg/86400);
+  if(d < 7) return `Hace ${d} día${d>1?'s':''}`;
+  return new Date(ts).toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit'});
+}
+
+let _alertasData = null;       // cache del snapshot para reutilizar en "Ver todo"
+let _verTodas = false;         // estado del toggle
+
+window.toggleVerTodo = function() {
+  _verTodas = !_verTodas;
+  const btn = document.getElementById('btn-ver-todo');
+  if(btn) btn.textContent = _verTodas ? 'VER MENOS' : 'VER TODO';
+  renderAlertas(_alertasData);
+};
+
 function renderAlertas(data) {
+  _alertasData = data;
   const list = document.getElementById('alertas-list');
-  if(!data) { list.innerHTML = '<div class="empty-state">Sin actividad reciente</div>'; return; }
-  const alertas = Object.entries(data).sort((a,b) => (b[1].ts||0)-(a[1].ts||0)).slice(0,10);
+  const btnVerTodo = document.getElementById('btn-ver-todo');
+  if(!data) {
+    list.innerHTML = '<div class="empty-state">Sin actividad reciente</div>';
+    if(btnVerTodo) btnVerTodo.style.display = 'none';
+    return;
+  }
+  const todas = Object.entries(data).sort((a,b) => (b[1].ts||0)-(a[1].ts||0));
+  const limite = _verTodas ? 50 : 10;
+  const alertas = todas.slice(0, limite);
+  // Mostrar "VER TODO" solo si hay más de 10
+  if(btnVerTodo) {
+    btnVerTodo.style.display = todas.length > 10 ? 'block' : 'none';
+    if(!_verTodas) btnVerTodo.textContent = 'VER TODO';
+  }
   list.innerHTML = alertas.map(([id,a]) => {
     const tipo = a.tipo || 'scan';
     const base = tipo.startsWith('contacto') ? 'contacto_'+tipo.split('_')[1] : tipo;
@@ -844,12 +944,13 @@ function renderAlertas(data) {
     const mapaLink = a.url
       ? `<a href="${a.url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;font-size:11px;color:var(--green);font-family:var(--mono);text-decoration:none;letter-spacing:0.04em;">📍 Ver en mapa</a>`
       : '';
+    const tiempo = tiempoRelativo(a.ts);
     return `<div class="alerta-item">
       <div class="alerta-icon ${cls}">${icon}</div>
       <div class="alerta-info">
         <div class="alerta-txt">${txt}</div>
         ${mapaLink}
-        <div class="alerta-hora">${a.fecha||''} · ${a.hora||''}</div>
+        <div class="alerta-hora">${tiempo}${a.fecha ? ' · ' + a.fecha : ''}</div>
       </div>
     </div>`;
   }).join('');

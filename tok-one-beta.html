@@ -617,6 +617,7 @@ body::before{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -629,7 +630,10 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+const db  = getDatabase(app);
+let messaging = null;
+try { messaging = getMessaging(app); } catch(e) {}
+const VAPID_KEY = 'REEMPLAZA_CON_TU_VAPID_KEY';
 
 const params = new URLSearchParams(location.search);
 const FID = params.get('fid');
@@ -693,6 +697,8 @@ async function init() {
   // Registrar escaneo en HOME
   if(FID) registrarAlertaONE();
   irA('public');
+  // Suscribir a FCM para recibir push de alertas familiares
+  if(FID) initMessagingONE();
 }
 
 window.conectarFID = async function() {
@@ -1038,6 +1044,29 @@ async function registrarAlertaONE() {
     const fecha = new Date().toLocaleDateString('es-ES');
     await push(ref(db, `familias/${FID}/alertas`), {tipo:'scan', nombre:CFG.nombre||'', hora, fecha, ts:Date.now()});
   } catch(e) {}
+}
+
+// ── FCM ONE — suscribirse para recibir push de KIDS y PETS ──
+async function initMessagingONE() {
+  if(!messaging || !FID || window._fcmOnePid) return;
+  window._fcmOnePid = true;
+  if(!('serviceWorker' in navigator)) return;
+  try {
+    await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    const perm = await Notification.requestPermission();
+    if(perm === 'granted') {
+      const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+      if(token) {
+        // ONE comparte el mismo token en hogar/fcm_token para recibir alertas
+        await set(ref(db, `familias/${FID}/hogar/fcm_token`), token);
+        onMessage(messaging, payload => {
+          const { title, body } = payload.notification || {};
+          toast(`${title||'TO-K'}: ${body||''}`);
+        });
+        console.log('[FCM ONE] Token guardado');
+      }
+    }
+  } catch(e) { console.warn('[FCM ONE] Error:', e); }
 }
 
 init();
