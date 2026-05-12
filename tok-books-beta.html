@@ -548,7 +548,7 @@ window.selTemaB=function(k){DATA.tema=k;aplicarTemaB(k);renderTemaGridB();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterB(){
   const url=DATA.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
   const el=document.getElementById('tok-footer-books');if(el)el.innerHTML=html;
 }
 

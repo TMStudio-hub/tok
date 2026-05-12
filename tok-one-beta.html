@@ -11,7 +11,7 @@
 :root{
   --violet:#7B6FBB;--vsoft:rgba(123,111,187,0.09);--vdark:#2E2575;
   --gold:#B8965A;--gold2:#D4B07A;
-  --ink:#1A1520;--paper:#F5F0E8;--card:rgba(245,240,232,0.95);
+  --ink:#1A1520;--paper:#F5F0E8;--bg:#F5F0E8;--card:rgba(245,240,232,0.95);
   --muted:#7A6F8A;--line:rgba(184,150,90,0.22);--rojo:#b91c1c;
   --sombra:rgba(46,37,117,0.09);
   --font:'Cormorant Garamond',Georgia,serif;
@@ -861,6 +861,7 @@ function aplicarTemaONE(t) {
   r.setProperty('--violet', tema.c1);
   r.setProperty('--vsoft',  tema.c2);
   r.setProperty('--paper',  tema.bg);
+  r.setProperty('--bg',     tema.bg);
   if(tema.dark){
     r.setProperty('--card','#1A1728');r.setProperty('--ink','#EAE7F8');
     r.setProperty('--muted','#6A6480');r.setProperty('--line','rgba(255,255,255,0.08)');
@@ -890,7 +891,7 @@ function esNFC(){
 // ── FOOTER ──
 function renderFooterONE(){
   const url = CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--violet);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--violet);">TO-K</span> · by El Taller de Memorias</a></div>`;
   document.querySelectorAll('.tok-footer-one').forEach(el=>el.innerHTML=html);
 }
 

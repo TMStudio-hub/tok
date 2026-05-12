@@ -338,10 +338,10 @@ body::before{
     <div id="llavero-title" style="font-size:1.3rem;font-weight:700;color:var(--c3);margin-bottom:8px;">Llavero TO-K</div>
     <div id="llavero-msg" style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;">Contacta con el dueño.</div>
     <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-      <button class="btn-sos btn-call" onclick="llamar()" style="border-radius:14px;">📞 <span id="llavero-call">Llamar</span></button>
-      <button class="btn-sos btn-wa" onclick="enviarMsg('wa')" style="border-radius:14px;">💬 <span id="llavero-wa">WhatsApp</span></button>
-      <button class="btn-sos btn-sms" onclick="enviarMsg('sms')" style="border-radius:14px;">✉️ SMS</button>
-      <button class="btn-sos btn-loc" onclick="enviarUbicacion()" style="border-radius:14px;">📍 <span id="llavero-loc">Enviar ubicación</span></button>
+      <button class="btn-sos btn-call" onclick="llamar()" style="border-radius:3px;">📞 <span id="llavero-call">Llamar</span></button>
+      <button class="btn-sos btn-wa" onclick="enviarMsg('wa')" style="border-radius:3px;">💬 <span id="llavero-wa">WhatsApp</span></button>
+      <button class="btn-sos btn-sms" onclick="enviarMsg('sms')" style="border-radius:3px;">✉️ SMS</button>
+      <button class="btn-sos btn-loc" onclick="enviarUbicacion()" style="border-radius:3px;">📍 <span id="llavero-loc">Enviar ubicación</span></button>
     </div>
     <div style="display:flex;justify-content:center;gap:6px;margin-top:12px;">
       <button class="lang-btn" onclick="setLang('es',event);actualizarLlavero()">🇪🇸</button>
@@ -489,8 +489,8 @@ function esNFC() {
 // ── FOOTER ──
 function renderFooters() {
   const url = CFG.redirect || 'https://linktr.ee/tallermemoriasstudio';
-  const html = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;filter:brightness(0) invert(1);opacity:0.3;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:rgba(255,255,255,0.3);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:rgba(255,255,255,0.5);">TO-K</span> · by El Taller de Memorias</a></div>`;
-  const htmlLight = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.4;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;filter:brightness(0) invert(1);opacity:0.3;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:rgba(255,255,255,0.3);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:rgba(255,255,255,0.5);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const htmlLight = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.4;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
   ['tok-footer-sel'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=html; });
   ['tok-footer-llavero'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=htmlLight; });
 }
@@ -658,7 +658,7 @@ function generarBotones() {
   const btns=[];
   if(tel) btns.push(`<button class="btn-sos btn-call" onclick="llamar()">📞 ${t.call}</button>`);
   if(wa) btns.push(`<button class="btn-sos btn-wa" onclick="enviarMsg('wa')">💬 ${t.wa}</button>`);
-  if(tg) btns.push(`<button class="btn-sos" onclick="enviarMsg('telegram')" style="background:#229ED9;color:#fff;border-radius:14px;">✈️ Telegram</button>`);
+  if(tg) btns.push(`<button class="btn-sos" onclick="enviarMsg('telegram')" style="background:#229ED9;color:#fff;border-radius:3px;">✈️ Telegram</button>`);
   btns.push(`<button class="btn-sos btn-sms" onclick="enviarMsg('sms')">✉️ ${t.sms}</button>`);
   btns.push(`<button class="btn-sos btn-loc" id="btn-loc" onclick="enviarUbicacion()">📍 <span id="btn-loc-txt">${t.loc}</span></button>`);
   document.getElementById('sos-actions').innerHTML=btns.join('');

@@ -355,7 +355,7 @@ body::before{
     <div style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
     <div style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;font-weight:700;">Código del hogar</div>
-      <input id="fid-input" type="text" placeholder="Pega aquí tu código familiar" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-size:0.82rem;font-family:monospace;color:#333;text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim()">
+      <input id="fid-input" type="text" placeholder="Pega aquí tu código familiar" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-size:0.82rem;font-family:var(--mono);color:#333;text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim()">
       <button onclick="conectarFID()" style="width:100%;padding:14px;border-radius:12px;background:var(--c1);color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Conectar mi hogar →</button>
     </div>
     <div style="font-size:0.72rem;color:var(--muted);">Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.</div>
@@ -511,7 +511,7 @@ body::before{
     <div class="cfg-section">
       <h3>🎨 Tema de color</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tema-grid-pets"></div>
-      <span id="tema-label-pets" style="font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;font-family:monospace;"></span>
+      <span id="tema-label-pets" style="font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;font-family:var(--mono);"></span>
     </div>
     <div class="cfg-section">
       <h3>🔗 Si no se escanea por NFC</h3>
@@ -630,7 +630,7 @@ window.selTema=function(k){CFG.tema=k;aplicarTemaP(k);renderTemaGridP();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterP(){
   const url=CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
   document.querySelectorAll('.tok-footer-pets').forEach(el=>el.innerHTML=html);
 }
 
