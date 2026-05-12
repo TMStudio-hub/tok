@@ -550,11 +550,22 @@ const VAPID_KEY = 'REEMPLAZA_CON_TU_VAPID_KEY'; // ← reemplazar antes de produ
 // Obtener en Firebase Console → Project Settings → Cloud Messaging → Server key (legacy)
 window.FCM_SERVER_KEY = 'REEMPLAZA_CON_TU_FCM_SERVER_KEY'; // ← reemplazar antes de producción
 
+// ── Helpers de persistencia FID ──────────────────────────────────────────────
+function getCookie(name) {
+  const m = document.cookie.match('(?:^|; )' + name + '=([^;]*)');
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function persistirFID(fid) {
+  localStorage.setItem('tok_home_fid', fid);
+  document.cookie = `tok_fid=${encodeURIComponent(fid)};max-age=31536000;path=/`;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 const params = new URLSearchParams(location.search);
-let FID = params.get('fid') || localStorage.getItem('tok_home_fid') || null;
+let FID = params.get('fid') || localStorage.getItem('tok_home_fid') || getCookie('tok_fid') || null;
 let CFG = {};
-// Si el FID viene de URL, guardarlo en localStorage para sobrevivir borrados de historial
-if(params.get('fid')) localStorage.setItem('tok_home_fid', params.get('fid'));
+// Sincronizar FID (sea cual sea el origen) en localStorage + cookie
+if(FID) persistirFID(FID);
 let pinInput = '', pinCB = null;
 // Cargar QRCode dinámicamente — compatible con módulos ES
 let qrLoaded = false;
