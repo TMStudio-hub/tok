@@ -840,6 +840,7 @@ async function registrarAlerta(tipo, lat, lon){
     const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     const fecha=new Date().toLocaleDateString('es-ES');
     const alerta={tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()};
+    if(CFG.foto) alerta.foto = CFG.foto; // avatar de la mascota para mostrar en HOME
     const mapaUrl = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : null;
     if(mapaUrl) alerta.url = mapaUrl;
     await push(ref(db,`familias/${fid}/alertas`),alerta);

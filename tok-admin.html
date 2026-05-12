@@ -350,6 +350,7 @@ function _checkPin() {
 
       <div class="btn-row" style="margin-top:16px;">
         <button class="btn btn-gold" onclick="imprimirHoja()">🖨️ Imprimir hoja</button>
+        <button class="btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="compartirPedido()">📤 Compartir</button>
         <button class="btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="guardarEnFirebase()">☁️ Guardar en Firebase</button>
         <button class="btn" style="background:rgba(255,255,255,0.1);color:#fff;" onclick="marcarEnviado()">✓ Marcar enviado</button>
       </div>
@@ -606,6 +607,45 @@ window.copiarCodigo = function() {
 
 window.copiarURL = function(url) {
   navigator.clipboard?.writeText(url).then(()=>toast('✓ URL copiada'));
+}
+
+// ── COMPARTIR PEDIDO ──
+window.compartirPedido = function() {
+  if(!pedidoActual) return;
+  const p = pedidoActual;
+  const fecha = formatFecha(p.fecha);
+  const chipLines = (p.chips||[]).map(c => `  ${c.n}. ${c.emoji} ${c.name}\n     ${c.url}`).join('\n');
+  const texto = [
+    `📦 PEDIDO TO-K #${p.numPedido} — ${fecha}`,
+    `👤 Cliente: ${p.cliente}${p.canal ? ' · ' + p.canal : ''}`,
+    ``,
+    `🔑 CÓDIGO DE ACTIVACIÓN`,
+    `   ${p.codigo}`,
+    ``,
+    `📡 CHIPS A PROGRAMAR (NFC Tools → Write → URL)`,
+    chipLines,
+    ``,
+    `📖 Instrucciones de configuración:`,
+    `   https://tmstudio-hub.github.io/tok/tok-home-beta.html`,
+    ``,
+    `— El Taller de Memorias · tallerdememorias.es`,
+  ].join('\n');
+
+  if(navigator.share) {
+    navigator.share({
+      title: `TO-K Pedido #${p.numPedido} · ${p.cliente}`,
+      text: texto
+    }).then(() => toast('✓ Pedido compartido'))
+      .catch(e => { if(e.name !== 'AbortError') copiarTexto(texto); });
+  } else {
+    copiarTexto(texto);
+  }
+}
+
+function copiarTexto(txt) {
+  navigator.clipboard?.writeText(txt)
+    .then(() => toast('✓ Texto del pedido copiado al portapapeles'))
+    .catch(() => toast('Error al copiar'));
 }
 
 // ── IMPRIMIR ──

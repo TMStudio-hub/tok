@@ -457,7 +457,14 @@ body::before{
   <div class="expired-wrap" id="pub-expired">
     <div class="exp-icon">◈</div>
     <h2 id="exp-title" style="font-size:1.4rem;font-weight:300;font-style:italic;">Sesión expirada</h2>
-    <p id="exp-msg" style="font-size:0.9rem;font-style:italic;color:var(--muted);line-height:1.6;"></p>
+    <p id="exp-msg" style="font-size:0.9rem;font-style:italic;color:var(--muted);line-height:1.6;max-width:280px;"></p>
+    <button id="exp-reopen-btn" onclick="reabrirSesion()"
+      style="margin-top:8px;padding:12px 28px;border-radius:2px;border:1px solid var(--line);
+             background:transparent;color:var(--violet);font-family:var(--cinzel);
+             font-size:10px;letter-spacing:.18em;text-transform:uppercase;
+             cursor:pointer;touch-action:manipulation;transition:all .2s;">
+      ↺ Volver a abrir
+    </button>
   </div>
 </div>
 
@@ -825,6 +832,17 @@ function expirar(){
   const t=T[lang]||T.es;
   document.getElementById('exp-title').textContent=t.exp_title;
   document.getElementById('exp-msg').textContent=t.exp_msg;
+}
+
+window.reabrirSesion = function() {
+  // Reconstruir URL con los parámetros mid y fid actuales
+  const p = new URLSearchParams();
+  const mid = params.get('mid');
+  const fid = params.get('fid');
+  if(mid) p.set('mid', mid);
+  if(fid) p.set('fid', fid);
+  const qs = p.toString();
+  location.href = location.pathname + (qs ? '?' + qs : '');
 }
 
 window.descargarVCard=function(){

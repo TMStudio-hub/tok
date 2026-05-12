@@ -186,6 +186,7 @@ select.inp{cursor:pointer;}
 .alerta-item{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
 .alerta-item:last-child{border-bottom:none;}
 .alerta-icon{width:34px;height:34px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.alerta-avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--line);}
 .alerta-icon.scan{background:rgba(74,103,65,.08);}
 .alerta-icon.estoy{background:rgba(184,150,90,.1);}
 .alerta-icon.ubi{background:rgba(64,145,108,.08);}
@@ -945,8 +946,11 @@ function renderAlertas(data) {
       ? `<a href="${a.url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;font-size:11px;color:var(--green);font-family:var(--mono);text-decoration:none;letter-spacing:0.04em;">📍 Ver en mapa</a>`
       : '';
     const tiempo = tiempoRelativo(a.ts);
+    const avatarHtml = a.foto
+      ? `<img class="alerta-avatar" src="${a.foto}" alt="${a.nombre||''}" onerror="this.classList.remove('alerta-avatar');this.outerHTML='<div class=\\'alerta-icon ${cls}\\'>${icon}</div>'">`
+      : `<div class="alerta-icon ${cls}">${icon}</div>`;
     return `<div class="alerta-item">
-      <div class="alerta-icon ${cls}">${icon}</div>
+      ${avatarHtml}
       <div class="alerta-info">
         <div class="alerta-txt">${txt}</div>
         ${mapaLink}
