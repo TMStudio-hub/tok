@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <meta name="theme-color" content="#1E3A1A"/>
 <title>TO-K HOME</title>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -303,9 +304,14 @@ select.inp{cursor:pointer;}
 <!-- SPLASH -->
 <div class="screen active" id="screen-splash">
   <div class="splash-wrap">
+    <div style="text-align:center;margin-bottom:8px;">
+      <img src="https://tmstudio-hub.github.io/tok/home.svg" alt="TO-K HOME"
+        style="height:72px;animation:float 3.5s ease-in-out infinite;display:block;margin:0 auto 16px;"
+        onerror="this.style.display='none';document.getElementById('splash-emoji').style.display='block'">
+      <span id="splash-emoji" style="display:none;font-size:3.5rem;animation:float 3.5s ease-in-out infinite;display:block;margin-bottom:12px;">🏠</span>
+    </div>
     <div class="splash-badge">TO-K HOME · BETA</div>
-    <div class="splash-icon"><img src="https://tmstudio-hub.github.io/tok/home.svg" alt="TO-K HOME" style="height:80px;filter:brightness(0) invert(1);animation:float 3s ease-in-out infinite;"></div>
-    <div class="splash-title" id="splash-title">Cargando...</div>
+    <div class="splash-title" id="splash-title" style="margin-top:16px;">Cargando...</div>
     <div class="splash-sub" id="splash-sub">Conectando con tu hogar</div>
     <div id="splash-loading"><div class="spinner"></div><p style="font-family:var(--mono);font-size:0.8rem;color:rgba(255,255,255,0.4);">Cargando datos...</p></div>
     <div class="splash-btns" id="splash-btns" style="display:none;">
@@ -493,8 +499,10 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const params = new URLSearchParams(location.search);
-let FID = params.get('fid');
+let FID = params.get('fid') || localStorage.getItem('tok_home_fid') || null;
 let CFG = {};
+// Si el FID viene de URL, guardarlo en localStorage para sobrevivir borrados de historial
+if(params.get('fid')) localStorage.setItem('tok_home_fid', params.get('fid'));
 let pinInput = '', pinCB = null;
 // Cargar QRCode dinámicamente — compatible con módulos ES
 let qrLoaded = false;
@@ -623,7 +631,7 @@ async function init() {
       renderFooter();
       document.getElementById('splash-loading').style.display = 'none';
       document.getElementById('splash-btns').style.display = 'flex';
-      document.getElementById('splash-title').textContent = (CFG.emoji||'🏠') + ' ' + CFG.nombre;
+      document.getElementById('splash-title').textContent = CFG.nombre;
       document.getElementById('splash-sub').textContent = 'Tu hogar TO-K familiar';
     } else {
       document.getElementById('splash-loading').style.display = 'none';
@@ -656,9 +664,13 @@ function renderDash() {
     document.getElementById('fid-card').style.display = 'block';
     document.getElementById('fid-display').textContent = FID;
   }
-  // Escuchar alertas en tiempo real
-  if(FID) {
+  // Escuchar alertas y notas en tiempo real (con flags para evitar listeners duplicados)
+  if(FID && !window._alertasListener) {
+    window._alertasListener = true;
     onValue(ref(db, `familias/${FID}/alertas`), snap => renderAlertas(snap.val()));
+  }
+  if(FID && !window._notasListener) {
+    window._notasListener = true;
     onValue(ref(db, `familias/${FID}/notas`), snap => renderNotasData(snap.val()));
   }
 }
@@ -764,6 +776,7 @@ window.guardarConfig = async function() {
     const newRef = push(ref(db, 'familias'));
     FID = newRef.key;
     await set(ref(db, `familias/${FID}/hogar`), CFG);
+    localStorage.setItem('tok_home_fid', FID);
     // Marcar código de activación como usado
     if(window._codigoActivacion && window._codigoActivacion !== 'BETA') {
       await set(ref(db, `activaciones/${window._codigoActivacion}`), {
@@ -792,18 +805,19 @@ window.mostrarQR = function() {
   document.getElementById('qr-overlay').classList.add('show');
   const canvas = document.getElementById('qr-canvas');
   const wifiStr = `WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
-  cargarQRCode(() => {
-    if(typeof window.QRCode === 'undefined') {
-      canvas.getContext('2d').fillText('QR no disponible', 10, 100);
-      return;
-    }
+  if(typeof window.QRCode === 'undefined') {
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    window.QRCode.toCanvas(canvas, wifiStr, {
-      width:200, margin:2,
-      color:{ dark:'#1A2018', light:'#ffffff' }
-    }, err => { if(err) console.error('QR error:', err); });
-  });
+    ctx.fillStyle = '#1A2018';
+    ctx.font = '13px monospace';
+    ctx.fillText('QR no disponible', 10, 100);
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  window.QRCode.toCanvas(canvas, wifiStr, {
+    width:200, margin:2,
+    color:{ dark:'#1A2018', light:'#ffffff' }
+  }, err => { if(err) console.error('QR error:', err); });
 }
 
 window.copiarPass = function() {
