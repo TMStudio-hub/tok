@@ -874,6 +874,26 @@ function renderDash() {
     window._alertasListener = true;
     onValue(ref(db, `familias/${FID}/alertas`), snap => renderAlertas(snap.val()));
   }
+  // Escuchar push_pending: notificaciones desde satélites sin server key FCM
+  if(FID && !window._pushPendingListener) {
+    window._pushPendingListener = true;
+    window._lastPushTs = window._lastPushTs || Date.now();
+    onValue(ref(db, `familias/${FID}/push_pending`), async snap => {
+      if(!snap.exists()) return;
+      snap.forEach(child => {
+        const d = child.val();
+        if(!d || !d.ts || d.ts <= window._lastPushTs) return;
+        window._lastPushTs = d.ts;
+        if(Notification.permission === 'granted') {
+          new Notification('TO-K', {
+            body: d.texto || `Nueva alerta: ${d.tipo||''}`,
+            icon: 'https://tmstudio-hub.github.io/tok/home.svg'
+          });
+        }
+        remove(child.ref).catch(()=>{});
+      });
+    });
+  }
   // FCM — pedir permiso de notificaciones al entrar al dashboard
   initMessaging();
   if(FID && !window._notasListener) {

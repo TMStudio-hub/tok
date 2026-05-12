@@ -801,41 +801,7 @@ window.enviarUbicacion=function(){
   },()=>{toast('Activa el GPS');if(txt)txt.textContent=t.loc;},{timeout:10000,enableHighAccuracy:true});
 }
 
-// ── PUSH FCM ──
-const FCM_SERVER_KEY = 'REEMPLAZA_CON_TU_FCM_SERVER_KEY';
 const PUSH_TIPOS = ['scan','sos','ubicacion','estoy'];
-
-async function enviarPushFCM(tipo, nombre, url) {
-  if(FCM_SERVER_KEY.startsWith('REEMPLAZA')) return;
-  let fid = FID;
-  if(!fid) return;
-  try {
-    const snap = await get(ref(db, `familias/${fid}/hogar/fcm_token`));
-    if(!snap.exists()) return;
-    const token = snap.val();
-    const titulos = { scan:'TO-K PETS', sos:'🚨 TO-K PETS — ALERTA', ubicacion:'TO-K PETS', estoy:'TO-K PETS' };
-    const cuerpos = {
-      scan:     `Se ha escaneado el chip de ${nombre||'tu mascota'}`,
-      sos:      `¡Alguien está con ${nombre||'tu mascota'} y ha avisado!`,
-      ubicacion:`📍 Ubicación enviada para ${nombre||'tu mascota'}`,
-      estoy:    `🙋 Alguien está con ${nombre||'tu mascota'}`
-    };
-    await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'key='+FCM_SERVER_KEY },
-      body: JSON.stringify({
-        to: token,
-        notification: {
-          title: titulos[tipo] || 'TO-K PETS',
-          body: cuerpos[tipo] || `Nueva alerta: ${tipo}`,
-          icon: 'https://tmstudio-hub.github.io/tok/pets.svg'
-        },
-        data: { url: url || '', tipo }
-      })
-    });
-    console.log('[FCM PETS] Push enviado tipo:', tipo);
-  } catch(e) { console.warn('[FCM PETS] Error push:', e); }
-}
 
 async function registrarAlerta(tipo, lat, lon){
   let fid = FID;
@@ -855,7 +821,19 @@ async function registrarAlerta(tipo, lat, lon){
     const mapaUrl = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : null;
     if(mapaUrl) alerta.url = mapaUrl;
     await push(ref(db,`familias/${fid}/alertas`),alerta);
-    if(PUSH_TIPOS.includes(tipo)) enviarPushFCM(tipo, CFG.nombre||'', mapaUrl||'');
+    // Notificación sin server key: escribir en push_pending para que HOME lo recoja
+    if(PUSH_TIPOS.includes(tipo)) {
+      const cuerpos = {
+        scan:     `Se ha escaneado el chip de ${CFG.nombre||'tu mascota'}`,
+        sos:      `¡Alguien está con ${CFG.nombre||'tu mascota'} y ha avisado!`,
+        ubicacion:`📍 Ubicación enviada para ${CFG.nombre||'tu mascota'}`,
+        estoy:    `🙋 Alguien está con ${CFG.nombre||'tu mascota'}`
+      };
+      const texto = cuerpos[tipo] || `Nueva alerta PETS: ${tipo}`;
+      try {
+        await set(ref(db, `familias/${fid}/push_pending/${Date.now()}`), {tipo, texto, nombre: CFG.nombre||'', ts: Date.now()});
+      } catch(e2) { console.warn('[PETS] push_pending error:', e2); }
+    }
   }catch(e){}
 }
 

@@ -730,44 +730,7 @@ window.enviarUbicacion=function(){
   },()=>{toast('Activa el GPS');if(txt)txt.textContent=T[lang]?.loc||'Enviar ubicación';},{timeout:10000,enableHighAccuracy:true});
 }
 
-// ── PUSH FCM ──
-// Server key (legacy FCM API) — solo para uso privado/beta.
-// Obtener en Firebase Console → Project Settings → Cloud Messaging → Server key (legacy)
-const FCM_SERVER_KEY = 'REEMPLAZA_CON_TU_FCM_SERVER_KEY';
 const PUSH_TIPOS = ['scan','sos','ubicacion','estoy'];
-
-async function enviarPushFCM(tipo, nombre, url) {
-  if(FCM_SERVER_KEY.startsWith('REEMPLAZA')) return;
-  let fid = FID;
-  if(!fid) return;
-  try {
-    const snap = await get(ref(db, `familias/${fid}/hogar/fcm_token`));
-    if(!snap.exists()) return;
-    const token = snap.val();
-    const titulos = { scan:'TO-K KIDS', sos:'🚨 TO-K KIDS — ALERTA', ubicacion:'TO-K KIDS', estoy:'TO-K KIDS' };
-    const cuerpos = {
-      scan:     `Se ha escaneado el chip de ${nombre||'tu familiar'}`,
-      sos:      `¡Alguien está con ${nombre||'tu familiar'} y ha avisado!`,
-      ubicacion:`📍 Ubicación enviada para ${nombre||'tu familiar'}`,
-      estoy:    `🙋 Alguien está con ${nombre||'tu familiar'}`
-    };
-    const body = cuerpos[tipo] || `Nueva alerta: ${tipo}`;
-    await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'Authorization':'key='+FCM_SERVER_KEY },
-      body: JSON.stringify({
-        to: token,
-        notification: {
-          title: titulos[tipo] || 'TO-K KIDS',
-          body,
-          icon: 'https://tmstudio-hub.github.io/tok/kids.svg'
-        },
-        data: { url: url || '', tipo }
-      })
-    });
-    console.log('[FCM KIDS] Push enviado tipo:', tipo);
-  } catch(e) { console.warn('[FCM KIDS] Error push:', e); }
-}
 
 async function registrarAlerta(tipo, lat, lon){
   let fid = FID;
@@ -787,8 +750,19 @@ async function registrarAlerta(tipo, lat, lon){
     const mapaUrl = (lat && lon) ? `https://maps.google.com/?q=${lat},${lon}` : null;
     if(mapaUrl) alerta.url = mapaUrl;
     await push(ref(db,`familias/${fid}/alertas`),alerta);
-    // Push FCM para alertas importantes
-    if(PUSH_TIPOS.includes(tipo)) enviarPushFCM(tipo, CFG.nombre||'', mapaUrl||'');
+    // Notificación sin server key: escribir en push_pending para que HOME lo recoja
+    if(PUSH_TIPOS.includes(tipo)) {
+      const cuerpos = {
+        scan:     `Se ha escaneado el chip de ${CFG.nombre||'tu familiar'}`,
+        sos:      `¡Alguien está con ${CFG.nombre||'tu familiar'} y ha avisado!`,
+        ubicacion:`📍 Ubicación enviada para ${CFG.nombre||'tu familiar'}`,
+        estoy:    `🙋 Alguien está con ${CFG.nombre||'tu familiar'}`
+      };
+      const texto = cuerpos[tipo] || `Nueva alerta KIDS: ${tipo}`;
+      try {
+        await set(ref(db, `familias/${fid}/push_pending/${Date.now()}`), {tipo, texto, nombre: CFG.nombre||'', ts: Date.now()});
+      } catch(e2) { console.warn('[KIDS] push_pending error:', e2); }
+    }
   }catch(e){}
 }
 
