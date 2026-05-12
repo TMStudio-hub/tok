@@ -355,6 +355,22 @@ select.inp{cursor:pointer;}
         <button onclick="activarCodigo()" style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.15);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Activar mi TO-K →</button>
       </div>
       <div style="font-size:0.72rem;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;">El código está en la tarjeta kraft de tu caja TO-K.<br>¿Problemas? <a href="https://linktr.ee/tallermemoriasstudio" style="color:var(--gold);text-decoration:none;">Contacta con nosotros</a></div>
+
+      <div style="margin-top:16px;text-align:center;">
+        <button onclick="toggleFidInput()"
+          style="background:none;border:none;color:var(--gold);font-family:var(--cinzel);font-size:10px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;opacity:0.75;">
+          ¿Ya tienes un hogar configurado?
+        </button>
+        <div id="fid-input-wrap" style="display:none;margin-top:12px;">
+          <input id="fid-manual" type="text" placeholder="Pega tu código de hogar aquí"
+            style="width:100%;padding:12px;border-radius:2px;border:1px solid rgba(245,240,232,.2);background:rgba(255,255,255,.08);color:#fff;font-family:var(--mono);font-size:14px;text-align:center;"
+            oninput="this.value=this.value.trim()">
+          <button onclick="entrarConFID()"
+            style="width:100%;margin-top:8px;padding:12px;border-radius:2px;border:1px solid var(--gold);background:transparent;color:var(--gold);font-family:var(--cinzel);font-size:10px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;">
+            Entrar
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -534,6 +550,24 @@ function renderQRHome(wifiStr) {
     colorDark: '#1A2018',
     colorLight: '#ffffff'
   });
+}
+
+// Acceso directo con FID existente (splash-setup)
+function toggleFidInput() {
+  const wrap = document.getElementById('fid-input-wrap');
+  wrap.style.display = wrap.style.display === 'none' ? 'block' : 'none';
+  if(wrap.style.display === 'block') {
+    setTimeout(() => document.getElementById('fid-manual')?.focus(), 50);
+  }
+}
+
+function entrarConFID() {
+  const fid = document.getElementById('fid-manual')?.value.trim();
+  if(!fid) { document.getElementById('fid-manual').focus(); return; }
+  // Persistir en localStorage y cookie (1 año)
+  localStorage.setItem('tok_home_fid', fid);
+  document.cookie = 'tok_fid=' + encodeURIComponent(fid) + ';max-age=31536000;path=/';
+  location.href = location.pathname + '?fid=' + encodeURIComponent(fid);
 }
 </script>
 
