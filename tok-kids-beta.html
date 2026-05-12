@@ -709,17 +709,17 @@ window.enviarUbicacion=function(){
   if(txt) txt.textContent='...';
   navigator.geolocation.getCurrentPosition(pos=>{
     const lat=pos.coords.latitude.toFixed(6),lon=pos.coords.longitude.toFixed(6);
-    const url=`https://www.google.com/maps?q=${lat},${lon}`;
+    const url=`https://maps.google.com/?q=${lat},${lon}`;
     const wa=(CFG.wa||CFG.tel||'').replace(/\s+/g,'').replace('+','');
     const msgs={es:`📍 He encontrado a ${CFG.nombre||'tu familiar'}. Mi ubicación: ${url}`,en:`📍 I found ${CFG.nombre||'your child'}. My location: ${url}`,de:`📍 Ich habe ${CFG.nombre||'Ihr Kind'} gefunden. Mein Standort: ${url}`};
     if(wa) window.open('https://wa.me/'+wa+'?text='+encodeURIComponent(msgs[lang]||msgs.es),'_blank');
     else navigator.clipboard?.writeText(msgs[lang]||msgs.es).then(()=>toast('Ubicación copiada'));
     if(txt) txt.textContent=t.loc_sent;
-    if(FID) registrarAlerta('ubicacion');
+    if(FID) registrarAlerta('ubicacion', lat, lon);
   },()=>{toast('Activa el GPS');if(txt)txt.textContent=T[lang]?.loc||'Enviar ubicación';},{timeout:10000,enableHighAccuracy:true});
 }
 
-async function registrarAlerta(tipo){
+async function registrarAlerta(tipo, lat, lon){
   let fid = FID;
   // Resolución de emergencia: si FID no está en contexto, buscarlo por MID en el índice inverso
   if(!fid) {
@@ -732,7 +732,9 @@ async function registrarAlerta(tipo){
   try{
     const hora=new Date().toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
     const fecha=new Date().toLocaleDateString('es-ES');
-    await push(ref(db,`familias/${fid}/alertas`),{tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()});
+    const alerta={tipo,nombre:CFG.nombre||'',hora,fecha,ts:Date.now()};
+    if(lat && lon) alerta.url=`https://maps.google.com/?q=${lat},${lon}`;
+    await push(ref(db,`familias/${fid}/alertas`),alerta);
   }catch(e){}
 }
 

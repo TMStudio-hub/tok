@@ -545,18 +545,51 @@ let pinInput = '', pinCB = null;
 // Cargar QRCode dinámicamente — compatible con módulos ES
 let qrLoaded = false;
 function cargarQRCode(cb) {
-  // Si ya está disponible globalmente
-  if(typeof window.QRCode !== 'undefined') { cb(); return; }
-  if(qrLoaded) { setTimeout(()=>{ if(typeof window.QRCode!=='undefined') cb(); }, 200); return; }
+  // 1. Ya disponible → ejecutar callback inmediatamente
+  if(typeof window.QRCode !== 'undefined') {
+    console.log('[QR] QRCode ya disponible en window');
+    cb();
+    return;
+  }
+  // 2. Script ya en carga → polling hasta que esté disponible (max 4s)
+  if(qrLoaded) {
+    console.log('[QR] Script en carga, esperando con polling...');
+    let n = 0;
+    const t = setInterval(() => {
+      n++;
+      if(typeof window.QRCode !== 'undefined') {
+        clearInterval(t);
+        console.log('[QR] QRCode disponible tras', n, 'comprobaciones');
+        cb();
+      } else if(n > 40) {
+        clearInterval(t);
+        console.warn('[QR] Timeout esperando QRCode');
+        cb(); // llamar igualmente para mostrar el error en canvas
+      }
+    }, 100);
+    return;
+  }
+  // 3. Primera carga
   qrLoaded = true;
+  console.log('[QR] Inyectando script desde jsdelivr...');
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-  s.onload = () => { setTimeout(cb, 50); }; // pequeño delay para asegurar que QRCode está en window
+  s.onload = () => {
+    console.log('[QR] Script cargado desde jsdelivr, QRCode:', typeof window.QRCode);
+    setTimeout(cb, 50);
+  };
   s.onerror = () => {
-    // Fallback: intentar con unpkg
+    console.warn('[QR] Error en jsdelivr, probando unpkg...');
     const s2 = document.createElement('script');
     s2.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
-    s2.onload = () => setTimeout(cb, 50);
+    s2.onload = () => {
+      console.log('[QR] Script cargado desde unpkg');
+      setTimeout(cb, 50);
+    };
+    s2.onerror = () => {
+      console.error('[QR] Error en ambos CDN');
+      cb();
+    };
     document.head.appendChild(s2);
   };
   document.head.appendChild(s);
@@ -650,38 +683,50 @@ window.activarCodigo = async function() {
 }
 
 async function init() {
-  // NFC check
-  if(!esNFC() && !FID) {
-    window.location.replace('https://linktr.ee/tallermemoriasstudio');
+  // Orden de prioridad explícito:
+  // 1. ?fid= en URL   (ya en FID desde módulo scope)
+  // 2. localStorage   (ya en FID desde módulo scope)
+  // 3. esNFC() → setup con código de activación
+  // 4. Nada → redirigir
+
+  if(FID) {
+    // Tenemos FID — cargar datos del hogar
+    try {
+      const snap = await get(ref(db, `familias/${FID}/hogar`));
+      if(snap.exists()) {
+        CFG = snap.val();
+        aplicarTema(CFG.tema||'dia');
+        actualizarSplashFoto();
+        renderFooter();
+        document.getElementById('splash-loading').style.display = 'none';
+        document.getElementById('splash-btns').style.display = 'flex';
+        document.getElementById('splash-title').textContent = CFG.nombre;
+        document.getElementById('splash-sub').textContent = 'Tu hogar TO-K familiar';
+      } else {
+        // FID válido pero hogar aún sin datos
+        document.getElementById('splash-loading').style.display = 'none';
+        document.getElementById('splash-setup').style.display = 'block';
+        document.getElementById('splash-title').textContent = 'Hogar sin configurar';
+        document.getElementById('splash-sub').textContent = 'Configura tu TO-K HOME';
+      }
+    } catch(e) {
+      document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;font-family:var(--mono);font-size:0.8rem;">Error de conexión</p>';
+    }
     return;
   }
-  if(!FID) {
+
+  // Sin FID — decidir según contexto
+  if(esNFC()) {
+    // NFC sin FID → setup con código de activación
     document.getElementById('splash-loading').style.display = 'none';
     document.getElementById('splash-setup').style.display = 'block';
     document.getElementById('splash-title').textContent = 'Bienvenido a TO-K';
     document.getElementById('splash-sub').textContent = 'Configura tu hogar familiar';
     return;
   }
-  try {
-    const snap = await get(ref(db, `familias/${FID}/hogar`));
-    if(snap.exists()) {
-      CFG = snap.val();
-      aplicarTema(CFG.tema||'dia');
-      actualizarSplashFoto();
-      renderFooter();
-      document.getElementById('splash-loading').style.display = 'none';
-      document.getElementById('splash-btns').style.display = 'flex';
-      document.getElementById('splash-title').textContent = CFG.nombre;
-      document.getElementById('splash-sub').textContent = 'Tu hogar TO-K familiar';
-    } else {
-      document.getElementById('splash-loading').style.display = 'none';
-      document.getElementById('splash-setup').style.display = 'block';
-      document.getElementById('splash-title').textContent = 'Hogar sin configurar';
-      document.getElementById('splash-sub').textContent = 'Configura tu TO-K HOME';
-    }
-  } catch(e) {
-    document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;font-family:var(--mono);font-size:0.8rem;">Error de conexión</p>';
-  }
+
+  // No es NFC y no hay FID → redirigir
+  window.location.replace('https://linktr.ee/tallermemoriasstudio');
 }
 
 window.irA = function(s) {
@@ -796,10 +841,14 @@ function renderAlertas(data) {
     const icon = ALERTA_ICONS[base] || '🔔';
     const cls = tipo==='estoy'?'estoy':tipo==='ubicacion'?'ubi':tipo.includes('contacto')?'scan':'scan';
     const txt = (ALERTA_TEXTOS[base]||((n)=>`Actividad: ${tipo}`))(a.nombre||'');
+    const mapaLink = a.url
+      ? `<a href="${a.url}" target="_blank" rel="noopener" style="display:inline-block;margin-top:4px;font-size:11px;color:var(--green);font-family:var(--mono);text-decoration:none;letter-spacing:0.04em;">📍 Ver en mapa</a>`
+      : '';
     return `<div class="alerta-item">
       <div class="alerta-icon ${cls}">${icon}</div>
       <div class="alerta-info">
         <div class="alerta-txt">${txt}</div>
+        ${mapaLink}
         <div class="alerta-hora">${a.fecha||''} · ${a.hora||''}</div>
       </div>
     </div>`;
@@ -886,29 +935,38 @@ window.guardarConfig = async function() {
 // QR WIFI
 window.mostrarQR = function() {
   if(!CFG.wifi?.ssid) { toast('Configura el WiFi primero'); return; }
+  console.log('[QR] mostrarQR() — SSID:', CFG.wifi.ssid, 'tipo:', CFG.wifi.type);
   document.getElementById('qr-title').textContent = (CFG.nombre||'Hogar') + ' · WiFi';
   document.getElementById('qr-ssid-disp').textContent = CFG.wifi.ssid;
   document.getElementById('qr-pass-disp').textContent = CFG.wifi.pass || '(sin contraseña)';
   document.getElementById('qr-overlay').classList.add('show');
   const canvas = document.getElementById('qr-canvas');
+  console.log('[QR] canvas encontrado:', !!canvas, 'id:', canvas?.id, 'size:', canvas?.width, 'x', canvas?.height);
   const wifiStr = `WIFI:T:${CFG.wifi.type||'WPA'};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
+  console.log('[QR] wifiStr:', wifiStr);
   // Limpiar canvas mientras carga
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   // Garantizar que la librería está cargada antes de renderizar
   cargarQRCode(() => {
+    console.log('[QR] callback ejecutado, window.QRCode:', typeof window.QRCode);
     if(typeof window.QRCode === 'undefined') {
+      console.error('[QR] QRCode no disponible, mostrando mensaje de error');
       ctx.fillStyle = '#1A2018';
-      ctx.font = '13px monospace';
+      ctx.font = '13px var(--mono)';
       ctx.textAlign = 'center';
       ctx.fillText('QR no disponible', canvas.width/2, canvas.height/2);
       return;
     }
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    console.log('[QR] Llamando QRCode.toCanvas...');
     window.QRCode.toCanvas(canvas, wifiStr, {
       width: 200, margin: 2,
       color: { dark: '#1A2018', light: '#ffffff' }
-    }, err => { if(err) console.error('QR error:', err); });
+    }, err => {
+      if(err) console.error('[QR] Error en toCanvas:', err);
+      else console.log('[QR] QR generado correctamente en canvas');
+    });
   });
 }
 
