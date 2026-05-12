@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>TO-K Admin · Generador de Pedidos</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
 :root{
   --green:#4A6741;--gsoft:#EBF2E9;--gdark:#1E3A1A;--gold:#C9A84C;
@@ -400,7 +400,7 @@ function _checkPin() {
           <div style="margin-top:10px;font-size:0.72rem;color:var(--muted);line-height:1.5;" id="print-notas-internas"></div>
         </div>
         <div style="flex-shrink:0;text-align:center;">
-          <canvas id="print-qr" width="90" height="90" style="display:block;border-radius:6px;"></canvas>
+          <div id="print-qr-wrap"></div>
           <div style="font-family:var(--mono);font-size:0.52rem;color:var(--muted);margin-top:4px;">Escanear para<br>instrucciones</div>
         </div>
       </div>
@@ -475,6 +475,20 @@ function _checkPin() {
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script>
+// QR instrucciones — usa qrcodejs (new QRCode), NO el módulo ES
+function renderQRAdmin(url) {
+  document.getElementById('print-qr-wrap').innerHTML = '';
+  new QRCode(document.getElementById('print-qr-wrap'), {
+    text: url,
+    width: 90,
+    height: 90,
+    colorDark: '#1E3A1A',
+    colorLight: '#ffffff'
+  });
+}
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -691,13 +705,7 @@ window.imprimirHoja = function() {
 
   // Generar QR de instrucciones
   const instrUrl = 'https://tmstudio-hub.github.io/tok/tok-instrucciones.html';
-  const canvas = document.getElementById('print-qr');
-  if(typeof QRCode !== 'undefined' && canvas) {
-    QRCode.toCanvas(canvas, instrUrl, {
-      width: 90, margin: 1,
-      color: { dark: '#1E3A1A', light: '#ffffff' }
-    }, err => { if(err) console.error('QR error:', err); });
-  }
+  window.renderQRAdmin(instrUrl);
 
   // Mover #print-card al <body> para evitar el display:none del tab padre durante impresión
   const printCard = document.getElementById('print-card');

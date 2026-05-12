@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
 <meta name="theme-color" content="#1E3A1A"/>
 <title>TO-K HOME</title>
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
 :root{
@@ -235,7 +235,7 @@ select.inp{cursor:pointer;}
   padding:8px 16px;border-radius:2px;margin:12px 0;
   border:1px solid var(--line);display:inline-block;
 }
-#qr-canvas{border-radius:2px;margin:0 auto 16px;display:block;}
+#qr-wrap{margin:0 auto 16px;display:flex;justify-content:center;}
 .qr-pass-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:16px;}
 .qr-pass-val{font-family:var(--mono);font-size:14px;color:var(--ink);}
 .qr-close{
@@ -489,7 +489,7 @@ select.inp{cursor:pointer;}
     <div class="qr-title" id="qr-title">WiFi del Hogar</div>
     <div style="font-size:0.78rem;color:var(--muted);margin-bottom:4px;">Escanea con la cámara del móvil</div>
     <div class="qr-ssid-box" id="qr-ssid-disp">—</div>
-    <canvas id="qr-canvas" width="200" height="200"></canvas>
+    <div id="qr-wrap"></div>
     <div class="qr-pass-row">
       <span style="font-size:0.78rem;color:var(--muted);">Contraseña:</span>
       <span class="qr-pass-val" id="qr-pass-disp">—</span>
@@ -522,6 +522,20 @@ select.inp{cursor:pointer;}
 </div>
 
 <div class="toast" id="toast"></div>
+
+<script>
+// QR WiFi — usa qrcodejs (new QRCode), NO el módulo ES
+function renderQRHome(wifiStr) {
+  document.getElementById('qr-wrap').innerHTML = '';
+  new QRCode(document.getElementById('qr-wrap'), {
+    text: wifiStr,
+    width: 180,
+    height: 180,
+    colorDark: '#1A2018',
+    colorLight: '#ffffff'
+  });
+}
+</script>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -567,58 +581,6 @@ let CFG = {};
 // Sincronizar FID (sea cual sea el origen) en localStorage + cookie
 if(FID) persistirFID(FID);
 let pinInput = '', pinCB = null;
-// Cargar QRCode dinámicamente — compatible con módulos ES
-let qrLoaded = false;
-function cargarQRCode(cb) {
-  // 1. Ya disponible → ejecutar callback inmediatamente
-  if(typeof window.QRCode !== 'undefined') {
-    console.log('[QR] QRCode ya disponible en window');
-    cb();
-    return;
-  }
-  // 2. Script ya en carga → polling hasta que esté disponible (max 4s)
-  if(qrLoaded) {
-    console.log('[QR] Script en carga, esperando con polling...');
-    let n = 0;
-    const t = setInterval(() => {
-      n++;
-      if(typeof window.QRCode !== 'undefined') {
-        clearInterval(t);
-        console.log('[QR] QRCode disponible tras', n, 'comprobaciones');
-        cb();
-      } else if(n > 40) {
-        clearInterval(t);
-        console.warn('[QR] Timeout esperando QRCode');
-        cb(); // llamar igualmente para mostrar el error en canvas
-      }
-    }, 100);
-    return;
-  }
-  // 3. Primera carga
-  qrLoaded = true;
-  console.log('[QR] Inyectando script desde jsdelivr...');
-  const s = document.createElement('script');
-  s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-  s.onload = () => {
-    console.log('[QR] Script cargado desde jsdelivr, QRCode:', typeof window.QRCode);
-    setTimeout(cb, 50);
-  };
-  s.onerror = () => {
-    console.warn('[QR] Error en jsdelivr, probando unpkg...');
-    const s2 = document.createElement('script');
-    s2.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
-    s2.onload = () => {
-      console.log('[QR] Script cargado desde unpkg');
-      setTimeout(cb, 50);
-    };
-    s2.onerror = () => {
-      console.error('[QR] Error en ambos CDN');
-      cb();
-    };
-    document.head.appendChild(s2);
-  };
-  document.head.appendChild(s);
-}
 
 // ── FCM MESSAGING ──
 async function initMessaging() {
@@ -1055,39 +1017,12 @@ window.guardarConfig = async function() {
 // QR WIFI
 window.mostrarQR = function() {
   if(!CFG.wifi?.ssid) { toast('Configura el WiFi primero'); return; }
-  console.log('[QR] mostrarQR() — SSID:', CFG.wifi.ssid, 'tipo:', CFG.wifi.type);
   document.getElementById('qr-title').textContent = (CFG.nombre||'Hogar') + ' · WiFi';
   document.getElementById('qr-ssid-disp').textContent = CFG.wifi.ssid;
   document.getElementById('qr-pass-disp').textContent = CFG.wifi.pass || '(sin contraseña)';
   document.getElementById('qr-overlay').classList.add('show');
-  const canvas = document.getElementById('qr-canvas');
-  console.log('[QR] canvas encontrado:', !!canvas, 'id:', canvas?.id, 'size:', canvas?.width, 'x', canvas?.height);
   const wifiStr = `WIFI:T:${CFG.wifi.type||'WPA'};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
-  console.log('[QR] wifiStr:', wifiStr);
-  // Limpiar canvas mientras carga
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  // Garantizar que la librería está cargada antes de renderizar
-  cargarQRCode(() => {
-    console.log('[QR] callback ejecutado, window.QRCode:', typeof window.QRCode);
-    if(typeof window.QRCode === 'undefined') {
-      console.error('[QR] QRCode no disponible, mostrando mensaje de error');
-      ctx.fillStyle = '#1A2018';
-      ctx.font = '13px var(--mono)';
-      ctx.textAlign = 'center';
-      ctx.fillText('QR no disponible', canvas.width/2, canvas.height/2);
-      return;
-    }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    console.log('[QR] Llamando QRCode.toCanvas...');
-    window.QRCode.toCanvas(canvas, wifiStr, {
-      width: 200, margin: 2,
-      color: { dark: '#1A2018', light: '#ffffff' }
-    }, err => {
-      if(err) console.error('[QR] Error en toCanvas:', err);
-      else console.log('[QR] QR generado correctamente en canvas');
-    });
-  });
+  window.renderQRHome(wifiStr);
 }
 
 window.copiarPass = function() {
