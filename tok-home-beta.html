@@ -633,7 +633,7 @@ async function initMessaging() {
     return;
   }
   try {
-    await navigator.serviceWorker.register('./firebase-messaging-sw.js');
+    await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: './' });
     console.log('[FCM] Service Worker registrado');
   } catch(e) {
     console.warn('[FCM] Error registrando SW:', e);
@@ -695,14 +695,16 @@ function aplicarTema(t) {
   r.setProperty('--paper', tema.bg);
   r.setProperty('--bg', tema.bg);
   if(tema.dark) {
-    r.setProperty('--card', '#1A2E23');
+    // Grafito usa fondo #1A1A1A → card más clara para contraste
+    const isDark = t === 'grafito';
+    r.setProperty('--card', isDark ? '#2A2A2A' : '#1A2E23');
     r.setProperty('--ink', '#F0EBE0');
-    r.setProperty('--muted', '#9AB890');
-    r.setProperty('--line', 'rgba(255,255,255,0.08)');
+    r.setProperty('--muted', isDark ? '#C0C0C0' : '#9AB890');
+    r.setProperty('--line', 'rgba(255,255,255,0.10)');
   } else {
     r.setProperty('--card', '#FFFFFF');
     r.setProperty('--ink', '#1A2018');
-    r.setProperty('--muted', '#8A9E86');
+    r.setProperty('--muted', '#6A8065');
     r.setProperty('--line', 'rgba(74,103,65,0.12)');
   }
 }
@@ -907,11 +909,14 @@ function renderSetup() {
 
 // ALERTAS
 const ALERTA_ICONS = {
-  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑', contacto_wa:'💬', contacto_sms:'✉️',
+  scan:'🔔', sos:'🚨', estoy:'🙋', ubicacion:'📍', llavero:'🔑',
+  contacto_wa:'💬', contacto_sms:'✉️',
   lectura:'📖', libro_terminado:'🏆', libro_nuevo:'📚',
+  paseo:'🦮', medicina:'💊', comida:'🍖',
 };
 const ALERTA_TEXTOS = {
   scan: n => `Se escaneó el chip de ${n||'tu familiar'}`,
+  sos: n => `¡Alguien está con ${n||'tu familiar'} y ha avisado!`,
   estoy: n => `Alguien está con ${n||'tu familiar'} y ha avisado`,
   ubicacion: n => `Ubicación enviada para ${n||'tu familiar'}`,
   llavero: n => `Llavero de ${n||'tu familiar'} encontrado`,
@@ -920,6 +925,9 @@ const ALERTA_TEXTOS = {
   lectura: (n,a) => a?.texto || `${n||'Tu familiar'} ha avanzado en su lectura`,
   libro_terminado: (n,a) => a?.texto || `${n||'Tu familiar'} terminó un libro`,
   libro_nuevo: (n,a) => a?.texto || `${n||'Tu familiar'} empezó a leer un nuevo libro`,
+  paseo: n => `🦮 ${n||'Tu mascota'} ha salido a pasear`,
+  medicina: n => `💊 ${n||'Tu mascota'} ha tomado su medicina`,
+  comida: n => `🍖 ${n||'Tu mascota'} ha comido`,
 };
 
 // ── TIEMPO RELATIVO ──

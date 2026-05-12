@@ -418,7 +418,7 @@ body::before{
     <div class="tok-header-inner">
       <div class="tok-badge-row">
         <div style="display:flex;align-items:center;gap:8px;">
-          <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:40px;flex-shrink:0;"
+          <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:48px;flex-shrink:0;"
             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
           <span style="display:none;font-family:var(--cinzel);font-size:1rem;letter-spacing:0.08em;color:#f5f0e8;">TO-K BOOKS</span>
           <div class="tok-badge">TO-K BOOKS · BETA</div>
@@ -452,6 +452,13 @@ body::before{
     </div>
     <div class="search-loading" id="search-loading">Buscando...</div>
     <div class="search-results" id="search-results"></div>
+    <!-- Formulario manual: visible cuando no hay resultados -->
+    <div id="manual-form" style="display:none;background:var(--card);border-radius:3px;border:1px solid var(--line);padding:16px;margin-top:8px;">
+      <div style="font-family:var(--cinzel);font-size:8.5px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">✏️ Añadir manualmente</div>
+      <input id="manual-titulo" type="text" class="inp" placeholder="Título del libro" style="margin-bottom:8px;">
+      <input id="manual-paginas" type="number" class="inp" placeholder="Número de páginas (0 si no sabes)" min="0" style="margin-bottom:12px;">
+      <button onclick="añadirManual()" style="width:100%;padding:11px;border-radius:3px;background:var(--bdark);color:#f5f0e8;border:none;font-family:var(--cinzel);font-size:9px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;touch-action:manipulation;">Añadir libro</button>
+    </div>
     <div class="frase-box" id="frase-box"></div>
     <div class="libros-activos" id="libros-activos"></div>
   </div>
@@ -477,25 +484,33 @@ body::before{
     </div>
   </div>
 
-  <div class="listas-section" style="padding-bottom:4px;">
-    <div style="background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--line);margin-bottom:6px;">
-      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">👤 Tu nombre</div>
-      <input id="cfg-nombre-books" type="text" placeholder="Ana, Juan, Marta..." class="inp" style="margin-bottom:0;"
+  <div id="tok-footer-books" style="margin-top:4px;padding-bottom:80px;"></div>
+  <button class="fab-cfg" onclick="irA('config')" title="Configuración">⚙️</button>
+</div>
+
+<!-- CONFIG SCREEN — solo desde FAB -->
+<div class="screen" id="screen-config">
+  <div class="cfg-header">
+    <button class="back-btn" onclick="irA('main')">←</button>
+    <h1>CONFIGURACIÓN</h1>
+  </div>
+  <div class="cfg-body">
+    <div class="cfg-section">
+      <h3>👤 Tu nombre</h3>
+      <input id="cfg-nombre-books" type="text" class="inp" placeholder="Ana, Juan, Marta..."
         oninput="DATA.nombre=this.value.trim();guardar();actualizarHeaderBooks();">
     </div>
-    <div style="background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--line);margin-bottom:6px;">
-      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">🎨 Tema</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tema-grid-books"></div>
-      <span id="tema-label-books" style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;"></span>
+    <div class="cfg-section">
+      <h3>🎨 Tema de color</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;" id="tema-grid-books"></div>
+      <span id="tema-label-books" style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:8px;display:block;text-align:center;"></span>
     </div>
-    <div style="background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--line);margin-bottom:6px;">
-      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">🔗 Si no es NFC</div>
-      <input type="url" id="cfg-redirect-books" placeholder="https://tuinstagram.com/..." style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--paper);font-size:0.82rem;font-family:var(--font);color:var(--ink);" onchange="DATA.redirect=this.value;guardar();">
+    <div class="cfg-section">
+      <h3>🔗 Si no se escanea por NFC</h3>
+      <input type="url" id="cfg-redirect-books" class="inp" placeholder="https://tuinstagram.com/..."
+        onchange="DATA.redirect=this.value;guardar();">
     </div>
   </div>
-
-  <div id="tok-footer-books" style="margin-top:4px;"></div>
-  <button class="fab-cfg" onclick="document.getElementById('cfg-redirect-books').scrollIntoView({behavior:'smooth'})" title="Configuración">⚙️</button>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -650,6 +665,15 @@ window.irA = function(s) {
   document.querySelectorAll('.screen').forEach(x=>x.classList.remove('active'));
   document.getElementById('screen-'+s).classList.add('active');
   if(s==='main') renderMain();
+  if(s==='config') renderConfigBooks();
+}
+
+function renderConfigBooks() {
+  const nombreEl = document.getElementById('cfg-nombre-books');
+  if(nombreEl) nombreEl.value = DATA.nombre || '';
+  const redirEl = document.getElementById('cfg-redirect-books');
+  if(redirEl) redirEl.value = DATA.redirect || '';
+  renderTemaGridB();
 }
 
 window.setLang = function(l,e) {
@@ -696,7 +720,13 @@ window.buscarLibro = async function() {
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`);
     const data = await res.json();
     loading.style.display='none';
-    if(!data.items?.length) { box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">Sin resultados</div>'; box.style.display='block'; return; }
+    document.getElementById('manual-form').style.display='none';
+    if(!data.items?.length) {
+      box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">Sin resultados — ¿añades el libro manualmente?</div>';
+      box.style.display='block';
+      document.getElementById('manual-form').style.display='block';
+      return;
+    }
     window._sr = [];
     box.innerHTML = data.items.map((item,idx)=>{
       const info=item.volumeInfo;
@@ -706,7 +736,10 @@ window.buscarLibro = async function() {
       const cover=info.imageLinks?.thumbnail?.replace('http:','https:') || '';
       window._sr[idx]={title,author,pages,cover,pagActual:0,pagBase:0,id:Date.now()+idx};
       const coverEl=cover?`<img class="result-cover" src="${cover}" alt="">`:`<div class="result-cover-ph">📖</div>`;
-      return `<div class="result-item" onclick="seleccionarLibro(${idx})">${coverEl}<div class="result-info"><div class="result-title">${title}</div><div class="result-author">${author}</div><div class="result-pages">${pages?pages+' págs':'Páginas no disponibles'}</div></div></div>`;
+      return `<div class="result-item" style="display:flex;align-items:center;gap:0;">
+        <div style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;" onclick="seleccionarLibro(${idx})">${coverEl}<div class="result-info"><div class="result-title">${title}</div><div class="result-author">${author}</div><div class="result-pages">${pages?pages+' págs':'Sin páginas'}</div></div></div>
+        <button onclick="event.stopPropagation();añadirADeseos(${idx})" title="Añadir a lista de deseos" style="flex-shrink:0;padding:8px 10px;border-radius:3px;border:1px solid var(--line);background:var(--card);color:var(--burdeos);font-family:var(--cinzel);font-size:8px;letter-spacing:.1em;cursor:pointer;touch-action:manipulation;margin-right:8px;">+ Deseos</button>
+      </div>`;
     }).join('');
     box.style.display='block';
   } catch(e) { loading.style.display='none'; box.innerHTML='<div style="text-align:center;padding:14px;color:#c44;">Error de conexión</div>'; box.style.display='block'; }
@@ -720,10 +753,40 @@ window.seleccionarLibro = function(idx) {
   guardar();
   registrarAlerta('libro_nuevo', libro.title);
   document.getElementById('search-results').style.display='none';
+  document.getElementById('manual-form').style.display='none';
   document.getElementById('search-input').value='';
   renderLibros();
   document.getElementById('stat-leyendo').textContent = DATA.libros.length;
   toast('📖 Añadido: '+libro.title.slice(0,25));
+}
+
+window.añadirADeseos = function(idx) {
+  const libro=window._sr?.[idx]; if(!libro) return;
+  const yaEsta=(DATA.listaWish||[]).find(l=>(typeof l==='string'?l:l.title)===libro.title);
+  if(yaEsta) { toast('Ya está en tu lista de deseos'); return; }
+  DATA.listaWish=[...(DATA.listaWish||[]),{title:libro.title,author:libro.author,cover:libro.cover,pages:libro.pages}];
+  guardar();
+  renderListas();
+  toast('📚 Añadido a deseos: '+libro.title.slice(0,25));
+}
+
+window.añadirManual = function() {
+  const titulo=(document.getElementById('manual-titulo')?.value||'').trim();
+  if(!titulo) { toast('Escribe el título del libro'); return; }
+  const paginas=parseInt(document.getElementById('manual-paginas')?.value||'0',10)||0;
+  const libro={title:titulo,author:'',pages:paginas,cover:'',pagActual:0,pagBase:0,id:Date.now()};
+  if((DATA.libros||[]).find(l=>l.title===titulo)) { toast('Ya está en tu lista'); return; }
+  DATA.libros=[...(DATA.libros||[]),libro];
+  guardar();
+  registrarAlerta('libro_nuevo', titulo);
+  document.getElementById('search-results').style.display='none';
+  document.getElementById('manual-form').style.display='none';
+  document.getElementById('search-input').value='';
+  document.getElementById('manual-titulo').value='';
+  document.getElementById('manual-paginas').value='';
+  renderLibros();
+  document.getElementById('stat-leyendo').textContent=DATA.libros.length;
+  toast('📖 Añadido: '+titulo.slice(0,25));
 }
 
 function renderLibros() {

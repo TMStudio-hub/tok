@@ -390,7 +390,7 @@ body::before{
   <div class="sos-wrap">
     <div class="sos-badge-row">
       <div style="margin-bottom:8px;">
-        <img src="https://tmstudio-hub.github.io/tok/pets.svg" alt="TO-K PETS" style="height:40px;"
+        <img src="https://tmstudio-hub.github.io/tok/pets.svg" alt="TO-K PETS" style="height:48px;"
           onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
         <span style="display:none;font-family:var(--cinzel);font-size:1rem;letter-spacing:0.1em;color:var(--c3);">TO-K PETS</span>
       </div>
@@ -875,6 +875,14 @@ window.registrarAccion=async function(i){
   const fecha=new Date().toLocaleDateString('es-ES');
   await push(ref(db,`familias/${FID}/bitacora_pets`),{emoji:a.emoji,accion:a.label,pts:a.pts,hora,fecha,ts:Date.now()});
   toast(`${a.emoji} ${a.label} registrado · +${a.pts} pts`);
+  // Registrar en HOME dashboard
+  const ACCION_TIPO = {
+    'Di de comer':'comida',
+    'Paseé':'paseo',
+    'Medicina':'medicina',
+  };
+  const tipoAlert = ACCION_TIPO[a.label];
+  if(tipoAlert) registrarAlerta(tipoAlert).catch(()=>{});
   renderBitacora();
 }
 
