@@ -328,9 +328,9 @@ select.inp{cursor:pointer;}
   <div class="splash-wrap">
     <div id="splash-icon-wrap" style="text-align:center;margin-bottom:8px;">
       <img src="https://tmstudio-hub.github.io/tok/home.svg" alt="TO-K HOME" id="splash-svg-img"
-        style="height:72px;animation:float 3.5s ease-in-out infinite;display:block;margin:0 auto 16px;"
-        onerror="this.style.display='none';document.getElementById('splash-emoji').style.display='block'">
-      <span id="splash-emoji" style="display:none;font-size:3.5rem;animation:float 3.5s ease-in-out infinite;display:block;margin-bottom:12px;">🏠</span>
+        style="height:64px;animation:float 3.5s ease-in-out infinite;display:block;margin:0 auto 16px;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span id="splash-emoji" style="display:none;font-family:var(--cinzel);font-size:1.6rem;letter-spacing:0.12em;color:rgba(245,240,232,0.9);animation:float 3.5s ease-in-out infinite;display:block;margin-bottom:12px;">TO-K HOME</span>
       <!-- Foto de familia en splash — visible solo si existe CFG.foto -->
       <div id="splash-family-photo-wrap" style="display:none;width:88px;height:88px;border-radius:50%;margin:0 auto 16px;overflow:hidden;border:3px solid rgba(184,150,90,0.4);animation:float 3.5s ease-in-out infinite;">
         <img id="splash-family-photo" src="" style="width:100%;height:100%;object-fit:cover;" alt="">
@@ -424,7 +424,12 @@ select.inp{cursor:pointer;}
 <!-- DASHBOARD -->
 <div class="screen" id="screen-dash">
   <div class="dash-header">
-    <div class="dash-hogar">TO-K HOME · BETA</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+      <img src="https://tmstudio-hub.github.io/tok/home.svg" alt="TO-K HOME" style="height:48px;flex-shrink:0;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+      <span style="display:none;font-family:var(--cinzel);font-size:1.1rem;color:#f5f0e8;letter-spacing:0.08em;">TO-K HOME</span>
+      <div class="dash-hogar" style="margin-left:auto;">TO-K HOME · BETA</div>
+    </div>
     <div class="dash-title" id="dash-title">🏠 Mi Hogar</div>
   </div>
   <div class="dash-body">
@@ -679,8 +684,8 @@ function aplicarTema(t) {
   r.setProperty('--bg', tema.bg);
   if(tema.dark) {
     r.setProperty('--card', '#1A2E23');
-    r.setProperty('--ink', '#E8F5E8');
-    r.setProperty('--muted', '#6A8A6A');
+    r.setProperty('--ink', '#F0EBE0');
+    r.setProperty('--muted', '#9AB890');
     r.setProperty('--line', 'rgba(255,255,255,0.08)');
   } else {
     r.setProperty('--card', '#FFFFFF');

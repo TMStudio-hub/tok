@@ -417,9 +417,15 @@ body::before{
   <div class="tok-header">
     <div class="tok-header-inner">
       <div class="tok-badge-row">
-        <div class="tok-badge">TO-K BOOKS · BETA</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:40px;flex-shrink:0;"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+          <span style="display:none;font-family:var(--cinzel);font-size:1rem;letter-spacing:0.08em;color:#f5f0e8;">TO-K BOOKS</span>
+          <div class="tok-badge">TO-K BOOKS · BETA</div>
+        </div>
         <button class="header-btn" onclick="resetAnio()">🔄 Año</button>
       </div>
+      <div id="books-header-title" style="font-family:var(--cinzel);font-size:13px;color:rgba(245,240,232,0.7);letter-spacing:0.06em;margin-top:4px;margin-bottom:2px;"></div>
       <div class="stats-row">
         <div class="stat-item"><span class="stat-num" id="stat-total">0</span><span class="stat-label">LEÍDOS</span></div>
         <div class="stat-item"><span class="stat-num" id="stat-anio">0</span><span class="stat-label">ESTE AÑO</span></div>
@@ -472,6 +478,11 @@ body::before{
   </div>
 
   <div class="listas-section" style="padding-bottom:4px;">
+    <div style="background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--line);margin-bottom:6px;">
+      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">👤 Tu nombre</div>
+      <input id="cfg-nombre-books" type="text" placeholder="Ana, Juan, Marta..." class="inp" style="margin-bottom:0;"
+        oninput="DATA.nombre=this.value.trim();guardar();actualizarHeaderBooks();">
+    </div>
     <div style="background:var(--card);border-radius:14px;padding:14px;border:1px solid var(--line);margin-bottom:6px;">
       <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">🎨 Tema</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;" id="tema-grid-books"></div>
@@ -540,7 +551,7 @@ function aplicarTemaB(t){
   const tema=TEMAS_B[t]||TEMAS_B.dia;
   const r=document.documentElement.style;
   r.setProperty('--burdeos',tema.c1);r.setProperty('--bsoft',tema.c2);r.setProperty('--bdark',tema.c3);r.setProperty('--paper',tema.bg);
-  if(tema.dark){r.setProperty('--card','#1E1018');r.setProperty('--ink','#F0C0D0');r.setProperty('--muted','#6A4060');r.setProperty('--line','rgba(255,255,255,0.08)');}
+  if(tema.dark){r.setProperty('--card','#1E1018');r.setProperty('--ink','#F0C0D0');r.setProperty('--muted','#C098A8');r.setProperty('--line','rgba(255,255,255,0.08)');}
   else{r.setProperty('--card','#FFFFFF');r.setProperty('--ink','#1A1015');r.setProperty('--muted','#9A8490');r.setProperty('--line','rgba(139,58,82,0.12)');}
 }
 function renderTemaGridB(){
@@ -584,7 +595,7 @@ async function enviarPushFCM(tipo, texto) {
 // ── ALERTAS FIREBASE ─────────────────────────────────────────────────────────
 async function registrarAlerta(tipo, titulo, paginas) {
   if(!FID) return;
-  const nombre = DATA.nombre || MID;
+  const nombre = DATA.nombre || 'Lector';
   let texto = '';
   if(tipo === 'lectura')          texto = `${nombre} lleva ${paginas} páginas en "${titulo}"`;
   else if(tipo === 'libro_terminado') texto = `${nombre} terminó "${titulo}"`;
@@ -649,6 +660,11 @@ window.setLang = function(l,e) {
   document.getElementById('search-input').placeholder = ph[lang]||ph.es;
 }
 
+function actualizarHeaderBooks() {
+  const el = document.getElementById('books-header-title');
+  if(el) el.textContent = DATA.nombre ? `Biblioteca de ${DATA.nombre}` : '';
+}
+
 function renderMain() {
   document.getElementById('stat-total').textContent = DATA.total||0;
   document.getElementById('stat-anio').textContent = DATA.anual||0;
@@ -656,10 +672,12 @@ function renderMain() {
   document.getElementById('pts-display').textContent = (DATA.puntos||0).toLocaleString('es-ES')+' pts';
   const nivel = NIVELES.filter(n=>(DATA.puntos||0)>=n.min).pop();
   document.getElementById('nivel-txt').textContent = nivel.label;
+  actualizarHeaderBooks();
   renderLibros();
   renderListas();
   renderTemaGridB();
   if(document.getElementById('cfg-redirect-books')) document.getElementById('cfg-redirect-books').value=DATA.redirect||'';
+  if(document.getElementById('cfg-nombre-books')) document.getElementById('cfg-nombre-books').value=DATA.nombre||'';
 }
 
 async function guardar() {

@@ -360,7 +360,11 @@ body::before{
   <div id="pub-content">
     <div class="pub-wrap">
       <div class="pub-header">
-        <div style="text-align:center;margin-bottom:12px;"><img src="https://tmstudio-hub.github.io/tok/one.svg" alt="TO-K ONE" style="height:48px;" onerror="this.style.display='none'"></div><div class="tok-badge">TO-K ONE · BETA</div>
+        <div style="text-align:center;margin-bottom:12px;">
+          <img src="https://tmstudio-hub.github.io/tok/one.svg" alt="TO-K ONE" style="height:40px;"
+            onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+          <span style="display:none;font-family:var(--cinzel);font-size:1.2rem;letter-spacing:0.1em;color:var(--ink);">TO-K ONE</span>
+        </div><div class="tok-badge">TO-K ONE · BETA</div>
         <div class="photo-ring">
           <div class="photo-inner">
             <span class="photo-ph" id="pub-photo-ph">👤</span>
@@ -900,7 +904,7 @@ function aplicarTemaONE(t) {
   r.setProperty('--bg',     tema.bg);
   if(tema.dark){
     r.setProperty('--card','#1A1728');r.setProperty('--ink','#EAE7F8');
-    r.setProperty('--muted','#6A6480');r.setProperty('--line','rgba(255,255,255,0.08)');
+    r.setProperty('--muted','#A09AB8');r.setProperty('--line','rgba(255,255,255,0.08)');
   } else {
     r.setProperty('--card','#FFFFFF');r.setProperty('--ink','#1A1520');
     r.setProperty('--muted','#9A94B0');r.setProperty('--line','rgba(123,111,187,0.12)');

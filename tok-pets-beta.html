@@ -388,7 +388,14 @@ body::before{
 <!-- SOS -->
 <div class="screen" id="screen-sos">
   <div class="sos-wrap">
-    <div class="sos-badge-row"><div class="sos-badge" id="sos-badge">🐾 HE ENCONTRADO A UNA MASCOTA</div></div>
+    <div class="sos-badge-row">
+      <div style="margin-bottom:8px;">
+        <img src="https://tmstudio-hub.github.io/tok/pets.svg" alt="TO-K PETS" style="height:40px;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+        <span style="display:none;font-family:var(--cinzel);font-size:1rem;letter-spacing:0.1em;color:var(--c3);">TO-K PETS</span>
+      </div>
+      <div class="sos-badge" id="sos-badge">🐾 HE ENCONTRADO A UNA MASCOTA</div>
+    </div>
     <div class="lang-row">
       <button class="lang-btn active" onclick="setLang('es',event)">🇪🇸 ES</button>
       <button class="lang-btn" onclick="setLang('en',event)">🇬🇧 EN</button>
@@ -411,7 +418,11 @@ body::before{
 <!-- LLAVERO SOLO -->
 <div class="screen" id="screen-llavero">
   <div style="max-width:340px;margin:0 auto;text-align:center;padding:40px 20px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;">
-    <div style="font-size:3rem;margin-bottom:12px;">🔑</div>
+    <div style="margin-bottom:12px;">
+      <img src="https://tmstudio-hub.github.io/tok/pets.svg" alt="TO-K PETS" style="height:64px;display:block;margin:0 auto;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <span style="display:none;font-family:var(--cinzel);font-size:1.6rem;letter-spacing:0.1em;color:var(--c3);">TO-K PETS</span>
+    </div>
     <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.15em;color:var(--c1);border:1px solid rgba(200,152,106,0.3);padding:5px 16px;border-radius:20px;display:inline-block;margin-bottom:16px;" id="llavero-badge">COLLAR/LLAVERO TO-K ENCONTRADO</div>
     <div style="font-size:1.3rem;font-weight:700;color:var(--c3);margin-bottom:8px;" id="llavero-title">Llavero TO-K PETS</div>
     <div style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;" id="llavero-msg">Contacta con el dueño para devolvérselo.</div>
@@ -618,7 +629,7 @@ function aplicarTemaP(t){
   const tema=TEMAS[t]||TEMAS.ambar;
   const r=document.documentElement.style;
   r.setProperty('--c1',tema.c1);r.setProperty('--c2',tema.c2);r.setProperty('--c3',tema.c3);r.setProperty('--bg',tema.bg);
-  if(tema.dark){r.setProperty('--card','#1E1610');r.setProperty('--ink','#F0D0A8');r.setProperty('--muted','#6A5040');r.setProperty('--line','rgba(255,255,255,0.08)');}
+  if(tema.dark){r.setProperty('--card','#1E1610');r.setProperty('--ink','#F0D0A8');r.setProperty('--muted','#B09080');r.setProperty('--line','rgba(255,255,255,0.08)');}
   else{r.setProperty('--card','#FFFFFF');r.setProperty('--ink','#2A1510');r.setProperty('--muted','#9A8490');r.setProperty('--line','rgba(200,152,106,0.15)');}
 }
 function renderTemaGridP(){
