@@ -93,9 +93,10 @@ body::before{
 .sos-wrap{max-width:420px;margin:0 auto;width:100%;padding-bottom:40px;}
 .sos-badge-row{text-align:center;padding:24px 20px 0;}
 .sos-badge{
-  display:inline-block;font-family:var(--cinzel);font-size:8px;letter-spacing:.25em;
-  text-transform:uppercase;padding:5px 16px;border-radius:20px;
-  border:1px solid rgba(232,132,90,.28);background:rgba(232,132,90,.07);color:var(--c3);
+  display:inline-block;font-family:var(--cinzel);font-size:9px;letter-spacing:.2em;
+  font-weight:500;text-transform:uppercase;padding:7px 20px;border-radius:20px;
+  border:1px solid rgba(185,28,28,.3);background:rgba(185,28,28,.08);color:#b91c1c;
+  animation:pulse 2s infinite;
 }
 .lang-row{display:flex;justify-content:center;gap:6px;padding:12px 20px;}
 .lang-btn{
@@ -119,40 +120,46 @@ body::before{
 .sos-name{font-family:var(--cinzel);font-size:clamp(20px,5vw,26px);font-weight:400;color:var(--c3);text-align:center;margin-bottom:4px;letter-spacing:.03em;}
 .sos-age{font-size:14px;font-style:italic;color:var(--muted);text-align:center;margin-bottom:12px;}
 .sos-msg{
-  background:var(--card);border-radius:3px;padding:12px 16px;margin:0 20px 14px;
-  font-size:15px;font-style:italic;color:var(--c3);line-height:1.5;
-  border:1px solid var(--line);text-align:center;
-  box-shadow:0 2px 10px var(--sombra);position:relative;overflow:hidden;
+  background:var(--card);border-radius:3px;padding:14px 18px;margin:0 20px 16px;
+  font-size:15px;font-style:italic;color:var(--c3);line-height:1.55;
+  border:1px solid rgba(184,150,90,.45);text-align:center;
+  box-shadow:0 2px 12px var(--sombra);position:relative;overflow:hidden;
 }
-.sos-msg::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;}
+.sos-msg::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.6;}
 .home-alert{
-  display:none;margin:0 20px 8px;padding:10px 14px;
+  display:none;margin:0 20px 12px;padding:10px 14px;
   background:rgba(64,145,108,.08);border-radius:3px;
   font-family:var(--cinzel);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
   color:#40916C;text-align:center;border:1px solid rgba(64,145,108,.18);
 }
-.estoy-btn{margin:0 20px 8px;}
-.estoy-btn button{
-  width:100%;padding:14px;border-radius:3px;border:1px solid rgba(184,150,90,.28);
-  background:rgba(184,150,90,.08);color:var(--c3);
-  font-family:var(--cinzel);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
-  cursor:pointer;touch-action:manipulation;
-}
-.sos-actions{padding:0 20px;display:flex;flex-direction:column;gap:8px;}
+/* Grid 2×2 para los 4 botones de acción */
+.sos-actions{padding:0 20px 4px;display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .btn-sos{
-  width:100%;padding:14px;border-radius:3px;border:none;
-  font-family:var(--cinzel);font-size:11px;letter-spacing:.15em;text-transform:uppercase;
-  cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;padding:14px 10px;border-radius:3px;border:none;min-height:54px;
+  font-family:var(--cinzel);font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center;gap:6px;
 }
 .btn-call{background:var(--c1);color:#fff;}
 .btn-wa{background:#25D366;color:#fff;}
 .btn-sms{background:#5856D6;color:#fff;}
 .btn-loc{background:#40916C;color:#fff;}
-.fam-access-btn{
-  width:100%;padding:10px;border-radius:2px;border:1px solid var(--line);
-  background:transparent;color:var(--muted);font-family:var(--cinzel);
-  font-size:8px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-top:8px;
+/* Botón secundario discreto */
+.estoy-btn{text-align:center;padding:12px 20px 4px;}
+.estoy-btn button{
+  padding:10px 24px;border-radius:20px;border:1px solid rgba(184,150,90,.22);
+  background:transparent;color:var(--muted);
+  font-family:var(--cinzel);font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:all .2s;
 }
+.estoy-btn button:active{background:rgba(184,150,90,.08);}
+/* Acceso familiar como texto-link */
+.fam-access-btn{
+  background:none;border:none;color:var(--muted);
+  font-family:var(--cinzel);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;padding:8px 4px;opacity:.5;
+  text-decoration:underline;text-underline-offset:3px;
+}
+.fam-access-btn:hover{opacity:.8;}
 
 /* ── LLAVERO / CONFIG ── */
 #screen-llavero{background:var(--bg);align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
@@ -308,12 +315,18 @@ body::before{
     <div class="sos-age" id="sos-age"></div>
     <div class="sos-msg" id="sos-msg"></div>
     <div class="home-alert" id="home-alert">✓ Familia notificada · están al tanto</div>
-    <div class="estoy-btn"><button id="btn-estoy" onclick="estoyCon()">🙋 <span id="btn-estoy-txt">Estoy con el niño</span></button></div>
+    <!-- Botones de acción: grid 2×2 -->
     <div class="sos-actions" id="sos-actions"></div>
-    <div style="text-align:center;padding:12px 20px 0;">
+    <!-- "Estoy con el niño" — botón secundario discreto debajo de las acciones -->
+    <div class="estoy-btn"><button id="btn-estoy" onclick="estoyCon()">🙋 <span id="btn-estoy-txt">Estoy con el niño</span></button></div>
+    <!-- "Acceso familiar" — texto-link al fondo -->
+    <div style="text-align:center;padding:8px 20px 4px;">
       <button class="fam-access-btn" onclick="mostrarPin(()=>irA('config'))">🔒 <span id="fam-access-txt">Acceso familiar</span></button>
     </div>
-    <div id="tok-footer-sos" style="padding:8px 0;"></div>
+    <!-- Footer: kids.svg centrado, 32px, sin filtros -->
+    <div style="text-align:center;padding:18px 0 24px;">
+      <img src="https://tmstudio-hub.github.io/tok/kids.svg" alt="TO-K KIDS" style="height:32px;display:inline-block;" onerror="this.style.display='none'">
+    </div>
   </div>
 </div>
 
@@ -479,7 +492,7 @@ function renderFooters() {
   const html = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;filter:brightness(0) invert(1);opacity:0.3;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:rgba(255,255,255,0.3);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:rgba(255,255,255,0.5);">TO-K</span> · by El Taller de Memorias</a></div>`;
   const htmlLight = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.4;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
   ['tok-footer-sel'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=html; });
-  ['tok-footer-sos','tok-footer-llavero'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=htmlLight; });
+  ['tok-footer-llavero'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=htmlLight; });
 }
 
 // ── TEMAS ──

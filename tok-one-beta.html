@@ -257,6 +257,74 @@ body::before{
 .qr-ssid-box{font-family:var(--mono);font-size:12px;background:var(--vsoft);color:var(--violet);padding:8px 16px;border-radius:2px;margin:12px 0;display:inline-block;border:1px solid var(--line);}
 #qr-canvas{border-radius:2px;margin:0 auto 16px;display:block;}
 .qr-close{padding:10px 28px;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--cinzel);font-size:9px;letter-spacing:.18em;text-transform:uppercase;}
+
+/* ── LOADING OVERLAY ── */
+.loading-overlay{position:fixed;inset:0;background:var(--paper);display:flex;align-items:center;justify-content:center;z-index:500;flex-direction:column;gap:12px;}
+.spinner{width:28px;height:28px;border:2px solid var(--line);border-top-color:var(--gold);border-radius:50%;animation:spin .9s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* ── FOTO CONFIG ── */
+.photo-upload-row{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.photo-thumb-ph{
+  width:72px;height:72px;border-radius:50%;background:var(--vsoft);
+  display:flex;align-items:center;justify-content:center;font-size:2rem;
+  flex-shrink:0;border:2px solid var(--line);
+}
+.photo-thumb{width:72px;height:72px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid var(--line);}
+.photo-upload-label{
+  display:inline-block;padding:9px 16px;border-radius:2px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);font-family:var(--cinzel);
+  font-size:9px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .15s;
+}
+.photo-upload-label:hover{border-color:var(--violet);color:var(--violet);}
+
+/* ── SAVE BTN ONE ── */
+.save-btn-one{
+  width:100%;padding:14px;border-radius:2px;border:none;
+  background:var(--vdark);color:#f5f0e8;
+  font-family:var(--cinzel);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:background .2s;
+}
+.save-btn-one:hover{background:var(--violet);}
+
+/* ── SESION BTNS ── */
+.sesion-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+.sesion-btn{
+  flex:1;min-width:60px;padding:9px 6px;border-radius:2px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);
+  font-family:var(--cinzel);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:all .15s;
+}
+.sesion-btn.active{background:var(--vdark);color:#f5f0e8;border-color:var(--vdark);}
+
+/* ── EXPIRED WRAP ── */
+.expired-wrap{
+  display:none;position:fixed;inset:0;background:var(--paper);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:40px 28px;text-align:center;z-index:5;gap:12px;
+}
+.exp-icon{font-size:3.5rem;color:var(--muted);opacity:.25;line-height:1;margin-bottom:4px;}
+
+/* ── TOGGLE (alias de toggle-sw, usado en el HTML) ── */
+.toggle{width:44px;height:24px;border-radius:12px;background:var(--line);border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.toggle.on{background:var(--violet);}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.15);}
+.toggle.on::after{transform:translateX(20px);}
+
+/* ── QR OVERLAY ONE ── */
+.qr-overlay{display:none;position:fixed;inset:0;background:rgba(26,21,32,.82);backdrop-filter:blur(10px);z-index:150;align-items:flex-end;justify-content:center;}
+.qr-overlay.show{display:flex;}
+.qr-sheet-one{background:var(--paper);border-radius:3px 3px 0 0;border-top:1px solid var(--line);padding:28px 24px 44px;width:100%;max-width:420px;text-align:center;}
+.qr-title-one{font-family:var(--cinzel);font-size:14px;font-weight:500;color:var(--ink);margin-bottom:4px;}
+.qr-sub-one{font-size:13px;font-style:italic;color:var(--muted);margin-bottom:16px;}
+.qr-ssid-one{font-family:var(--mono);font-size:12px;background:var(--vsoft);color:var(--violet);padding:8px 16px;border-radius:2px;margin:10px auto 16px;display:inline-block;border:1px solid var(--line);}
+.qr-close-one{padding:10px 28px;border-radius:2px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--cinzel);font-size:9px;letter-spacing:.18em;text-transform:uppercase;}
+
+/* ── PIN SHEET ONE ── */
+.pin-sheet-one{background:var(--paper);border-radius:3px 3px 0 0;border-top:1px solid var(--line);border-left:1px solid var(--line);border-right:1px solid var(--line);padding:28px 24px 44px;width:100%;max-width:420px;text-align:center;}
+.pin-title-one{font-family:var(--cinzel);font-size:14px;font-weight:500;color:var(--ink);margin-bottom:4px;}
+.pin-sub-one{font-size:13px;font-style:italic;color:var(--muted);margin-bottom:20px;}
 </style>
 </head>
 <body>
