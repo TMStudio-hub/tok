@@ -641,7 +641,7 @@ function renderQROne(wifiStr) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -720,28 +720,8 @@ async function init() {
   // Registrar escaneo en HOME
   if(FID) registrarAlertaONE();
   irA('public');
-  // Suscribir a FCM para recibir push de alertas familiares
+  // Suscribir a FCM y activar SW listener de push_pending en background
   if(FID) initMessagingONE();
-  // Escuchar alertas en tiempo real y notificar si hay permiso
-  if(FID && Notification.permission === 'granted' && !window._oneAlertasListener) {
-    window._oneAlertasListener = true;
-    const lastTs = parseInt(localStorage.getItem('tok_one_last_ts') || '0', 10) || Date.now();
-    localStorage.setItem('tok_one_last_ts', String(lastTs));
-    onValue(ref(db, `familias/${FID}/alertas`), snap => {
-      if(!snap.exists()) return;
-      let maxTs = parseInt(localStorage.getItem('tok_one_last_ts') || '0', 10);
-      snap.forEach(child => {
-        const a = child.val();
-        if(!a || !a.ts || a.ts <= maxTs) return;
-        if(a.ts > maxTs) maxTs = a.ts;
-        new Notification('TO-K', {
-          body: a.texto || `Nueva alerta: ${a.tipo||''}`,
-          icon: 'https://tmstudio-hub.github.io/tok/one.svg'
-        });
-      });
-      localStorage.setItem('tok_one_last_ts', String(maxTs));
-    });
-  }
 }
 
 window.conectarFID = async function() {
@@ -1102,6 +1082,18 @@ async function initMessagingONE() {
         });
         console.log('[FCM ONE] Token guardado');
       }
+      // Activar listener de push_pending en el Service Worker (funciona en background)
+      try {
+        const reg = await navigator.serviceWorker.ready;
+        if(reg.active) {
+          reg.active.postMessage({
+            type: 'WATCH_PUSH',
+            fid: FID,
+            lastTs: parseInt(localStorage.getItem('tok_one_last_ts') || '0', 10)
+          });
+          console.log('[FCM ONE] WATCH_PUSH enviado al SW');
+        }
+      } catch(e2) { console.warn('[FCM ONE] postMessage SW error:', e2); }
     }
   } catch(e) { console.warn('[FCM ONE] Error:', e); }
 }

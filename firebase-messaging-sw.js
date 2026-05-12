@@ -1,30 +1,48 @@
-// TO-K Firebase Cloud Messaging Service Worker
-// Maneja notificaciones push en background (app cerrada o minimizada)
-
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js');
 
-firebase.initializeApp({
+const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
-  authDomain: "tok-familiar.firebaseapp.com",
   databaseURL: "https://tok-familiar-default-rtdb.firebaseio.com",
-  projectId: "tok-familiar",
-  storageBucket: "tok-familiar.firebasestorage.app",
-  messagingSenderId: "530434764197",
-  appId: "1:530434764197:web:32a8ca1b42e09131dacc4c"
+  projectId: "tok-familiar"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+
+// Escuchar mensajes desde la página principal
+self.addEventListener('message', event => {
+  if (event.data.type === 'WATCH_PUSH' && event.data.fid) {
+    const fid = event.data.fid;
+    let lastTs = event.data.lastTs || 0;
+
+    firebase.database()
+      .ref(`familias/${fid}/push_pending`)
+      .on('child_added', snap => {
+        const data = snap.val();
+        if (!data || data.ts <= lastTs) return;
+        lastTs = data.ts;
+
+        self.registration.showNotification('TO-K', {
+          body: data.texto || 'Nueva actividad familiar',
+          icon: '/tok/tok.svg',
+          badge: '/tok/tok.svg',
+          tag: snap.key,
+          data: { fid, key: snap.key }
+        });
+
+        // Borrar el nodo procesado
+        snap.ref.remove();
+      });
+  }
 });
 
-const messaging = firebase.messaging();
-
-// Notificaciones en background (cuando la app está cerrada o en segundo plano)
-messaging.onBackgroundMessage(payload => {
-  console.log('[TO-K SW] Notificación en background:', payload);
-  const { title, body, icon } = payload.notification || {};
-  self.registration.showNotification(title || 'TO-K', {
-    body: body || '',
-    icon: icon || 'https://tmstudio-hub.github.io/tok/tok.svg',
-    badge: 'https://tmstudio-hub.github.io/tok/tok.svg',
-    vibrate: [300, 100, 300],
-    requireInteraction: true
-  });
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  event.waitUntil(
+    clients.openWindow('https://tmstudio-hub.github.io/tok/tok-home-beta.html?fid=' +
+      event.notification.data.fid)
+  );
 });
