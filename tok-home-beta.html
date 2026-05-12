@@ -354,7 +354,7 @@ select.inp{cursor:pointer;}
         <div id="codigo-error" style="display:none;color:#FF6B6B;font-size:0.75rem;font-family:var(--mono);text-align:center;margin-bottom:8px;"></div>
         <button onclick="activarCodigo()" style="width:100%;padding:14px;border-radius:12px;background:rgba(255,255,255,0.15);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Activar mi TO-K →</button>
       </div>
-      <div style="font-size:0.72rem;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;">El código está en la tarjeta kraft de tu caja TO-K.<br>¿Problemas? <a href="https://linktr.ee/tallermemoriasstudio" style="color:var(--gold);text-decoration:none;">Contacta con nosotros</a></div>
+      <div style="font-size:0.72rem;color:rgba(255,255,255,0.3);text-align:center;line-height:1.6;">El código está en la tarjeta kraft de tu caja TO-K.<br>¿Problemas? <a href="https://linktr.ee/tallermemoriasstudio" target="_blank" rel="noopener" style="color:var(--gold);text-decoration:none;">Contacta con El Taller de Memorias</a></div>
 
       <div style="margin-top:16px;text-align:center;">
         <button onclick="toggleFidInput()"
@@ -495,7 +495,7 @@ select.inp{cursor:pointer;}
   </div>
     <div id="tok-footer"><div style="text-align:center;padding:16px 0;display:flex;align-items:center;justify-content:center;gap:10px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:28px;opacity:0.5;" onerror="this.style.display='none'"><a href="https://linktr.ee/tallermemoriasstudio" target="_blank" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-decoration:none;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias</a></div></div>
   </div>
-  <button class="fab" onclick="mostrarPin(()=>irA('setup'))">⚙️</button>
+  <button id="main-fab" class="fab" style="display:none;" onclick="mostrarPin(()=>irA('setup'))">⚙️</button>
 </div>
 
 <!-- QR WiFi -->
@@ -797,6 +797,9 @@ async function init() {
 window.irA = function(s) {
   document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
   document.getElementById('screen-'+s).classList.add('active');
+  // FAB solo visible en pantallas autenticadas
+  const fab = document.getElementById('main-fab');
+  if(fab) fab.style.display = (s === 'dash' || s === 'setup') ? 'flex' : 'none';
   if(s === 'dash') renderDash();
   if(s === 'setup') renderSetup();
 }
