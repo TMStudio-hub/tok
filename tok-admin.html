@@ -104,20 +104,28 @@ select.inp{cursor:pointer;}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 20px;border-radius:20px;font-size:0.82rem;font-family:var(--mono);z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
 .toast.show{opacity:1;}
 
-/* PRINT */
+/* PRINT — solo imprime el recibo, oculta todo lo demás */
 @media print{
-  .admin-header,.admin-nav,.btn-row,.nav-btn{display:none!important;}
-  .resultado,.print-card{display:block!important;}
-  body{background:#fff;}
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  body { background:#fff !important; margin:0; padding:0; }
+  .admin-header, .admin-nav, .main > .tab,
+  .resultado, .btn-row, .nav-btn,
+  .toast { display:none !important; }
+  #print-card { display:block !important; border:none !important; box-shadow:none !important; margin:0 !important; padding:16px !important; }
+  #print-wrapper { display:block !important; }
 }
 </style>
 </head>
 <body>
 
 <div class="admin-header">
-  <div>
-    <div class="admin-title">TO-K Admin</div>
-    <div class="admin-badge">PANEL INTERNO · EL TALLER DE MEMORIAS</div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="TO-K"
+      style="height:36px;filter:brightness(0) invert(1);opacity:0.85;" onerror="this.style.display='none'">
+    <div>
+      <div class="admin-title">TO-K Admin</div>
+      <div class="admin-badge">PANEL INTERNO · EL TALLER DE MEMORIAS</div>
+    </div>
   </div>
   <div class="admin-nav">
     <button class="nav-btn active" onclick="setTab('generar',this)">📦 Nuevo pedido</button>
@@ -258,26 +266,48 @@ select.inp{cursor:pointer;}
 
     <!-- HOJA DE IMPRESIÓN -->
     <div class="print-card" id="print-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;">
-        <div>
-          <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:var(--muted);">TO-K · EL TALLER DE MEMORIAS</div>
-          <div style="font-size:1.3rem;font-weight:800;color:var(--ink);margin-top:4px;" id="print-titulo">Pedido #001</div>
-          <div style="font-size:0.85rem;color:var(--muted);" id="print-cliente">Cliente</div>
+      <!-- Cabecera recibo -->
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:14px;border-bottom:2px solid var(--green);">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="TO-K"
+            style="height:32px;" onerror="this.style.display='none'">
+          <div>
+            <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.2em;color:var(--muted);">EL TALLER DE MEMORIAS</div>
+            <div style="font-size:1.2rem;font-weight:800;color:var(--ink);" id="print-titulo">Pedido #001</div>
+            <div style="font-size:0.82rem;color:var(--muted);" id="print-cliente">Cliente</div>
+          </div>
         </div>
         <div style="text-align:right;">
-          <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);" id="print-fecha"></div>
-          <div style="background:var(--gsoft);border:2px solid var(--green);border-radius:8px;padding:8px 14px;margin-top:6px;">
-            <div style="font-family:var(--mono);font-size:0.58rem;letter-spacing:0.12em;color:var(--muted);margin-bottom:2px;">CÓDIGO DE ACTIVACIÓN</div>
-            <div style="font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--green);" id="print-codigo">TOK-XXXX-XXXX</div>
+          <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:6px;" id="print-fecha"></div>
+          <div style="background:var(--gsoft);border:2px solid var(--green);border-radius:8px;padding:8px 14px;">
+            <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.12em;color:var(--muted);margin-bottom:2px;">CÓDIGO DE ACTIVACIÓN</div>
+            <div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--green);letter-spacing:0.1em;" id="print-codigo">TOK-XXXX-XXXX</div>
           </div>
         </div>
       </div>
-      <div style="border-top:1px solid var(--line);padding-top:14px;">
-        <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.12em;color:var(--muted);margin-bottom:10px;">CHIPS INCLUIDOS Y URLs A PROGRAMAR</div>
+
+      <!-- Lista de chips -->
+      <div style="margin-bottom:16px;">
+        <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:8px;">CHIPS INCLUIDOS · URLs A PROGRAMAR CON NFC TOOLS</div>
         <div id="print-chips"></div>
       </div>
-      <div style="margin-top:16px;padding:10px 14px;background:var(--gsoft);border-radius:8px;font-size:0.78rem;color:var(--green);">
-        <strong>Instrucciones para el cliente:</strong> tmstudio-hub.github.io/tok/tok-instrucciones.html
+
+      <!-- Instrucciones + QR -->
+      <div style="border-top:1px solid var(--line);padding-top:14px;display:flex;align-items:flex-start;gap:16px;">
+        <div style="flex:1;">
+          <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.12em;color:var(--muted);margin-bottom:6px;">INSTRUCCIONES DE CONFIGURACIÓN</div>
+          <div style="font-size:0.8rem;color:var(--ink);line-height:1.5;margin-bottom:6px;">
+            Escanea el código QR o visita el enlace para aprender a configurar tu TO-K.
+          </div>
+          <div style="font-family:var(--mono);font-size:0.72rem;color:var(--green);font-weight:700;">
+            tmstudio-hub.github.io/tok/tok-instrucciones.html
+          </div>
+          <div style="margin-top:10px;font-size:0.72rem;color:var(--muted);line-height:1.5;" id="print-notas-internas"></div>
+        </div>
+        <div style="flex-shrink:0;text-align:center;">
+          <canvas id="print-qr" width="90" height="90" style="display:block;border-radius:6px;"></canvas>
+          <div style="font-family:var(--mono);font-size:0.52rem;color:var(--muted);margin-top:4px;">Escanear para<br>instrucciones</div>
+        </div>
       </div>
     </div>
   </div>
@@ -491,17 +521,37 @@ window.copiarURL = function(url) {
 window.imprimirHoja = function() {
   if(!pedidoActual) return;
   document.getElementById('print-titulo').textContent = `Pedido #${pedidoActual.numPedido}`;
-  document.getElementById('print-cliente').textContent = pedidoActual.cliente + (pedidoActual.notas ? ' · ' + pedidoActual.notas : '');
+  document.getElementById('print-cliente').textContent = pedidoActual.cliente + (pedidoActual.canal ? ' · ' + pedidoActual.canal : '');
   document.getElementById('print-fecha').textContent = formatFecha(pedidoActual.fecha);
   document.getElementById('print-codigo').textContent = pedidoActual.codigo;
+
+  // Notas internas
+  const notasEl = document.getElementById('print-notas-internas');
+  if(notasEl) notasEl.textContent = pedidoActual.notas ? '📝 ' + pedidoActual.notas : '';
+
+  // Chips
   document.getElementById('print-chips').innerHTML = pedidoActual.chips.map(c=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);">
-      <span style="font-size:1rem;">${c.emoji}</span>
-      <span style="font-weight:600;font-size:0.82rem;width:90px;">${c.name.replace('TO-K ','TO-K ')}</span>
-      <span style="font-family:monospace;font-size:0.65rem;color:var(--muted);flex:1;">${c.url}</span>
+    <div style="display:flex;align-items:center;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);">
+      <span style="font-size:1rem;flex-shrink:0;">${c.emoji}</span>
+      <span style="font-weight:700;font-size:0.8rem;width:80px;flex-shrink:0;">${c.name.replace('TO-K ','TO-K ')}</span>
+      <span style="font-family:monospace;font-size:0.62rem;color:var(--muted);flex:1;word-break:break-all;">${c.url}</span>
     </div>`).join('');
+
+  // Mostrar la tarjeta de impresión
   document.getElementById('print-card').classList.add('show');
-  setTimeout(()=>window.print(), 300);
+
+  // Generar QR de instrucciones
+  const instrUrl = 'https://tmstudio-hub.github.io/tok/tok-instrucciones.html';
+  const canvas = document.getElementById('print-qr');
+  if(typeof QRCode !== 'undefined' && canvas) {
+    QRCode.toCanvas(canvas, instrUrl, {
+      width: 90, margin: 1,
+      color: { dark: '#1E3A1A', light: '#ffffff' }
+    }, err => { if(err) console.error('QR error:', err); });
+  }
+
+  // Dar tiempo al QR a renderizarse y luego imprimir solo el recibo
+  setTimeout(() => window.print(), 400);
 }
 
 // ── GUARDAR EN FIREBASE ──

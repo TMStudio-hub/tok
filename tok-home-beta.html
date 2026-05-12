@@ -3,113 +3,298 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="theme-color" content="#1E3A1A"/>
 <title>TO-K HOME</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Cinzel:wght@400;500;600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
 <style>
-:root{--green:#4A6741;--gsoft:#EBF2E9;--gdark:#1E3A1A;--gold:#C9A84C;--ink:#1A2018;--paper:#F5F7F4;--card:#fff;--muted:#8A9E86;--line:rgba(74,103,65,0.12);--font:'Syne',system-ui,sans-serif;--mono:'DM Mono',monospace;}
+:root{
+  --green:#4A6741;--gsoft:rgba(74,103,65,0.09);--gdark:#1E3A1A;
+  --gold:#B8965A;--gold2:#D4B07A;
+  --ink:#1A2018;--paper:#F5F0E8;--card:rgba(245,240,232,0.95);
+  --muted:#6A8460;--line:rgba(184,150,90,0.22);
+  --sombra:rgba(26,46,26,0.11);
+  --font:'Cormorant Garamond',Georgia,serif;
+  --cinzel:'Cinzel',serif;
+  --mono:'DM Mono',monospace;
+}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;}
-.screen{display:none;min-height:100vh;flex-direction:column;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font);background:var(--paper);color:var(--ink);
+  min-height:100vh;-webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse at 12% 6%, rgba(74,103,65,.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 88% 90%, rgba(26,46,26,.05) 0%, transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.030'/%3E%3C/svg%3E");
+}
+.screen{display:none;min-height:100vh;flex-direction:column;position:relative;z-index:1;}
 .screen.active{display:flex;}
-/* SPLASH */
-#screen-splash{background:linear-gradient(160deg,var(--gdark),var(--green));align-items:center;justify-content:center;padding:30px;text-align:center;}
-.splash-wrap{max-width:340px;width:100%;}
-.splash-badge{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.3em;color:rgba(255,255,255,0.4);border:1px solid rgba(255,255,255,0.1);padding:4px 14px;border-radius:20px;display:inline-block;margin-bottom:24px;}
-.splash-icon{margin-bottom:16px;}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.splash-title{font-size:1.8rem;font-weight:800;color:#fff;margin-bottom:6px;}
-.splash-sub{font-size:0.85rem;color:rgba(255,255,255,0.5);margin-bottom:32px;line-height:1.6;}
-.splash-btns{display:flex;flex-direction:column;gap:10px;}
-.btn-primary{padding:15px;border-radius:14px;border:none;background:rgba(255,255,255,0.15);color:#fff;font-size:0.95rem;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
-.btn-secondary{padding:13px;border-radius:14px;border:1px solid rgba(255,255,255,0.15);background:transparent;color:rgba(255,255,255,0.7);font-size:0.88rem;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
-.spinner{width:32px;height:32px;border:3px solid rgba(255,255,255,0.2);border-top-color:#fff;border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 12px;}
+
+/* ── SPLASH ── */
+#screen-splash{
+  background:linear-gradient(160deg,var(--gdark) 0%,#2d4a2d 60%,#3d5c35 100%);
+  align-items:center;justify-content:center;padding:40px 28px;text-align:center;
+}
+#screen-splash::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+.splash-wrap{max-width:340px;width:100%;position:relative;z-index:1;}
+.splash-badge{
+  font-family:var(--cinzel);font-size:8px;letter-spacing:.38em;text-transform:uppercase;
+  color:var(--gold);opacity:.8;margin-bottom:32px;
+  border:1px solid rgba(184,150,90,.25);padding:5px 16px;border-radius:20px;display:inline-block;
+}
+.splash-icon{margin-bottom:20px;}
+.splash-icon img{height:72px;filter:brightness(0) invert(1);opacity:.9;animation:float 3.5s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.splash-title{
+  font-family:var(--cinzel);font-size:clamp(20px,5.5vw,26px);font-weight:500;
+  color:#f5f0e8;letter-spacing:.04em;margin-bottom:8px;
+}
+.splash-sub{
+  font-family:var(--font);font-style:italic;font-size:15px;
+  color:rgba(245,240,232,.5);margin-bottom:36px;line-height:1.6;
+}
+.spinner{width:28px;height:28px;border:2px solid rgba(245,240,232,.15);border-top-color:var(--gold);border-radius:50%;animation:spin .9s linear infinite;margin:0 auto 12px;}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* SETUP */
+.splash-btns{display:flex;flex-direction:column;gap:10px;}
+.btn-primary{
+  padding:14px 20px;border-radius:2px;border:none;
+  background:rgba(245,240,232,.12);color:#f5f0e8;
+  font-family:var(--cinzel);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:background .25s;
+  border:1px solid rgba(245,240,232,.15);
+}
+.btn-primary:hover{background:rgba(245,240,232,.2);}
+.btn-secondary{
+  padding:12px 20px;border-radius:2px;border:1px solid rgba(245,240,232,.1);
+  background:transparent;color:rgba(245,240,232,.55);
+  font-family:var(--cinzel);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:all .2s;
+}
+.btn-secondary:hover{border-color:rgba(184,150,90,.35);color:var(--gold);}
+
+/* ── SETUP ── */
 #screen-setup{background:var(--paper);overflow-y:auto;}
-.setup-header{background:var(--green);color:#fff;padding:18px 20px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;}
-.setup-header h1{font-size:1rem;font-weight:700;}
-.back-btn{width:36px;height:36px;border-radius:50%;border:1px solid rgba(255,255,255,0.3);background:transparent;color:#fff;cursor:pointer;font-size:1rem;}
-.setup-body{padding:20px;display:flex;flex-direction:column;gap:14px;padding-bottom:30px;max-width:480px;margin:0 auto;width:100%;}
-.setup-section{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--line);}
-.setup-section h3{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--green);margin-bottom:14px;}
-.lbl{font-size:0.78rem;color:var(--muted);margin-bottom:5px;display:block;}
-.inp{width:100%;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:0.9rem;font-family:var(--font);margin-bottom:10px;transition:border-color 0.15s;}
-.inp:focus{outline:none;border-color:var(--green);}
+.setup-header{
+  background:var(--gdark);padding:20px;
+  display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10;
+  border-bottom:1px solid rgba(184,150,90,.15);
+}
+.setup-header h1{font-family:var(--cinzel);font-size:13px;font-weight:500;letter-spacing:.12em;color:#f5f0e8;}
+.back-btn{
+  width:34px;height:34px;border-radius:50%;border:1px solid rgba(245,240,232,.2);
+  background:transparent;color:rgba(245,240,232,.7);cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;
+}
+.setup-body{padding:20px;display:flex;flex-direction:column;gap:16px;padding-bottom:40px;max-width:480px;margin:0 auto;width:100%;}
+.setup-section{
+  background:var(--card);border:1px solid var(--line);border-radius:3px;padding:20px;
+  box-shadow:0 2px 14px var(--sombra);position:relative;overflow:hidden;
+}
+.setup-section::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.45;
+}
+.setup-section h3{
+  font-family:var(--cinzel);font-size:8.5px;letter-spacing:.28em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:16px;
+}
+.lbl{font-family:var(--cinzel);font-size:8px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);display:block;margin-bottom:5px;}
+.inp{
+  width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:2px;
+  background:rgba(255,255,255,.5);color:var(--ink);
+  font-family:var(--font);font-size:16px;
+  outline:none;transition:border-color .2s;margin-bottom:12px;-webkit-appearance:none;
+}
+.inp:focus{border-color:var(--gold);}
 .inp:last-child{margin-bottom:0;}
 select.inp{cursor:pointer;}
-.save-btn{width:100%;padding:15px;background:var(--green);color:#fff;border:none;border-radius:14px;font-size:0.95rem;font-weight:700;font-family:var(--font);cursor:pointer;touch-action:manipulation;}
-/* DASHBOARD */
+.save-btn{
+  width:100%;padding:14px;border-radius:2px;border:none;
+  background:var(--gdark);color:#f5f0e8;
+  font-family:var(--cinzel);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:background .2s;
+}
+.save-btn:hover{background:var(--green);}
+
+/* ── DASHBOARD ── */
 #screen-dash{background:var(--paper);overflow-y:auto;}
-.dash-header{background:linear-gradient(160deg,var(--gdark),var(--green));padding:24px 20px 20px;}
-.dash-hogar{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);margin-bottom:4px;}
-.dash-title{font-size:1.5rem;font-weight:800;color:#fff;}
-.dash-body{padding:16px;display:flex;flex-direction:column;gap:12px;padding-bottom:80px;}
-.dash-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--line);box-shadow:0 2px 12px rgba(74,103,65,0.06);}
-.dash-card-title{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
-.wifi-big-card{background:linear-gradient(135deg,rgba(74,103,65,0.08),rgba(201,168,76,0.04));border:1.5px solid rgba(74,103,65,0.2);border-radius:18px;padding:16px;}
-.wifi-ssid-big{font-size:1.1rem;font-weight:700;color:var(--ink);margin-bottom:4px;}
-.wifi-pass-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-.wifi-pass-val{font-family:var(--mono);font-size:0.82rem;color:var(--muted);flex:1;}
-.wifi-copy-btn{padding:6px 12px;border-radius:8px;background:rgba(74,103,65,0.1);color:var(--green);border:1px solid rgba(74,103,65,0.2);font-size:0.72rem;cursor:pointer;font-family:var(--mono);touch-action:manipulation;}
+.dash-header{
+  background:linear-gradient(160deg,var(--gdark),#2d4a2d);
+  padding:32px 24px 24px;position:relative;overflow:hidden;
+}
+.dash-header::after{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+}
+.dash-hogar{font-family:var(--cinzel);font-size:8px;letter-spacing:.32em;color:var(--gold);opacity:.7;margin-bottom:6px;position:relative;z-index:1;}
+.dash-title{font-family:var(--cinzel);font-size:clamp(18px,5vw,24px);font-weight:500;color:#f5f0e8;position:relative;z-index:1;}
+.dash-body{padding:20px;display:flex;flex-direction:column;gap:14px;padding-bottom:88px;}
+.dash-card{
+  background:var(--card);border:1px solid var(--line);border-radius:3px;
+  padding:18px;box-shadow:0 2px 14px var(--sombra);position:relative;overflow:hidden;
+}
+.dash-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;
+}
+.dash-card-title{
+  font-family:var(--cinzel);font-size:8px;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:14px;
+}
+
+/* WiFi card */
+.wifi-big-card{
+  background:var(--card);border:1px solid var(--line);border-radius:3px;
+  padding:18px;box-shadow:0 2px 14px var(--sombra);position:relative;overflow:hidden;display:none;
+}
+.wifi-big-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:1.5px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;
+}
+.wifi-ssid-big{font-family:var(--cinzel);font-size:15px;color:var(--ink);margin-bottom:6px;}
+.wifi-pass-row{display:flex;align-items:center;gap:8px;margin-bottom:14px;}
+.wifi-pass-val{font-family:var(--mono);font-size:13px;color:var(--muted);flex:1;}
+.wifi-copy-btn{
+  padding:5px 12px;border-radius:2px;
+  background:var(--gsoft);color:var(--green);border:1px solid var(--line);
+  font-family:var(--cinzel);font-size:8px;letter-spacing:.12em;text-transform:uppercase;
+  cursor:pointer;
+}
 .wifi-actions-row{display:flex;gap:8px;}
-.wifi-qr-btn{flex:1;padding:11px;border-radius:12px;background:var(--green);color:#fff;border:none;font-size:0.85rem;font-weight:700;cursor:pointer;font-family:var(--font);touch-action:manipulation;}
-.wifi-share-btn{padding:11px 16px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:0.85rem;cursor:pointer;touch-action:manipulation;}
-.alerta-item{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);}
+.wifi-qr-btn{
+  flex:1;padding:12px;border-radius:2px;border:none;
+  background:var(--gdark);color:#f5f0e8;
+  font-family:var(--cinzel);font-size:10px;letter-spacing:.15em;text-transform:uppercase;
+  cursor:pointer;touch-action:manipulation;transition:background .2s;
+}
+.wifi-qr-btn:hover{background:var(--green);}
+.wifi-share-btn{
+  padding:12px 16px;border-radius:2px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);
+  font-family:var(--cinzel);font-size:10px;letter-spacing:.12em;
+  cursor:pointer;touch-action:manipulation;
+}
+
+/* Alertas */
+.alerta-item{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);}
 .alerta-item:last-child{border-bottom:none;}
-.alerta-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.alerta-icon.scan{background:rgba(74,103,65,0.1);}
-.alerta-icon.estoy{background:rgba(201,168,76,0.1);}
-.alerta-icon.ubi{background:rgba(64,145,108,0.1);}
+.alerta-icon{width:34px;height:34px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;}
+.alerta-icon.scan{background:rgba(74,103,65,.08);}
+.alerta-icon.estoy{background:rgba(184,150,90,.1);}
+.alerta-icon.ubi{background:rgba(64,145,108,.08);}
+.alerta-icon.sos{background:rgba(185,28,28,.08);}
 .alerta-info{flex:1;}
-.alerta-txt{font-size:0.82rem;color:var(--ink);}
-.alerta-hora{font-family:var(--mono);font-size:0.65rem;color:var(--muted);}
-.empty-state{font-style:italic;color:var(--muted);font-size:0.82rem;text-align:center;padding:10px 0;}
+.alerta-txt{font-size:15px;color:var(--ink);line-height:1.3;}
+.alerta-hora{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.empty-state{font-style:italic;color:var(--muted);font-size:14px;text-align:center;padding:12px 0;}
+
+/* Notas */
 .nota-item{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-bottom:1px solid var(--line);}
 .nota-item:last-child{border-bottom:none;}
-.nota-autor{font-family:var(--mono);font-size:0.65rem;color:var(--green);width:50px;flex-shrink:0;padding-top:2px;}
-.nota-texto{font-size:0.85rem;color:var(--ink);flex:1;line-height:1.4;}
-.nota-ts{font-family:var(--mono);font-size:0.6rem;color:var(--muted);flex-shrink:0;}
-.nota-del{color:var(--muted);cursor:pointer;background:none;border:none;font-size:0.85rem;padding:2px 4px;}
-.nota-add-row{display:flex;gap:8px;margin-top:10px;}
-.nota-add-inp{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--font);color:var(--ink);}
-.nota-add-inp:focus{outline:none;border-color:var(--green);}
-.nota-autor-inp{width:80px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--font);color:var(--ink);}
-.nota-add-btn{padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.85rem;touch-action:manipulation;}
-.fid-card{background:var(--card);border-radius:18px;padding:16px;border:1px solid var(--line);}
-.fid-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.fid-val{font-family:var(--mono);font-size:0.72rem;background:var(--gsoft);color:var(--green);padding:10px 12px;border-radius:10px;flex:1;word-break:break-all;}
-.fid-copy{padding:10px 14px;border-radius:10px;background:var(--green);color:#fff;border:none;cursor:pointer;font-size:0.78rem;flex-shrink:0;touch-action:manipulation;}
-.fid-hint{font-size:0.7rem;color:var(--muted);font-style:italic;line-height:1.5;}
-.tok-footer-home{text-align:center;padding:12px 16px 8px;display:flex;align-items:center;justify-content:center;gap:8px;}
-/* QR */
-.qr-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,0.75);backdrop-filter:blur(8px);z-index:100;align-items:flex-end;justify-content:center;}
+.nota-autor{font-family:var(--cinzel);font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);width:52px;flex-shrink:0;padding-top:3px;}
+.nota-texto{font-size:15px;color:var(--ink);flex:1;line-height:1.4;}
+.nota-ts{font-family:var(--mono);font-size:10px;color:var(--muted);flex-shrink:0;}
+.nota-del{color:var(--muted);cursor:pointer;background:none;border:none;font-size:14px;padding:2px 4px;opacity:.5;}
+.nota-del:hover{opacity:1;}
+.nota-add-row{display:flex;gap:8px;margin-top:14px;}
+.nota-add-inp,.nota-autor-inp{
+  padding:10px 12px;border-radius:2px;border:1px solid var(--line);
+  background:rgba(255,255,255,.5);font-size:15px;font-family:var(--font);color:var(--ink);
+  outline:none;transition:border-color .2s;
+}
+.nota-add-inp{flex:1;}
+.nota-add-inp:focus,.nota-autor-inp:focus{border-color:var(--gold);}
+.nota-autor-inp{width:80px;}
+.nota-add-btn{
+  padding:10px 14px;border-radius:2px;background:var(--gdark);color:#f5f0e8;
+  border:none;cursor:pointer;font-family:var(--cinzel);font-size:14px;touch-action:manipulation;
+}
+
+/* QR Modal */
+.qr-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,.78);backdrop-filter:blur(10px);z-index:100;align-items:flex-end;justify-content:center;}
 .qr-overlay.show{display:flex;}
-.qr-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:28px 24px 40px;width:100%;max-width:420px;text-align:center;}
-.qr-handle{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
-.qr-title{font-size:1.1rem;font-weight:700;margin-bottom:4px;}
-.qr-ssid-box{font-family:var(--mono);font-size:0.8rem;background:var(--gsoft);color:var(--green);padding:8px 16px;border-radius:8px;margin:12px 0;}
-#qr-canvas{border-radius:12px;margin:0 auto 16px;display:block;}
+.qr-sheet{
+  background:var(--paper);border-radius:3px 3px 0 0;
+  border-top:1px solid var(--line);border-left:1px solid var(--line);border-right:1px solid var(--line);
+  padding:28px 24px 44px;width:100%;max-width:420px;text-align:center;
+  box-shadow:0 -8px 40px rgba(26,46,26,.15);
+}
+.qr-handle{width:36px;height:3px;border-radius:2px;background:var(--line);margin:0 auto 24px;}
+.qr-title{font-family:var(--cinzel);font-size:15px;font-weight:500;color:var(--ink);margin-bottom:6px;}
+.qr-ssid-box{
+  font-family:var(--mono);font-size:13px;
+  background:var(--gsoft);color:var(--green);
+  padding:8px 16px;border-radius:2px;margin:12px 0;
+  border:1px solid var(--line);display:inline-block;
+}
+#qr-canvas{border-radius:2px;margin:0 auto 16px;display:block;}
 .qr-pass-row{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:16px;}
-.qr-pass-val{font-family:var(--mono);font-size:0.85rem;color:var(--ink);}
-.qr-close{padding:12px 28px;border-radius:20px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer;font-family:var(--font);}
+.qr-pass-val{font-family:var(--mono);font-size:14px;color:var(--ink);}
+.qr-close{
+  padding:10px 28px;border-radius:2px;border:1px solid var(--line);
+  background:transparent;color:var(--muted);cursor:pointer;font-family:var(--cinzel);
+  font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+}
+
 /* PIN */
-.pin-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,0.75);backdrop-filter:blur(10px);z-index:200;align-items:flex-end;justify-content:center;}
+.pin-overlay{display:none;position:fixed;inset:0;background:rgba(26,32,24,.82);backdrop-filter:blur(12px);z-index:200;align-items:flex-end;justify-content:center;}
 .pin-overlay.show{display:flex;}
-.pin-sheet{background:var(--card);border-radius:24px 24px 0 0;padding:24px 24px 40px;width:100%;max-width:420px;text-align:center;}
-.pin-handle{width:40px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 20px;}
-.pin-dots{display:flex;justify-content:center;gap:14px;margin-bottom:20px;}
-.pin-dot{width:12px;height:12px;border-radius:50%;border:1.5px solid var(--muted);transition:all 0.15s;}
-.pin-dot.filled{background:var(--green);border-color:var(--green);transform:scale(1.2);}
-.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:280px;margin:0 auto;}
-.pin-key{padding:15px;border-radius:12px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-size:1.1rem;font-family:var(--font);font-weight:600;cursor:pointer;touch-action:manipulation;}
+.pin-sheet{
+  background:var(--paper);border-radius:3px 3px 0 0;
+  border-top:1px solid var(--line);border-left:1px solid var(--line);border-right:1px solid var(--line);
+  padding:28px 24px 44px;width:100%;max-width:420px;text-align:center;
+}
+.pin-handle{width:36px;height:3px;border-radius:2px;background:var(--line);margin:0 auto 24px;}
+.pin-dots{display:flex;justify-content:center;gap:16px;margin-bottom:24px;}
+.pin-dot{width:11px;height:11px;border-radius:50%;border:1.5px solid var(--line);transition:all .15s;}
+.pin-dot.filled{background:var(--gold);border-color:var(--gold);transform:scale(1.2);}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:270px;margin:0 auto;}
+.pin-key{
+  padding:16px;border-radius:2px;border:1px solid var(--line);
+  background:rgba(255,255,255,.5);color:var(--ink);
+  font-family:var(--cinzel);font-size:16px;cursor:pointer;touch-action:manipulation;transition:background .1s;
+}
 .pin-key:active{background:var(--gsoft);}
-.pin-error{color:#c44;font-size:0.78rem;margin-top:10px;display:none;}
-.fab{position:fixed;bottom:20px;right:16px;width:52px;height:52px;border-radius:50%;background:var(--green);color:#fff;border:none;font-size:1.2rem;cursor:pointer;box-shadow:0 4px 16px rgba(74,103,65,0.4);z-index:10;touch-action:manipulation;}
-.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--ink);color:rgba(255,255,255,0.9);padding:10px 20px;border-radius:20px;font-size:0.82rem;z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;font-family:var(--mono);}
+.pin-error{color:#b91c1c;font-family:var(--cinzel);font-size:9px;letter-spacing:.15em;margin-top:12px;display:none;}
+
+/* FID card */
+.fid-card{background:var(--card);border:1px solid var(--line);border-radius:3px;padding:18px;box-shadow:0 2px 14px var(--sombra);position:relative;overflow:hidden;display:none;}
+.fid-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1.5px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.4;}
+.fid-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.fid-val{font-family:var(--mono);font-size:12px;background:var(--gsoft);color:var(--green);padding:10px 12px;border-radius:2px;flex:1;word-break:break-all;border:1px solid var(--line);}
+.fid-copy{padding:10px 14px;border-radius:2px;background:var(--gdark);color:#f5f0e8;border:none;cursor:pointer;font-family:var(--cinzel);font-size:9px;letter-spacing:.12em;flex-shrink:0;}
+.fid-hint{font-size:13px;font-style:italic;color:var(--muted);line-height:1.55;}
+
+/* FAB */
+.fab{
+  position:fixed;bottom:24px;right:20px;width:50px;height:50px;border-radius:2px;
+  background:var(--gdark);color:#f5f0e8;border:none;font-size:18px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(26,46,26,.3);z-index:10;touch-action:manipulation;
+  transition:background .2s;
+}
+.fab:hover{background:var(--green);}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+  background:var(--gdark);color:rgba(245,240,232,.9);
+  padding:10px 22px;border-radius:2px;
+  font-family:var(--cinzel);font-size:9px;letter-spacing:.18em;text-transform:uppercase;
+  z-index:300;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(26,46,26,.3);
+}
 .toast.show{opacity:1;}
-.tema-btn{width:36px;height:36px;border-radius:50%;cursor:pointer;border:3px solid transparent;transition:all 0.15s;touch-action:manipulation;}
-.tema-btn.active{border-color:var(--ink,#333);transform:scale(1.15);}
-.tema-label{font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:6px;text-align:center;display:block;}
+
+/* Temas */
+.tema-btn{width:34px;height:34px;border-radius:2px;cursor:pointer;border:2px solid transparent;transition:all .15s;touch-action:manipulation;}
+.tema-btn.active{border-color:var(--ink);transform:scale(1.15);}
+.tema-label{font-family:var(--cinzel);font-size:8px;letter-spacing:.18em;color:var(--muted);margin-top:8px;text-align:center;display:block;}
 .tema-grid{display:flex;gap:8px;flex-wrap:wrap;}
 </style>
 </head>
@@ -119,17 +304,10 @@ select.inp{cursor:pointer;}
 <div class="screen active" id="screen-splash">
   <div class="splash-wrap">
     <div class="splash-badge">TO-K HOME · BETA</div>
-    <div class="splash-icon">
-      <img src="https://tmstudio-hub.github.io/tok/Logos-To-k/home.svg" alt="TO-K HOME"
-        style="height:80px;filter:brightness(0) invert(1);animation:float 3s ease-in-out infinite;"
-        onerror="this.style.display='none'">
-    </div>
+    <div class="splash-icon"><img src="https://tmstudio-hub.github.io/tok/home.svg" alt="TO-K HOME" style="height:80px;filter:brightness(0) invert(1);animation:float 3s ease-in-out infinite;"></div>
     <div class="splash-title" id="splash-title">Cargando...</div>
     <div class="splash-sub" id="splash-sub">Conectando con tu hogar</div>
-    <div id="splash-loading">
-      <div class="spinner"></div>
-      <p style="font-family:var(--mono);font-size:0.8rem;color:rgba(255,255,255,0.4);">Cargando datos...</p>
-    </div>
+    <div id="splash-loading"><div class="spinner"></div><p style="font-family:var(--mono);font-size:0.8rem;color:rgba(255,255,255,0.4);">Cargando datos...</p></div>
     <div class="splash-btns" id="splash-btns" style="display:none;">
       <button class="btn-primary" onclick="irA('dash')">Entrar al hogar</button>
       <button class="btn-secondary" onclick="mostrarQR()">📶 WiFi para visitas</button>
@@ -184,7 +362,7 @@ select.inp{cursor:pointer;}
     <div class="setup-section">
       <h3>🎨 Tema de color</h3>
       <div class="tema-grid" id="tema-grid"></div>
-      <span class="tema-label" id="tema-label-actual"></span>
+      <span class="tema-label" id="tema-label-actual" style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;"></span>
     </div>
     <div class="setup-section">
       <h3>🔗 Redirección si no es NFC</h3>
@@ -203,6 +381,7 @@ select.inp{cursor:pointer;}
   </div>
   <div class="dash-body">
 
+    <!-- WiFi prominente arriba -->
     <div class="wifi-big-card" id="wifi-big-card" style="display:none;">
       <div class="dash-card-title">📶 WiFi del hogar</div>
       <div class="wifi-ssid-big" id="wifi-ssid-big">—</div>
@@ -216,6 +395,7 @@ select.inp{cursor:pointer;}
       </div>
     </div>
 
+    <!-- Alertas y escaneos en tiempo real -->
     <div class="dash-card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
         <div class="dash-card-title" style="margin:0;">🔔 Actividad familiar</div>
@@ -224,6 +404,7 @@ select.inp{cursor:pointer;}
       <div id="alertas-list"><div class="empty-state">Sin actividad reciente</div></div>
     </div>
 
+    <!-- Notas familiares -->
     <div class="dash-card">
       <div class="dash-card-title">📝 Notas de la familia</div>
       <div id="notas-list"><div class="empty-state">Sin notas aún — ¡deja el primer mensaje!</div></div>
@@ -234,24 +415,21 @@ select.inp{cursor:pointer;}
       </div>
     </div>
 
+    <!-- Código del hogar — al final -->
     <div class="fid-card" id="fid-card" style="display:none;">
       <div class="dash-card-title">🔑 Código del hogar</div>
       <div class="fid-row">
         <div class="fid-val" id="fid-display">—</div>
         <button class="fid-copy" onclick="copiarFID()">Copiar</button>
       </div>
-      <div class="fid-hint">Comparte este código con tu familia para conectar sus llaveros TO-K ONE, KIDS y PETS.</div>
+      <div class="fid-hint">Comparte este código con los miembros de tu familia para que conecten sus llaveros TO-K ONE, KIDS y PETS.</div>
     </div>
 
-    <div class="tok-footer-home">
-      <img src="https://tmstudio-hub.github.io/tok/Logos-To-k/tok.svg" alt="TO-K"
-        style="height:22px;opacity:0.4;" onerror="this.style.display='none'">
-      <a id="footer-link" href="https://linktr.ee/tallermemoriasstudio" target="_blank"
-        style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-decoration:none;letter-spacing:0.1em;">
-        <span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias
-      </a>
+    <div style="text-align:center;padding:6px 0 16px;">
+      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);letter-spacing:0.1em;">TO-K HOME BETA · El Taller de Memorias</div>
     </div>
-
+  </div>
+    <div id="tok-footer"><div style="text-align:center;padding:16px 0;display:flex;align-items:center;justify-content:center;gap:10px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:28px;opacity:0.5;" onerror="this.style.display='none'"><a href="https://linktr.ee/tallermemoriasstudio" target="_blank" style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);text-decoration:none;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias</a></div></div>
   </div>
   <button class="fab" onclick="mostrarPin(()=>irA('setup'))">⚙️</button>
 </div>
@@ -318,26 +496,27 @@ const params = new URLSearchParams(location.search);
 let FID = params.get('fid');
 let CFG = {};
 let pinInput = '', pinCB = null;
+// Cargar QRCode dinámicamente — compatible con módulos ES
 let qrLoaded = false;
-// ← CLAVE: flags para registrar onValue solo UNA VEZ
-let alertasListener = false, notasListener = false;
-
 function cargarQRCode(cb) {
+  // Si ya está disponible globalmente
   if(typeof window.QRCode !== 'undefined') { cb(); return; }
-  if(qrLoaded) { setTimeout(()=>{ if(typeof window.QRCode!=='undefined') cb(); else cb(); }, 300); return; }
+  if(qrLoaded) { setTimeout(()=>{ if(typeof window.QRCode!=='undefined') cb(); }, 200); return; }
   qrLoaded = true;
   const s = document.createElement('script');
   s.src = 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-  s.onload = () => setTimeout(cb, 60);
+  s.onload = () => { setTimeout(cb, 50); }; // pequeño delay para asegurar que QRCode está en window
   s.onerror = () => {
+    // Fallback: intentar con unpkg
     const s2 = document.createElement('script');
     s2.src = 'https://unpkg.com/qrcode@1.5.3/build/qrcode.min.js';
-    s2.onload = () => setTimeout(cb, 60);
+    s2.onload = () => setTimeout(cb, 50);
     document.head.appendChild(s2);
   };
   document.head.appendChild(s);
 }
 
+// ── TEMAS HOME ──
 const TEMAS = {
   dia:     { name:'☀️ Día',      c1:'#4A6741', c2:'#EBF2E9', c3:'#1E3A1A', bg:'#F5F7F4', dark:false },
   noche:   { name:'🌙 Noche',    c1:'#52B788', c2:'#1A2E23', c3:'#A8D5BA', bg:'#0D1F17', dark:true  },
@@ -349,34 +528,86 @@ const TEMAS = {
 function aplicarTema(t) {
   const tema = TEMAS[t] || TEMAS.dia;
   const r = document.documentElement.style;
-  r.setProperty('--green', tema.c1); r.setProperty('--gsoft', tema.c2);
-  r.setProperty('--gdark', tema.c3); r.setProperty('--paper', tema.bg);
+  r.setProperty('--green', tema.c1);
+  r.setProperty('--gsoft', tema.c2);
+  r.setProperty('--gdark', tema.c3);
+  r.setProperty('--paper', tema.bg);
   if(tema.dark) {
-    r.setProperty('--card','#1A2E23'); r.setProperty('--ink','#E8F5E8');
-    r.setProperty('--muted','#6A8A6A'); r.setProperty('--line','rgba(255,255,255,0.08)');
+    r.setProperty('--card', '#1A2E23');
+    r.setProperty('--ink', '#E8F5E8');
+    r.setProperty('--muted', '#6A8A6A');
+    r.setProperty('--line', 'rgba(255,255,255,0.08)');
   } else {
-    r.setProperty('--card','#FFFFFF'); r.setProperty('--ink','#1A2018');
-    r.setProperty('--muted','#8A9E86'); r.setProperty('--line','rgba(74,103,65,0.12)');
+    r.setProperty('--card', '#FFFFFF');
+    r.setProperty('--ink', '#1A2018');
+    r.setProperty('--muted', '#8A9E86');
+    r.setProperty('--line', 'rgba(74,103,65,0.12)');
   }
 }
 
 function renderTemaGrid() {
-  const grid = document.getElementById('tema-grid'); if(!grid) return;
-  grid.innerHTML = Object.entries(TEMAS).map(([k,t]) =>
-    `<button class="tema-btn ${CFG.tema===k?'active':''}" style="background:${t.c1};" onclick="selTema('${k}')" title="${t.name}"></button>`
-  ).join('');
+  const grid = document.getElementById('tema-grid');
+  if(!grid) return;
+  grid.innerHTML = Object.entries(TEMAS).map(([k,t]) => `
+    <button class="tema-btn ${CFG.tema===k?'active':''}" style="background:${t.c1};" onclick="selTema('${k}')" title="${t.name}"></button>`).join('');
   const lbl = document.getElementById('tema-label-actual');
   if(lbl) lbl.textContent = TEMAS[CFG.tema]?.name || '';
 }
-window.selTema = function(k){ CFG.tema=k; aplicarTema(k); renderTemaGrid(); }
 
+window.selTema = function(k) { CFG.tema=k; aplicarTema(k); renderTemaGrid(); }
+
+// ── NFC DETECTION ──
 function esNFC() {
   if(params.get('nfc')==='1') return true;
   return /Android|iPhone|iPad/i.test(navigator.userAgent) && !document.referrer;
 }
 
+// ── FOOTER ──
+function renderFooter() {
+  const url = CFG.redirect || 'https://linktr.ee/tallermemoriasstudio';
+  const html = `<div style="text-align:center;padding:8px 0;"><a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:monospace;letter-spacing:0.1em;"><span style="font-weight:800;color:var(--green);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const el = document.getElementById('tok-footer');
+  if(el) el.innerHTML = html;
+}
+
+window.activarCodigo = async function() {
+  const codigo = document.getElementById('codigo-activacion').value.trim().toUpperCase();
+  const errEl = document.getElementById('codigo-error');
+  errEl.style.display = 'none';
+
+  if(!codigo || codigo.length < 12) {
+    errEl.textContent = 'Introduce el código completo (TOK-XXXX-XXXX)';
+    errEl.style.display = 'block'; return;
+  }
+
+  try {
+    const snap = await get(ref(db, `activaciones/${codigo}`));
+    if(!snap.exists()) {
+      errEl.textContent = '❌ Código no encontrado. Comprueba que lo has escrito bien.';
+      errEl.style.display = 'block'; return;
+    }
+    const data = snap.val();
+    if(data.usado) {
+      errEl.textContent = '❌ Este código ya fue activado. Contacta con El Taller de Memorias.';
+      errEl.style.display = 'block'; return;
+    }
+    // Código válido → ir a setup
+    window._codigoActivacion = codigo;
+    irA('setup');
+  } catch(e) {
+    // Si Firebase falla, permitir continuar en modo beta sin código
+    console.warn('Firebase check failed, allowing anyway:', e);
+    window._codigoActivacion = codigo || 'BETA';
+    irA('setup');
+  }
+}
+
 async function init() {
-  if(!esNFC() && !FID) { window.location.replace('https://linktr.ee/tallermemoriasstudio'); return; }
+  // NFC check
+  if(!esNFC() && !FID) {
+    window.location.replace('https://linktr.ee/tallermemoriasstudio');
+    return;
+  }
   if(!FID) {
     document.getElementById('splash-loading').style.display = 'none';
     document.getElementById('splash-setup').style.display = 'block';
@@ -389,8 +620,7 @@ async function init() {
     if(snap.exists()) {
       CFG = snap.val();
       aplicarTema(CFG.tema||'dia');
-      // Actualizar footer link si hay redirect personalizado
-      if(CFG.redirect) document.getElementById('footer-link').href = CFG.redirect;
+      renderFooter();
       document.getElementById('splash-loading').style.display = 'none';
       document.getElementById('splash-btns').style.display = 'flex';
       document.getElementById('splash-title').textContent = (CFG.emoji||'🏠') + ' ' + CFG.nombre;
@@ -402,35 +632,33 @@ async function init() {
       document.getElementById('splash-sub').textContent = 'Configura tu TO-K HOME';
     }
   } catch(e) {
-    document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;font-family:monospace;font-size:0.8rem;">Error de conexión. Comprueba internet.</p>';
+    document.getElementById('splash-loading').innerHTML = '<p style="color:#f88;font-family:monospace;font-size:0.8rem;">Error de conexión</p>';
   }
 }
 
 window.irA = function(s) {
   document.querySelectorAll('.screen').forEach(x => x.classList.remove('active'));
   document.getElementById('screen-'+s).classList.add('active');
-  if(s === 'dash') iniciarDash();
+  if(s === 'dash') renderDash();
   if(s === 'setup') renderSetup();
 }
 
-function iniciarDash() {
+function renderDash() {
   document.getElementById('dash-title').textContent = (CFG.emoji||'🏠') + ' ' + (CFG.nombre||'Mi Hogar');
+  // WiFi prominente
   if(CFG.wifi?.ssid) {
     document.getElementById('wifi-big-card').style.display = 'block';
     document.getElementById('wifi-ssid-big').textContent = CFG.wifi.ssid;
     document.getElementById('wifi-pass-val').textContent = CFG.wifi.pass || '(sin contraseña)';
   }
+  // FID
   if(FID) {
     document.getElementById('fid-card').style.display = 'block';
     document.getElementById('fid-display').textContent = FID;
   }
-  // onValue una sola vez — si ya están registrados no se repite
-  if(FID && !alertasListener) {
-    alertasListener = true;
+  // Escuchar alertas en tiempo real
+  if(FID) {
     onValue(ref(db, `familias/${FID}/alertas`), snap => renderAlertas(snap.val()));
-  }
-  if(FID && !notasListener) {
-    notasListener = true;
     onValue(ref(db, `familias/${FID}/notas`), snap => renderNotasData(snap.val()));
   }
 }
@@ -442,33 +670,33 @@ function renderSetup() {
   document.getElementById('cfg-pass').value = CFG.wifi?.pass || '';
   document.getElementById('cfg-wtype').value = CFG.wifi?.type || 'WPA';
   document.getElementById('cfg-pin').value = '';
-  document.getElementById('cfg-redirect').value = CFG.redirect || '';
+  if(document.getElementById('cfg-redirect')) document.getElementById('cfg-redirect').value = CFG.redirect||'';
   renderTemaGrid();
 }
 
+// ALERTAS
 const ALERTA_ICONS = {
-  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑',
-  contacto_wa:'💬', contacto_sms:'✉️', contacto_telegram:'✈️'
+  scan:'🔔', estoy:'🙋', ubicacion:'📍', llavero:'🔑', contacto_wa:'💬', contacto_sms:'✉️'
 };
 const ALERTA_TEXTOS = {
-  scan:              n => `Chip escaneado · ${n||'familiar'}`,
-  estoy:             n => `Alguien está con ${n||'tu familiar'} y ha avisado`,
-  ubicacion:         n => `Ubicación enviada para ${n||'tu familiar'}`,
-  llavero:           n => `Llavero de ${n||'tu familiar'} encontrado`,
-  contacto_wa:       n => `WhatsApp enviado para ${n||'tu familiar'}`,
-  contacto_sms:      n => `SMS enviado para ${n||'tu familiar'}`,
-  contacto_telegram: n => `Telegram enviado para ${n||'tu familiar'}`,
+  scan: n => `Se escaneó el chip de ${n||'tu familiar'}`,
+  estoy: n => `Alguien está con ${n||'tu familiar'} y ha avisado`,
+  ubicacion: n => `Ubicación enviada para ${n||'tu familiar'}`,
+  llavero: n => `Llavero de ${n||'tu familiar'} encontrado`,
+  contacto_wa: n => `Contacto vía WhatsApp para ${n||'tu familiar'}`,
+  contacto_sms: n => `Contacto vía SMS para ${n||'tu familiar'}`,
 };
 
 function renderAlertas(data) {
   const list = document.getElementById('alertas-list');
   if(!data) { list.innerHTML = '<div class="empty-state">Sin actividad reciente</div>'; return; }
-  const alertas = Object.entries(data).sort((a,b) => (b[1].ts||0)-(a[1].ts||0)).slice(0,15);
+  const alertas = Object.entries(data).sort((a,b) => (b[1].ts||0)-(a[1].ts||0)).slice(0,10);
   list.innerHTML = alertas.map(([id,a]) => {
     const tipo = a.tipo || 'scan';
-    const icon = ALERTA_ICONS[tipo] || '🔔';
-    const cls  = tipo==='estoy'?'estoy':tipo==='ubicacion'?'ubi':'scan';
-    const txt  = (ALERTA_TEXTOS[tipo]||(n=>`Actividad: ${tipo}`))(a.nombre||'');
+    const base = tipo.startsWith('contacto') ? 'contacto_'+tipo.split('_')[1] : tipo;
+    const icon = ALERTA_ICONS[base] || '🔔';
+    const cls = tipo==='estoy'?'estoy':tipo==='ubicacion'?'ubi':tipo.includes('contacto')?'scan':'scan';
+    const txt = (ALERTA_TEXTOS[base]||((n)=>`Actividad: ${tipo}`))(a.nombre||'');
     return `<div class="alerta-item">
       <div class="alerta-icon ${cls}">${icon}</div>
       <div class="alerta-info">
@@ -485,6 +713,7 @@ window.limpiarAlertas = async function() {
   toast('Actividad limpiada');
 }
 
+// NOTAS
 function renderNotasData(data) {
   const list = document.getElementById('notas-list');
   if(!data) { list.innerHTML = '<div class="empty-state">Sin notas aún — ¡deja el primer mensaje!</div>'; return; }
@@ -519,44 +748,28 @@ window.delNota = async function(id) {
   await remove(ref(db, `familias/${FID}/notas/${id}`));
 }
 
-window.activarCodigo = async function() {
-  const codigo = document.getElementById('codigo-activacion').value.trim().toUpperCase();
-  const errEl = document.getElementById('codigo-error');
-  errEl.style.display = 'none';
-  if(!codigo || codigo.length < 12) {
-    errEl.textContent = 'Introduce el código completo (TOK-XXXX-XXXX)';
-    errEl.style.display = 'block'; return;
-  }
-  try {
-    const snap = await get(ref(db, `activaciones/${codigo}`));
-    if(!snap.exists()) { errEl.textContent='❌ Código no encontrado.'; errEl.style.display='block'; return; }
-    if(snap.val().usado) { errEl.textContent='❌ Código ya activado. Contacta con El Taller de Memorias.'; errEl.style.display='block'; return; }
-    window._codigoActivacion = codigo;
-    irA('setup');
-  } catch(e) {
-    window._codigoActivacion = codigo || 'BETA';
-    irA('setup');
-  }
-}
-
+// CONFIG
 window.guardarConfig = async function() {
-  const nombre   = document.getElementById('cfg-nombre').value.trim() || 'Mi Hogar';
-  const emoji    = document.getElementById('cfg-emoji').value.trim() || '🏠';
-  const ssid     = document.getElementById('cfg-ssid').value.trim();
-  const pass     = document.getElementById('cfg-pass').value;
-  const wtype    = document.getElementById('cfg-wtype').value;
-  const pin      = document.getElementById('cfg-pin').value || CFG.pin || '1234';
-  const redirect = document.getElementById('cfg-redirect').value.trim();
+  const nombre = document.getElementById('cfg-nombre').value.trim() || 'Mi Hogar';
+  const emoji  = document.getElementById('cfg-emoji').value.trim() || '🏠';
+  const ssid   = document.getElementById('cfg-ssid').value.trim();
+  const pass   = document.getElementById('cfg-pass').value;
+  const wtype  = document.getElementById('cfg-wtype').value;
+  const pin    = document.getElementById('cfg-pin').value || CFG.pin || '1234';
+  const redirect = document.getElementById('cfg-redirect')?.value.trim() || '';
   CFG = {...CFG, nombre, emoji, pin, redirect, tema:CFG.tema||'dia', wifi:{ssid,pass,type:wtype}};
   aplicarTema(CFG.tema);
-  if(CFG.redirect) document.getElementById('footer-link').href = CFG.redirect;
+  renderFooter();
   if(!FID) {
     const newRef = push(ref(db, 'familias'));
     FID = newRef.key;
     await set(ref(db, `familias/${FID}/hogar`), CFG);
+    // Marcar código de activación como usado
     if(window._codigoActivacion && window._codigoActivacion !== 'BETA') {
       await set(ref(db, `activaciones/${window._codigoActivacion}`), {
-        usado: true, familia_id: FID, fecha_activacion: new Date().toISOString()
+        usado: true,
+        familia_id: FID,
+        fecha_activacion: new Date().toISOString()
       });
     }
     const newUrl = location.origin + location.pathname + '?fid=' + FID;
@@ -570,6 +783,7 @@ window.guardarConfig = async function() {
   irA('dash');
 }
 
+// QR WIFI
 window.mostrarQR = function() {
   if(!CFG.wifi?.ssid) { toast('Configura el WiFi primero'); return; }
   document.getElementById('qr-title').textContent = (CFG.nombre||'Hogar') + ' · WiFi';
@@ -579,23 +793,43 @@ window.mostrarQR = function() {
   const canvas = document.getElementById('qr-canvas');
   const wifiStr = `WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
   cargarQRCode(() => {
-    if(typeof window.QRCode === 'undefined') { toast('QR no disponible'); return; }
+    if(typeof window.QRCode === 'undefined') {
+      canvas.getContext('2d').fillText('QR no disponible', 10, 100);
+      return;
+    }
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    window.QRCode.toCanvas(canvas, wifiStr, {width:200,margin:2,color:{dark:'#1A2018',light:'#ffffff'}}, err=>{if(err) console.error(err);});
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    window.QRCode.toCanvas(canvas, wifiStr, {
+      width:200, margin:2,
+      color:{ dark:'#1A2018', light:'#ffffff' }
+    }, err => { if(err) console.error('QR error:', err); });
   });
 }
 
-window.copiarPass = function(){ navigator.clipboard?.writeText(CFG.wifi?.pass||'').then(()=>toast('✓ Contraseña copiada')); }
-window.compartirWifi = function(){
-  if(navigator.share && CFG.wifi?.ssid) navigator.share({title:'WiFi de casa',text:`Red: ${CFG.wifi.ssid}\nContraseña: ${CFG.wifi.pass}`});
-  else copiarPass();
+window.copiarPass = function() {
+  const pass = CFG.wifi?.pass || '';
+  navigator.clipboard?.writeText(pass).then(() => toast('✓ Contraseña copiada'));
 }
-window.copiarFID = function(){ if(FID) navigator.clipboard?.writeText(FID).then(()=>toast('✓ Código copiado')); }
 
-window.mostrarPin = function(cb){ pinCB=cb; pinInput=''; actualizarDots(); document.getElementById('pin-error').style.display='none'; document.getElementById('pin-overlay').classList.add('show'); }
-window.cerrarPin = function(){ document.getElementById('pin-overlay').classList.remove('show'); pinInput=''; }
-window.pinKey = function(k){
+window.compartirWifi = function() {
+  if(navigator.share && CFG.wifi?.ssid) {
+    navigator.share({title:'WiFi de casa', text:`Red: ${CFG.wifi.ssid}\nContraseña: ${CFG.wifi.pass}`});
+  } else { copiarPass(); }
+}
+
+window.copiarFID = function() {
+  if(FID) navigator.clipboard?.writeText(FID).then(() => toast('✓ Código copiado'));
+}
+
+// PIN
+window.mostrarPin = function(cb) {
+  pinCB=cb; pinInput='';
+  actualizarDots();
+  document.getElementById('pin-error').style.display='none';
+  document.getElementById('pin-overlay').classList.add('show');
+}
+window.cerrarPin = function() { document.getElementById('pin-overlay').classList.remove('show'); pinInput=''; }
+window.pinKey = function(k) {
   if(k==='del'){pinInput=pinInput.slice(0,-1);actualizarDots();return;}
   if(pinInput.length>=4) return;
   pinInput+=k; actualizarDots();
@@ -604,7 +838,7 @@ window.pinKey = function(k){
     else{document.getElementById('pin-error').style.display='block';pinInput='';actualizarDots();}
   },200);
 }
-function actualizarDots(){for(let i=0;i<4;i++) document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
+function actualizarDots(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('filled',i<pinInput.length);}
 window.toast = function(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);}
 
 init();
