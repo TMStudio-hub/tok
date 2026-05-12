@@ -804,20 +804,25 @@ window.mostrarQR = function() {
   document.getElementById('qr-pass-disp').textContent = CFG.wifi.pass || '(sin contraseña)';
   document.getElementById('qr-overlay').classList.add('show');
   const canvas = document.getElementById('qr-canvas');
-  const wifiStr = `WIFI:T:${CFG.wifi.type};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
-  if(typeof window.QRCode === 'undefined') {
-    const ctx = canvas.getContext('2d');
-    ctx.fillStyle = '#1A2018';
-    ctx.font = '13px monospace';
-    ctx.fillText('QR no disponible', 10, 100);
-    return;
-  }
+  const wifiStr = `WIFI:T:${CFG.wifi.type||'WPA'};S:${CFG.wifi.ssid};P:${CFG.wifi.pass};;`;
+  // Limpiar canvas mientras carga
   const ctx = canvas.getContext('2d');
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  window.QRCode.toCanvas(canvas, wifiStr, {
-    width:200, margin:2,
-    color:{ dark:'#1A2018', light:'#ffffff' }
-  }, err => { if(err) console.error('QR error:', err); });
+  // Garantizar que la librería está cargada antes de renderizar
+  cargarQRCode(() => {
+    if(typeof window.QRCode === 'undefined') {
+      ctx.fillStyle = '#1A2018';
+      ctx.font = '13px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('QR no disponible', canvas.width/2, canvas.height/2);
+      return;
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    window.QRCode.toCanvas(canvas, wifiStr, {
+      width: 200, margin: 2,
+      color: { dark: '#1A2018', light: '#ffffff' }
+    }, err => { if(err) console.error('QR error:', err); });
+  });
 }
 
 window.copiarPass = function() {
