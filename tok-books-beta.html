@@ -593,6 +593,34 @@ const GOOGLE_SEARCH_TIMEOUT_MS = 2500;
 const SEARCH_SLOW_HINT_MS = 2600;
 const SEARCH_CACHE_KEY = 'tok_books_catalog_cache_v1';
 const SEARCH_CACHE_LIMIT = 160;
+const STARTER_BOOKS_CATALOG = [
+  { title:'El Principito', author:'Antoine de Saint-Exupéry', pages:96, cachedAt:1 },
+  { title:'La historia interminable', author:'Michael Ende', pages:420, cachedAt:1 },
+  { title:'Momo', author:'Michael Ende', pages:304, cachedAt:1 },
+  { title:'Matilda', author:'Roald Dahl', pages:240, cachedAt:1 },
+  { title:'Charlie y la fábrica de chocolate', author:'Roald Dahl', pages:208, cachedAt:1 },
+  { title:'Coraline', author:'Neil Gaiman', pages:192, cachedAt:1 },
+  { title:'Wonder', author:'R. J. Palacio', pages:320, cachedAt:1 },
+  { title:'El hobbit', author:'J. R. R. Tolkien', pages:320, cachedAt:1 },
+  { title:'Alicia en el País de las Maravillas', author:'Lewis Carroll', pages:160, cachedAt:1 },
+  { title:'Peter Pan', author:'J. M. Barrie', pages:224, cachedAt:1 },
+  { title:'El alquimista', author:'Paulo Coelho', pages:192, cachedAt:1 },
+  { title:'Manolito Gafotas', author:'Elvira Lindo', pages:192, cachedAt:1 },
+  { title:'El monstruo de colores', author:'Anna Llenas', pages:48, cachedAt:1 },
+  { title:'Elmer', author:'David McKee', pages:32, cachedAt:1 },
+  { title:'Diary of a Wimpy Kid', author:'Jeff Kinney', pages:224, cachedAt:1 },
+  { title:'El diario de Greg', author:'Jeff Kinney', pages:224, cachedAt:1 },
+  { title:'The Name of the Wind', author:'Patrick Rothfuss', pages:662, cachedAt:1 },
+  { title:'The Wise Man\'s Fear', author:'Patrick Rothfuss', pages:994, cachedAt:1 },
+  { title:'Harry Potter and the Philosopher\'s Stone', author:'J. K. Rowling', pages:223, cachedAt:1 },
+  { title:'Harry Potter and the Chamber of Secrets', author:'J. K. Rowling', pages:251, cachedAt:1 },
+  { title:'Harry Potter and the Prisoner of Azkaban', author:'J. K. Rowling', pages:317, cachedAt:1 },
+  { title:'Harry Potter y la piedra filosofal', author:'J. K. Rowling', pages:254, cachedAt:1 },
+  { title:'Harry Potter y la cámara secreta', author:'J. K. Rowling', pages:286, cachedAt:1 },
+  { title:'Harry Potter y el prisionero de Azkaban', author:'J. K. Rowling', pages:360, cachedAt:1 },
+  { title:'Percy Jackson y el ladrón del rayo', author:'Rick Riordan', pages:288, cachedAt:1 },
+  { title:'Percy Jackson and the Lightning Thief', author:'Rick Riordan', pages:377, cachedAt:1 },
+];
 
 let DATA = { total:0, anual:0, puntos:0, libros:[], listaWish:[], listaDone:[] };
 let lang = 'es';
@@ -1092,6 +1120,7 @@ function buscarCatalogoLocal(q) {
   if(!normalizedQ) return [];
   const tokens = normalizedQ.split(' ').filter(Boolean);
   const mergedLocal = mezclarResultadosLibros(
+    STARTER_BOOKS_CATALOG,
     leerCacheCatalogoBooks(),
     DATA.libros || [],
     DATA.listaWish || [],
@@ -1186,7 +1215,7 @@ function mezclarResultadosLibros(...sources) {
       cachedAt: Math.max(prev.cachedAt || 0, item.cachedAt || 0),
     });
   }
-  return Array.from(merged.values()).slice(0, 8).map((item, idx) => ({ ...item, id: Date.now() + idx }));
+  return Array.from(merged.values()).map((item, idx) => ({ ...item, id: Date.now() + idx }));
 }
 
 async function enriquecerLibroPaginas(libro) {
@@ -1279,7 +1308,7 @@ window.buscarLibro = async function() {
     }
     clearTimeout(slowHintTimer);
     if(window._booksSearchRun !== searchRun) return;
-    const results = mezclarResultadosLibros(localResults, openResults, googleResults);
+    const results = mezclarResultadosLibros(localResults, openResults, googleResults).slice(0, 8);
     loading.style.display='none';
     loading.textContent='Buscando...';
     if(!results.length) {
