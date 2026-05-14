@@ -150,10 +150,12 @@ body::before{
 .btn-sms{background:#5856D6;color:#fff;}
 .btn-loc{background:#40916C;color:#fff;}
 .fam-access-btn{
-  width:100%;padding:10px;border-radius:2px;border:1px solid var(--line);
-  background:transparent;color:var(--muted);font-family:var(--cinzel);
+  width:100%;padding:10px 14px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(255,255,255,.7);color:var(--c3);font-family:var(--cinzel);
   font-size:8px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;margin-top:8px;
+  box-shadow:0 8px 18px var(--sombra);transition:transform .15s,border-color .15s,background .15s;
 }
+.fam-access-btn:hover{border-color:rgba(200,152,106,.32);background:#fff;transform:translateY(-1px);}
 
 /* ── LLAVERO ── */
 #screen-llavero{background:var(--bg);align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
@@ -434,10 +436,10 @@ body::before{
     <div style="font-size:1.3rem;font-weight:700;color:var(--c3);margin-bottom:8px;" id="llavero-title">Llavero TO-K PETS</div>
     <div style="font-size:0.85rem;color:var(--muted);margin-bottom:24px;" id="llavero-msg">Contacta con el dueño para devolvérselo.</div>
     <div style="display:flex;flex-direction:column;gap:8px;width:100%;">
-      <button class="btn-sos btn-call" onclick="llamar()" style="border-radius:14px;">📞 <span id="llavero-call">Llamar al dueño</span></button>
-      <button class="btn-sos btn-wa" onclick="enviarMsg('wa')" style="border-radius:14px;">💬 <span id="llavero-wa">WhatsApp al dueño</span></button>
-      <button class="btn-sos btn-sms" onclick="enviarMsg('sms')" style="border-radius:14px;">✉️ Enviar SMS</button>
-      <button class="btn-sos btn-loc" onclick="enviarUbicacion()" style="border-radius:14px;">📍 Enviar mi ubicación</button>
+      <button class="btn-sos btn-call" onclick="llamar()" style="border-radius:3px;">📞 <span id="llavero-call">Llamar al dueño</span></button>
+      <button class="btn-sos btn-wa" onclick="enviarMsg('wa')" style="border-radius:3px;">💬 <span id="llavero-wa">WhatsApp al dueño</span></button>
+      <button class="btn-sos btn-sms" onclick="enviarMsg('sms')" style="border-radius:3px;">✉️ Enviar SMS</button>
+      <button class="btn-sos btn-loc" onclick="enviarUbicacion()" style="border-radius:3px;">📍 Enviar mi ubicación</button>
     </div>
     <button class="fam-access-btn" onclick="mostrarPin(()=>irA('bitacora'))" style="margin-top:12px;width:100%;">🔒 Acceso familiar</button>
     <div class="tok-footer-pets" style="margin-top:16px;text-align:center;"></div>
@@ -474,7 +476,7 @@ body::before{
       </div>
       <div id="salud-list"></div>
     </div>
-    <button onclick="mostrarPin(()=>irA('config'))" style="width:100%;padding:14px;border-radius:14px;background:var(--c1);color:#fff;border:none;font-weight:700;cursor:pointer;touch-action:manipulation;">⚙️ Configurar TO-K PETS</button>
+    <button onclick="mostrarPin(()=>irA('config'))" style="width:100%;padding:14px;border-radius:3px;background:var(--c1);color:#fff;border:none;font-weight:700;cursor:pointer;touch-action:manipulation;">⚙️ Configurar TO-K PETS</button>
   </div>
 </div>
 
@@ -504,7 +506,7 @@ body::before{
         </div>
       </div>
       <span class="lbl">Nombre</span>
-      <input class="inp" id="cfg-nombre" placeholder="Kovu, Luna, Toby...">
+      <input class="inp" id="cfg-nombre" placeholder="Nombre visible de tu mascota">
       <span class="lbl">Raza / descripción</span>
       <input class="inp" id="cfg-raza" placeholder="Labrador dorado, 3 años" style="margin-bottom:0;">
     </div>
@@ -524,7 +526,7 @@ body::before{
       <span class="lbl">WhatsApp</span>
       <input class="inp" id="cfg-wa" type="tel" placeholder="+34 600 000 000">
       <span class="lbl">Nombre en el collar</span>
-      <input class="inp" id="cfg-llavero-nombre" placeholder="Kovu, mascota de los García" style="margin-bottom:0;">
+      <input class="inp" id="cfg-llavero-nombre" placeholder="Nombre y referencia de contacto" style="margin-bottom:0;">
     </div>
     <div class="cfg-section">
       <h3>🎨 Tema de color</h3>
@@ -532,7 +534,7 @@ body::before{
       <span id="tema-label-pets" style="font-size:0.65rem;color:var(--muted);margin-top:6px;display:block;text-align:center;font-family:var(--mono);"></span>
     </div>
     <div class="cfg-section">
-      <h3>🔗 Si no se escanea por NFC</h3>
+      <h3>🔗 Enlace alternativo si el NFC no abre</h3>
       <span class="lbl">URL de redirección</span>
       <input class="inp" id="cfg-redirect" type="url" placeholder="https://tuinstagram.com/..." style="margin-bottom:0;">
     </div>
@@ -571,8 +573,8 @@ body::before{
   <div style="font-size:0.9rem;font-weight:700;color:var(--c3);margin-bottom:8px;">📍 ¿Enviamos tu ubicación al dueño?</div>
   <div style="font-size:0.78rem;color:var(--muted);margin-bottom:12px;">Le ayudará a encontrarte más rápido</div>
   <div style="display:flex;gap:8px;">
-    <button onclick="confirmarUbicacion()" style="flex:1;padding:10px;border-radius:10px;background:var(--c1);color:#fff;border:none;font-weight:700;cursor:pointer;touch-action:manipulation;">Sí, enviar</button>
-    <button onclick="document.getElementById('ubi-prompt').style.display='none'" style="flex:1;padding:10px;border-radius:10px;background:#f5f5f5;color:#666;border:none;cursor:pointer;">Ahora no</button>
+    <button onclick="confirmarUbicacion()" style="flex:1;padding:10px;border-radius:3px;background:var(--c1);color:#fff;border:none;font-weight:700;cursor:pointer;touch-action:manipulation;">Sí, enviar</button>
+    <button onclick="document.getElementById('ubi-prompt').style.display='none'" style="flex:1;padding:10px;border-radius:3px;background:#f5f5f5;color:#666;border:none;cursor:pointer;">Ahora no</button>
   </div>
 </div>
 
@@ -678,9 +680,9 @@ async function activarPetsDirecto(token) {
   if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
 
   const assetSnap = await get(ref(db, `admin/assets/${AID}`));
-  if(!assetSnap.exists()) throw new Error('Este TO-K PETS no tiene AID válido. Reprograma el chip.');
+  if(!assetSnap.exists()) throw new Error('Este TO-K PETS no tiene identificador válido. Reprograma la pieza.');
   const assetData = assetSnap.val() || {};
-  if((assetData.productType || '').toUpperCase() !== 'PETS') throw new Error('El AID escaneado no corresponde a un TO-K PETS.');
+  if((assetData.productType || '').toUpperCase() !== 'PETS') throw new Error('La pieza identificada no corresponde a un TO-K PETS.');
   if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K PETS ya fue activado.');
   if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K PETS.');
 
@@ -800,7 +802,7 @@ window.selTema=function(k){CFG.tema=k;aplicarTemaP(k);renderTemaGridP();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterP(){
   const url=CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.62rem;font-family:var(--mono);letter-spacing:0.12em;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:22px;opacity:0.48;" onerror="this.style.display='none'"><span>El Taller de Memorias</span></a>`;
   document.querySelectorAll('.tok-footer-pets').forEach(el=>el.innerHTML=html);
 }
 
@@ -861,7 +863,7 @@ window.conectarFID=async function(){
 window.activarPetsRegalo = async function() {
   const token = (document.getElementById('gift-token-input-pets')?.value || '').trim().toUpperCase();
   const btn = document.getElementById('gift-activate-btn-pets');
-  if(!AID) { setGiftStatusPets('Este TO-K PETS no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!AID) { setGiftStatusPets('Este TO-K PETS no incluye identificador válido. Reprograma la pieza antes de entregarlo.', true); return; }
   if(!token) { setGiftStatusPets('Introduce el token familiar incluido con el regalo.', true); return; }
   setGiftStatusPets('Activando TO-K PETS...');
   if(btn) btn.disabled = true;

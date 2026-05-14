@@ -422,7 +422,7 @@ body::before{
     <div id="setup-books-copy" style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Si este es tu primer TO-K, activa tu biblioteca con el token incluido.<br>Si ya tienes hogar, conecta con tu código familiar.</div>
     <div id="gift-activation-box" style="display:none;background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--burdeos);margin-bottom:12px;">Activar este regalo</div>
-      <div style="font-size:0.78rem;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.6;">Usa el token familiar que viene con tu <strong>TO-K BOOKS</strong>. Este chip ya incluye su identificador de regalo.</div>
+      <div style="font-size:0.78rem;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.6;">Usa el token familiar que viene con tu <strong>TO-K BOOKS</strong>. La pieza ya viene identificada para activar tu biblioteca.</div>
       <input id="gift-token-input" class="fid-inp" type="text" placeholder="TOK-XXXX-XXXX" oninput="this.value=this.value.trim().toUpperCase()">
       <button id="gift-activate-btn" class="fid-btn" onclick="activarBooksRegalo()">Activar mi biblioteca →</button>
       <div id="gift-activation-status" style="display:none;margin-top:10px;font-size:0.72rem;font-family:var(--mono);line-height:1.55;"></div>
@@ -443,7 +443,7 @@ body::before{
     <div style="display:none;font-family:var(--cinzel);font-size:1.3rem;letter-spacing:0.08em;color:var(--ink);margin-bottom:18px;">TO-K BOOKS</div>
     <div class="books-welcome-title">Ponle nombre a tu biblioteca</div>
     <div class="books-welcome-copy">Será lo primero que veas al entrar y también aparecerá en tus avisos de lectura.</div>
-    <input id="welcome-name-books" class="fid-inp" type="text" placeholder="Ana, Juan, Marta..." onkeydown="if(event.key==='Enter')guardarNombreInicialBooks()">
+    <input id="welcome-name-books" class="fid-inp" type="text" placeholder="Tu nombre o el de tu biblioteca" onkeydown="if(event.key==='Enter')guardarNombreInicialBooks()">
     <button class="fid-btn" onclick="guardarNombreInicialBooks()">Entrar a mi biblioteca →</button>
     <div class="books-welcome-note">Podrás cambiar el nombre y el tema más tarde desde ajustes.</div>
   </div>
@@ -533,7 +533,7 @@ body::before{
   <div class="cfg-body">
     <div class="cfg-section">
       <h3>👤 Tu nombre</h3>
-      <input id="cfg-nombre-books" type="text" class="inp" placeholder="Ana, Juan, Marta..."
+      <input id="cfg-nombre-books" type="text" class="inp" placeholder="Tu nombre o el nombre de tu biblioteca"
         oninput="DATA.nombre=this.value.trim();guardar();actualizarHeaderBooks();">
     </div>
     <div class="cfg-section">
@@ -542,7 +542,7 @@ body::before{
       <span id="tema-label-books" style="font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:8px;display:block;text-align:center;"></span>
     </div>
     <div class="cfg-section">
-      <h3>🔗 Si no se escanea por NFC</h3>
+      <h3>🔗 Enlace alternativo si el NFC no abre</h3>
       <input type="url" id="cfg-redirect-books" class="inp" placeholder="https://tuinstagram.com/..."
         onchange="DATA.redirect=this.value;guardar();">
     </div>
@@ -655,7 +655,7 @@ window.selTemaB=function(k){DATA.tema=k;aplicarTemaB(k);renderTemaGridB();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterB(){
   const url=DATA.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<a class="books-footer-brand" href="${url}" target="_blank" rel="noopener"><img class="books-footer-logo" src="https://tm-ops-44e43.web.app/El%20Taller%20de%20memorias.png" alt="El Taller de Memorias" onerror="this.style.display='none'"><span>By El Taller de Memorias</span></a>`;
+  const html=`<a class="books-footer-brand" href="${url}" target="_blank" rel="noopener" style="gap:10px;flex-direction:row;"><img class="books-footer-logo" src="https://tm-ops-44e43.web.app/El%20Taller%20de%20memorias.png" alt="El Taller de Memorias" onerror="this.style.display='none'"><span>El Taller de Memorias</span></a>`;
   const el=document.getElementById('tok-footer-books');if(el)el.innerHTML=html;
 }
 
@@ -729,9 +729,9 @@ async function activarBooksDirecto(token) {
   if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto. Necesita activación asistida.');
 
   const assetSnap = await get(ref(db, `admin/assets/${AID}`));
-  if(!assetSnap.exists()) throw new Error('Este TO-K BOOKS no tiene AID válido. Reprograma el chip.');
+  if(!assetSnap.exists()) throw new Error('Este TO-K BOOKS no tiene identificador válido. Reprograma la pieza.');
   const assetData = assetSnap.val() || {};
-  if((assetData.productType || '').toUpperCase() !== 'BOOKS') throw new Error('El AID escaneado no corresponde a un TO-K BOOKS.');
+  if((assetData.productType || '').toUpperCase() !== 'BOOKS') throw new Error('La pieza identificada no corresponde a un TO-K BOOKS.');
   if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K BOOKS ya fue activado.');
   if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K BOOKS.');
 
@@ -936,7 +936,7 @@ window.conectarFID = async function() {
 window.activarBooksRegalo = async function() {
   const token = (document.getElementById('gift-token-input')?.value || '').trim().toUpperCase();
   const btn = document.getElementById('gift-activate-btn');
-  if(!AID) { setGiftStatus('Este TO-K BOOKS no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!AID) { setGiftStatus('Este TO-K BOOKS no incluye identificador válido. Reprograma la pieza antes de entregarlo.', true); return; }
   if(!token) { setGiftStatus('Introduce el token familiar incluido con el regalo.', true); return; }
 
   setGiftStatus('Activando biblioteca...');

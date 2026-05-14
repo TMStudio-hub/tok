@@ -338,12 +338,16 @@ body::before{
 <!-- PRIMERA VEZ — pedir código familiar -->
 <div class="screen" id="screen-setup-fid" style="background:var(--paper);align-items:center;justify-content:center;padding:30px;">
   <div style="max-width:340px;width:100%;text-align:center;">
-    <div style="font-size:3rem;margin-bottom:16px;">👋</div>
-    <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">Bienvenido a TO-K ONE</div>
-    <div id="setup-one-copy" style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Si este es tu primer TO-K, actívalo desde aquí con el token familiar incluido.<br>Si ya tienes hogar, conecta tu código familiar.</div>
+    <div style="margin-bottom:18px;">
+      <img src="https://tmstudio-hub.github.io/tok/one.svg" alt="TO-K ONE" style="height:72px;"
+        onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+      <div style="display:none;font-family:var(--cinzel);font-size:1.4rem;letter-spacing:0.12em;color:var(--ink);">TO-K ONE</div>
+    </div>
+    <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">Tu perfil TO-K</div>
+    <div id="setup-one-copy" style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Si este es tu primer TO-K, activa tu perfil con el token familiar incluido.<br>Si ya tienes hogar, conecta tu código familiar.</div>
     <div id="gift-activation-box-one" style="display:none;background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--violet);margin-bottom:12px;">Activar este regalo</div>
-      <div style="font-size:0.78rem;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.6;">Usa el token familiar que acompaña a este <strong>TO-K ONE</strong>. El chip ya lleva su identificador de pieza.</div>
+      <div style="font-size:0.78rem;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.6;">Usa el token familiar que acompaña a este <strong>TO-K ONE</strong>. La pieza ya viene identificada para unirse a tu hogar.</div>
       <input id="gift-token-input-one" type="text" placeholder="TOK-XXXX-XXXX" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--mono);color:var(--ink);text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim().toUpperCase()">
       <button id="gift-activate-btn-one" onclick="activarOneRegalo()" style="width:100%;padding:14px;border-radius:12px;background:var(--violet);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-style:italic;cursor:pointer;touch-action:manipulation;">Activar mi TO-K ONE →</button>
       <div id="gift-activation-status-one" style="display:none;margin-top:10px;font-size:0.72rem;font-family:var(--mono);line-height:1.55;"></div>
@@ -354,7 +358,7 @@ body::before{
       <button onclick="conectarFID()" style="width:100%;padding:14px;border-radius:12px;background:var(--violet);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-style:italic;cursor:pointer;touch-action:manipulation;">Conectar mi hogar →</button>
     </div>
     <div id="setup-one-note" style="font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.6;">Si todavía no tienes hogar, puedes empezar directamente desde este <strong>TO-K ONE</strong>.</div>
-    <div style="margin-top:24px;font-family:var(--mono);font-size:0.6rem;color:rgba(0,0,0,0.2);letter-spacing:0.1em;">TO-K ONE BETA · El Taller de Memorias</div>
+    <div style="margin-top:24px;font-family:var(--mono);font-size:0.6rem;color:rgba(0,0,0,0.2);letter-spacing:0.1em;">TO-K ONE · El Taller de Memorias</div>
   </div>
 </div>
 
@@ -371,7 +375,7 @@ body::before{
           <img src="https://tmstudio-hub.github.io/tok/one.svg" alt="TO-K ONE" style="height:48px;"
             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
           <span style="display:none;font-family:var(--cinzel);font-size:1.2rem;letter-spacing:0.1em;color:var(--ink);">TO-K ONE</span>
-        </div><div class="tok-badge">TO-K ONE · BETA</div>
+        </div><div class="tok-badge">Perfil conectado</div>
         <div class="photo-ring">
           <div class="photo-inner">
             <span class="photo-ph" id="pub-photo-ph">👤</span>
@@ -460,7 +464,7 @@ body::before{
       </div>
       <div class="pub-footer">
         <button class="footer-priv" onclick="mostrarPin(()=>irA('config'))">🔒 <span id="priv-btn-txt">Mi perfil privado</span></button>
-        <div class="footer-brand">TO-K ONE · by <a href="https://tallerdememorias.es" target="_blank">El Taller de Memorias</a><br><span style="opacity:0.7;">¿Quieres el tuyo?</span></div>
+        <div class="footer-brand">Perfil personal conectado</div>
         <div class="tok-footer-one" data-logo="https://tmstudio-hub.github.io/tok/tok.svg" style="margin-top:4px;"></div>
       </div>
     </div>
@@ -497,7 +501,7 @@ body::before{
       <span class="cfg-label">Tu nombre</span>
       <input class="cfg-input" id="cfg-nombre" type="text" placeholder="Tu nombre o apodo">
       <span class="cfg-label">Bio corta</span>
-      <input class="cfg-input" id="cfg-bio" type="text" placeholder="Papá de Chloe · Sevilla" style="margin-bottom:0;">
+      <input class="cfg-input" id="cfg-bio" type="text" placeholder="Quien eres, que compartes o donde encontrarte" style="margin-bottom:0;">
     </div>
     <!-- Número maestro -->
     <div class="cfg-section">
@@ -582,7 +586,7 @@ body::before{
     </div>
     <!-- Redirect -->
     <div class="cfg-section">
-      <div class="cfg-sec-title">🔗 Si no se escanea por NFC</div>
+      <div class="cfg-sec-title">🔗 Enlace alternativo si el NFC no abre</div>
       <span class="cfg-label">URL de redirección</span>
       <input class="cfg-input" id="cfg-redirect" type="url" placeholder="https://tuinstagram.com/..." style="margin-bottom:0;">
     </div>
@@ -649,6 +653,7 @@ function renderQROne(wifiStr) {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -709,7 +714,7 @@ function configurarSetupOne() {
   if(giftBox) giftBox.style.display = AID ? 'block' : 'none';
   if(copyEl) {
     copyEl.innerHTML = AID
-      ? 'Si este es tu primer TO-K, actívalo desde aquí con el token familiar incluido.<br>Si ya tienes hogar, conecta tu código familiar.'
+      ? 'Si este es tu primer TO-K, activa tu perfil desde aquí con el token familiar incluido.<br>Si ya tienes hogar, conecta tu código familiar.'
       : 'Para empezar necesitas el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong> — toca el marco y configura el hogar primero.';
   }
   if(noteEl) {
@@ -742,9 +747,9 @@ async function activarOneDirecto(token) {
   if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
 
   const assetSnap = await get(ref(db, `admin/assets/${AID}`));
-  if(!assetSnap.exists()) throw new Error('Este TO-K ONE no tiene AID válido. Reprograma el chip.');
+  if(!assetSnap.exists()) throw new Error('Este TO-K ONE no tiene identificador válido. Reprograma la pieza.');
   const assetData = assetSnap.val() || {};
-  if((assetData.productType || '').toUpperCase() !== 'ONE') throw new Error('El AID escaneado no corresponde a un TO-K ONE.');
+  if((assetData.productType || '').toUpperCase() !== 'ONE') throw new Error('La pieza identificada no corresponde a un TO-K ONE.');
   if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K ONE ya fue activado.');
   if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K ONE.');
 
@@ -910,7 +915,7 @@ window.conectarFID = async function() {
 window.activarOneRegalo = async function() {
   const token = (document.getElementById('gift-token-input-one')?.value || '').trim().toUpperCase();
   const btn = document.getElementById('gift-activate-btn-one');
-  if(!AID) { setGiftStatusOne('Este TO-K ONE no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!AID) { setGiftStatusOne('Este TO-K ONE no incluye identificador válido. Reprograma la pieza antes de entregarlo.', true); return; }
   if(!token) { setGiftStatusOne('Introduce el token familiar incluido con el regalo.', true); return; }
   setGiftStatusOne('Activando TO-K ONE...');
   if(btn) btn.disabled = true;
@@ -1120,7 +1125,7 @@ function esNFC(){
 // ── FOOTER ──
 function renderFooterONE(){
   const url = CFG.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--violet);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.62rem;font-family:var(--mono);letter-spacing:0.12em;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:22px;opacity:0.48;" onerror="this.style.display='none'"><span>El Taller de Memorias</span></a>`;
   document.querySelectorAll('.tok-footer-one').forEach(el=>el.innerHTML=html);
 }
 
@@ -1272,6 +1277,42 @@ async function registrarAlertaONE() {
 async function initMessagingONE() {
   if(!messaging || !FID || window._fcmOnePid) return;
   window._fcmOnePid = true;
+
+const ALERTA_TOASTS_ONE = {
+  scan: nombre => `${nombre || 'Un TO-K'} se ha abierto`,
+  estoy: nombre => `${nombre || 'Tu familiar'} ya esta acompanado`,
+  ubicacion: nombre => `${nombre || 'Tu familiar'} ha compartido ubicacion`,
+  contacto_wa: nombre => `Han escrito por WhatsApp sobre ${nombre || 'tu familiar'}`,
+  contacto_sms: nombre => `Han enviado un SMS sobre ${nombre || 'tu familiar'}`,
+  lectura: (nombre, alerta) => alerta?.texto || `${nombre || 'Alguien'} ha avanzado en su lectura`,
+  libro_nuevo: (nombre, alerta) => alerta?.texto || `${nombre || 'Alguien'} ha anadido una lectura`,
+  libro_terminado: (nombre, alerta) => alerta?.texto || `${nombre || 'Alguien'} ha terminado un libro`,
+  paseo: nombre => `${nombre || 'Tu mascota'} ha salido a pasear`,
+  medicina: nombre => `${nombre || 'Tu mascota'} ya tiene su medicina`,
+  comida: nombre => `${nombre || 'Tu mascota'} ya ha comido`,
+};
+
+function textoAlertaONE(alerta) {
+  const tipo = alerta?.tipo || 'scan';
+  const base = tipo.startsWith('contacto_') ? `contacto_${tipo.split('_')[1]}` : tipo;
+  const resolver = ALERTA_TOASTS_ONE[base];
+  if(resolver) return resolver(alerta?.nombre || '', alerta);
+  return alerta?.texto || `Nueva actividad familiar: ${base}`;
+}
+
+function initActiveAlertListenerONE() {
+  if(!FID || window._oneAlertListener) return;
+  window._oneAlertListener = true;
+  let cursorTs = Date.now();
+  onChildAdded(ref(db, `familias/${FID}/alertas`), snap => {
+    const alerta = snap.val();
+    const ts = Number(alerta?.ts || 0);
+    if(!alerta || ts <= cursorTs) return;
+    cursorTs = ts;
+    if(document.visibilityState !== 'visible') return;
+    toast(`Aviso familiar · ${textoAlertaONE(alerta)}`);
+  });
+}
   if(!('serviceWorker' in navigator)) return;
   try {
     await navigator.serviceWorker.register('./firebase-messaging-sw.js', { scope: './' });
@@ -1279,6 +1320,7 @@ async function initMessagingONE() {
     if(perm === 'granted') {
       const token = await getToken(messaging, { vapidKey: VAPID_KEY });
       if(token) {
+  if(FID) initActiveAlertListenerONE();
         // ONE comparte el mismo token en hogar/fcm_token para recibir alertas
         await set(ref(db, `familias/${FID}/hogar/fcm_token`), token);
         onMessage(messaging, payload => {

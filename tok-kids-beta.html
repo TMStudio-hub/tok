@@ -154,12 +154,14 @@ body::before{
 .estoy-btn button:active{background:rgba(184,150,90,.08);}
 /* Acceso familiar como texto-link */
 .fam-access-btn{
-  background:none;border:none;color:var(--muted);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;border-radius:999px;border:1px solid var(--line);
+  background:rgba(255,255,255,.7);color:var(--c3);
   font-family:var(--cinzel);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
-  cursor:pointer;padding:8px 4px;opacity:.5;
-  text-decoration:underline;text-underline-offset:3px;
+  cursor:pointer;opacity:1;box-shadow:0 8px 18px var(--sombra);
+  transition:transform .15s,border-color .15s,background .15s;
 }
-.fam-access-btn:hover{opacity:.8;}
+.fam-access-btn:hover{border-color:rgba(184,150,90,.45);background:#fff;transform:translateY(-1px);}
 
 /* ── LLAVERO / CONFIG ── */
 #screen-llavero{background:var(--bg);align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
@@ -197,6 +199,19 @@ body::before{
   cursor:pointer;touch-action:manipulation;transition:background .2s;
 }
 .save-btn:hover,.cfg-save:hover{background:var(--c1);}
+.tema-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.tema-btn{
+  display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:16px;
+  border:1px solid var(--line);background:rgba(255,255,255,.72);color:var(--ink);
+  cursor:pointer;transition:transform .15s,border-color .15s,box-shadow .15s;text-align:left;
+}
+.tema-btn::before{
+  content:'';width:18px;height:18px;border-radius:50%;background:var(--tema);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.45);flex-shrink:0;
+}
+.tema-btn-name{font-family:var(--cinzel);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;}
+.tema-btn.active{border-color:var(--c1);box-shadow:0 10px 22px var(--sombra);transform:translateY(-1px);}
+.tema-label{font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-top:8px;display:block;text-align:center;}
 .cfg-delete{
   width:100%;padding:12px;border-radius:2px;
   border:1px solid rgba(185,28,28,.25);background:transparent;
@@ -337,10 +352,7 @@ body::before{
     <div style="text-align:center;padding:8px 20px 4px;">
       <button class="fam-access-btn" onclick="mostrarPin(()=>irA('config'))">🔒 <span id="fam-access-txt">Acceso familiar</span></button>
     </div>
-    <!-- Footer: kids.svg centrado, 32px, sin filtros -->
-    <div style="text-align:center;padding:18px 0 24px;">
-      <img src="https://tmstudio-hub.github.io/tok/kids.svg" alt="TO-K KIDS" style="height:48px;display:inline-block;" onerror="this.style.display='none'">
-    </div>
+    <div id="tok-footer-sos" style="text-align:center;padding:18px 0 24px;"></div>
   </div>
 </div>
 
@@ -386,9 +398,9 @@ body::before{
         <label class="photo-lbl">📷 Subir foto<input type="file" accept="image/*" style="display:none;" onchange="subirFoto(this)"></label>
       </div>
       <span class="lbl">Nombre</span>
-      <input class="inp" id="cfg-nombre" placeholder="Chloe">
+      <input class="inp" id="cfg-nombre" placeholder="Nombre visible">
       <span class="lbl">Edad</span>
-      <input class="inp" id="cfg-edad" placeholder="3 años" style="margin-bottom:0;">
+      <input class="inp" id="cfg-edad" placeholder="Edad o etapa" style="margin-bottom:0;">
     </div>
     <div class="cfg-section">
       <h3>Mensajes de emergencia</h3>
@@ -408,15 +420,15 @@ body::before{
       <span class="lbl">Telegram</span>
       <input class="inp" id="cfg-tg" placeholder="@usuario">
       <span class="lbl">Nombre en el llavero</span>
-      <input class="inp" id="cfg-llavero-nombre" placeholder="Chloe, hija de Víctor" style="margin-bottom:0;">
+      <input class="inp" id="cfg-llavero-nombre" placeholder="Nombre y referencia breve" style="margin-bottom:0;">
     </div>
     <div class="cfg-section">
       <h3>🎨 Tema de color</h3>
       <div class="tema-grid" id="tema-grid"></div>
-      <span class="tema-label" id="tema-label-actual">Naranja · predeterminado</span>
+      <span class="tema-label" id="tema-label-actual">Tema activo</span>
     </div>
     <div class="cfg-section">
-      <h3>🔗 Si no se escanea por NFC</h3>
+      <h3>🔗 Enlace alternativo si el NFC no abre</h3>
       <span class="lbl">URL de redirección (tu web, Instagram...)</span>
       <input class="inp" id="cfg-redirect" type="url" placeholder="https://linktr.ee/tuusuario" style="margin-bottom:0;">
     </div>
@@ -476,15 +488,27 @@ const AID = (params.get('aid') || '').trim().toUpperCase();
 
 // ── TEMAS ──
 const TEMAS = {
-  neutro:  { name:'🧡 Naranja', c1:'#E8845A', c2:'#FFD6C2', c3:'#7A3316', bg:'#FFF8F5', dark:false },
-  nino:    { name:'💙 Niño',    c1:'#4A90E2', c2:'#E3F0FD', c3:'#1A4A8A', bg:'#F4F8FE', dark:false },
-  nina:    { name:'🩷 Niña',    c1:'#E06FA0', c2:'#FDEAF3', c3:'#8B2A5A', bg:'#FDF4F8', dark:false },
-  natura:  { name:'🌿 Natura',  c1:'#52A86B', c2:'#E3F7EA', c3:'#1E5C32', bg:'#F4FCF6', dark:false },
-  noche:   { name:'🌙 Noche',   c1:'#7B8FBB', c2:'#2A2E45', c3:'#C8D0FF', bg:'#10121E', dark:true  },
+  amanecer:     { name:'☀️ Amanecer',     c1:'#F29B6A', c2:'#FFE7D8', c3:'#7B3F1F', bg:'#FFF8F3', dark:false },
+  brisa:        { name:'💧 Brisa',        c1:'#67A7E8', c2:'#E6F2FF', c3:'#1E4F86', bg:'#F5FAFF', dark:false },
+  coral:        { name:'🌺 Coral',        c1:'#E98AA4', c2:'#FFE9F0', c3:'#8D3153', bg:'#FFF6F8', dark:false },
+  bosque:       { name:'🌿 Bosque',       c1:'#5EA97A', c2:'#E5F6EC', c3:'#225B37', bg:'#F6FCF8', dark:false },
+  constelacion: { name:'🌙 Constelación', c1:'#7C8FD8', c2:'#242844', c3:'#D9E0FF', bg:'#0F1220', dark:true  },
+};
+const TEMAS_ALIAS = {
+  neutro: 'amanecer',
+  nino: 'brisa',
+  nina: 'coral',
+  natura: 'bosque',
+  noche: 'constelacion',
 };
 
+function normalizarTemaKids(tema) {
+  const key = TEMAS_ALIAS[tema] || tema;
+  return TEMAS[key] ? key : 'amanecer';
+}
+
 let CFG = {
-  nombre:'', edad:'', foto:'', pin:'1234', tema:'neutro',
+  nombre:'', edad:'', foto:'', pin:'1234', tema:'amanecer',
   msg_es:'Hola, soy [NOMBRE]. Por favor llama a mis papás.',
   msg_en:'Hi, I am [NOMBRE]. Please call my parents.',
   msg_de:'Hallo, ich bin [NOMBRE]. Bitte ruf meine Eltern an.',
@@ -552,9 +576,9 @@ async function activarKidsDirecto(token) {
   if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
 
   const assetSnap = await get(ref(db, `admin/assets/${AID}`));
-  if(!assetSnap.exists()) throw new Error('Este TO-K KIDS no tiene AID válido. Reprograma el chip.');
+  if(!assetSnap.exists()) throw new Error('Este TO-K KIDS no tiene identificador válido. Reprograma la pieza.');
   const assetData = assetSnap.val() || {};
-  if((assetData.productType || '').toUpperCase() !== 'KIDS') throw new Error('El AID escaneado no corresponde a un TO-K KIDS.');
+  if((assetData.productType || '').toUpperCase() !== 'KIDS') throw new Error('La pieza identificada no corresponde a un TO-K KIDS.');
   if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K KIDS ya fue activado.');
   if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K KIDS.');
 
@@ -659,16 +683,18 @@ function esNFC() {
 // ── FOOTER ──
 function renderFooters() {
   const url = CFG.redirect || 'https://linktr.ee/tallermemoriasstudio';
-  const html = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;filter:brightness(0) invert(1);opacity:0.3;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:rgba(255,255,255,0.3);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:rgba(255,255,255,0.5);">TO-K</span> · by El Taller de Memorias</a></div>`;
-  const htmlLight = `<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.4;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--c1);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html = `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:rgba(255,255,255,0.42);font-size:0.62rem;font-family:var(--mono);letter-spacing:0.12em;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:22px;filter:brightness(0) invert(1);opacity:0.38;" onerror="this.style.display='none'"><span>El Taller de Memorias</span></a>`;
+  const htmlLight = `<a href="${url}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.62rem;font-family:var(--mono);letter-spacing:0.12em;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:22px;opacity:0.48;" onerror="this.style.display='none'"><span>El Taller de Memorias</span></a>`;
   ['tok-footer-sel'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=html; });
-  ['tok-footer-llavero'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=htmlLight; });
+  ['tok-footer-llavero','tok-footer-sos'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=htmlLight; });
 }
 
 // ── TEMAS ──
 function aplicarTema(t) {
-  const tema = TEMAS[t] || TEMAS.neutro;
+  const key = normalizarTemaKids(t);
+  const tema = TEMAS[key] || TEMAS.amanecer;
   const r = document.documentElement.style;
+  CFG.tema = key;
   r.setProperty('--c1', tema.c1);
   r.setProperty('--c2', tema.c2);
   r.setProperty('--c3', tema.c3);
@@ -689,18 +715,20 @@ function aplicarTema(t) {
 function renderTemaGrid() {
   const grid = document.getElementById('tema-grid');
   if(!grid) return;
+  const temaActivo = normalizarTemaKids(CFG.tema);
   grid.innerHTML = Object.entries(TEMAS).map(([k,t])=>`
-    <button class="tema-btn ${CFG.tema===k?'active':''}"
-      style="background:${t.c1};"
+    <button class="tema-btn ${temaActivo===k?'active':''}"
+      style="--tema:${t.c1};"
       onclick="selTema('${k}')" title="${t.name}">
+      <span class="tema-btn-name">${t.name}</span>
     </button>`).join('');
   const lbl = document.getElementById('tema-label-actual');
-  if(lbl) lbl.style.display = 'none';
+  if(lbl) lbl.textContent = `Tema activo · ${TEMAS[temaActivo]?.name || ''}`;
 }
 
 window.selTema = function(k) {
-  CFG.tema = k;
-  aplicarTema(k);
+  CFG.tema = normalizarTemaKids(k);
+  aplicarTema(CFG.tema);
   renderTemaGrid();
 }
 
@@ -769,7 +797,7 @@ window.conectarFID = async function() {
 window.activarKidsRegalo = async function() {
   const token = (document.getElementById('gift-token-input-kids')?.value || '').trim().toUpperCase();
   const btn = document.getElementById('gift-activate-btn-kids');
-  if(!AID) { setGiftStatusKids('Este TO-K KIDS no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!AID) { setGiftStatusKids('Este TO-K KIDS no incluye identificador válido. Reprograma la pieza antes de entregarlo.', true); return; }
   if(!token) { setGiftStatusKids('Introduce el token familiar incluido con el regalo.', true); return; }
   setGiftStatusKids('Activando TO-K KIDS...');
   if(btn) btn.disabled = true;
