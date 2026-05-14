@@ -621,6 +621,19 @@ function configurarSetupBooks() {
   setGiftStatus('');
 }
 
+async function resolverFIDPorAID() {
+  if(!AID) return null;
+  try {
+    const snap = await get(ref(db, `assetIndex/${AID}`));
+    if(!snap.exists()) return null;
+    const val = snap.val();
+    return typeof val === 'string' ? val : (val?.fid || null);
+  } catch(e) {
+    console.warn('[BOOKS] No se pudo resolver FID por AID:', e);
+    return null;
+  }
+}
+
 async function activarBooksDirecto(token) {
   const tokenSnap = await get(ref(db, `admin/familyTokens/${token}`));
   if(!tokenSnap.exists()) throw new Error('Token no encontrado. Comprueba que lo has escrito bien.');
@@ -785,9 +798,19 @@ async function init() {
   configurarSetupBooks();
   if(!esNFC()&&!FID&&!AID){window.location.replace(DATA.redirect||'https://linktr.ee/tallermemoriasstudio');return;}
   if(!FID) {
+    const fidPorAid = await resolverFIDPorAID();
+    if(fidPorAid) {
+      FID = fidPorAid;
+      localStorage.setItem('tok_fid', FID);
+    }
     const fidLocal = localStorage.getItem('tok_fid');
-    if(fidLocal) {
+    if(!FID && fidLocal) {
       const nextUrl = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      location.href = nextUrl;
+      return;
+    }
+    if(FID) {
+      const nextUrl = `${location.pathname}?fid=${encodeURIComponent(FID)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
       location.href = nextUrl;
       return;
     }
@@ -882,6 +905,23 @@ function renderMain() {
 async function guardar() {
   if(!FID) return;
   await set(ref(db, `familias/${FID}/miembros/${MID}`), DATA);
+  if(AID) {
+    const ts = Date.now();
+    await update(ref(db), {
+      [`familias/${FID}/assets/${AID}/aid`]: AID,
+      [`familias/${FID}/assets/${AID}/productType`]: 'BOOKS',
+      [`familias/${FID}/assets/${AID}/status`]: 'active',
+      [`familias/${FID}/assets/${AID}/linkedMid`]: MID,
+      [`familias/${FID}/assets/${AID}/linkedMidType`]: 'reader',
+      [`familias/${FID}/assets/${AID}/activatedAt`]: ts,
+      [`assetIndex/${AID}/fid`]: FID,
+      [`assetIndex/${AID}/productType`]: 'BOOKS',
+      [`assetIndex/${AID}/status`]: 'active',
+      [`assetIndex/${AID}/linkedMid`]: MID,
+      [`assetIndex/${AID}/updatedAt`]: ts,
+      [`midIndex/${MID}`]: FID,
+    });
+  }
 }
 
 // GOOGLE BOOKS

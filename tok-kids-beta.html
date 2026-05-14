@@ -267,13 +267,20 @@ body::before{
   <div class="fid-box">
     <div style="margin-bottom:16px;"><img src="https://tmstudio-hub.github.io/tok/kids.svg" alt="TO-K KIDS" style="height:60px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">👶</div></div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--c3);margin-bottom:8px;">TO-K KIDS</div>
-    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
+    <div id="setup-kids-copy" style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
+    <div id="gift-activation-box-kids" style="display:none;background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+      <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;font-weight:700;">Activar este regalo</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6;">Si este <strong>TO-K KIDS</strong> es la primera pieza del núcleo familiar, usa aquí el token familiar incluido.</div>
+      <input id="gift-token-input-kids" class="fid-inp" type="text" placeholder="TOK-XXXX-XXXX" style="margin-bottom:12px;font-family:var(--mono);text-transform:uppercase;" oninput="this.value=this.value.trim().toUpperCase()">
+      <button id="gift-activate-btn-kids" class="fid-btn" onclick="activarKidsRegalo()">Activar mi TO-K KIDS →</button>
+      <div id="gift-activation-status-kids" style="display:none;margin-top:10px;font-size:0.72rem;font-family:var(--mono);line-height:1.55;"></div>
+    </div>
     <div style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;font-weight:700;">Código del hogar</div>
       <input id="fid-input" class="fid-inp" type="text" placeholder="Pega aquí tu código familiar" oninput="this.value=this.value.trim()">
       <button class="fid-btn" onclick="conectarFID()">Conectar mi hogar →</button>
     </div>
-    <div style="font-size:0.72rem;color:var(--muted);">Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.</div>
+    <div id="setup-kids-note" style="font-size:0.72rem;color:var(--muted);">Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.</div>
   </div>
 </div>
 
@@ -457,7 +464,7 @@ body::before{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const FB = { apiKey:"AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI", authDomain:"tok-familiar.firebaseapp.com", databaseURL:"https://tok-familiar-default-rtdb.firebaseio.com", projectId:"tok-familiar", storageBucket:"tok-familiar.firebasestorage.app", messagingSenderId:"530434764197", appId:"1:530434764197:web:32a8ca1b42e09131dacc4c" };
 const app = initializeApp(FB);
@@ -465,6 +472,7 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 let FID = params.get('fid');
 const MID = params.get('mid') || 'kids_1';
+const AID = (params.get('aid') || '').trim().toUpperCase();
 
 // ── TEMAS ──
 const TEMAS = {
@@ -490,6 +498,157 @@ const T = {
   en:{ badge:'🚨 I FOUND A CHILD', call:'Contact family', wa:'WhatsApp', sms:'SMS', loc:'Send location', loc_sent:'✓ Location sent', estoy:"I'm with the child", estoy_sent:'✓ Family notified', fam:'🔒 Family access', llavero_badge:'TO-K KEYCHAIN', llavero_call:'Call owner', llavero_wa:'WhatsApp owner', llavero_loc:'Send my location', llavero_msg:'Contact the owner.' },
   de:{ badge:'🚨 ICH HABE EIN KIND GEFUNDEN', call:'Familie kontaktieren', wa:'WhatsApp', sms:'SMS', loc:'Standort senden', loc_sent:'✓ Standort gesendet', estoy:'Ich bin beim Kind', estoy_sent:'✓ Familie benachrichtigt', fam:'🔒 Familienzugang', llavero_badge:'TO-K SCHLÜSSELANHÄNGER', llavero_call:'Besitzer anrufen', llavero_wa:'WhatsApp Besitzer', llavero_loc:'Standort senden', llavero_msg:'Kontaktieren Sie den Besitzer.' },
 };
+
+function setGiftStatusKids(msg, isError=false) {
+  const el = document.getElementById('gift-activation-status-kids');
+  if(!el) return;
+  if(!msg) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.color = isError ? '#c44' : 'var(--c1)';
+}
+
+function configurarSetupKids() {
+  const giftBox = document.getElementById('gift-activation-box-kids');
+  const copyEl = document.getElementById('setup-kids-copy');
+  const noteEl = document.getElementById('setup-kids-note');
+  if(giftBox) giftBox.style.display = AID ? 'block' : 'none';
+  if(copyEl) {
+    copyEl.innerHTML = AID
+      ? 'Si este es tu primer TO-K, puedes iniciar aquí el núcleo familiar con el token incluido.<br>Si ya tienes hogar, conecta tu código familiar.'
+      : 'Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.';
+  }
+  if(noteEl) {
+    noteEl.innerHTML = AID
+      ? 'Una vez activado, este <strong>TO-K KIDS</strong> seguirá mostrando su flujo público de ayuda cuando alguien lo escanee.'
+      : 'Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.';
+  }
+  setGiftStatusKids('');
+}
+
+async function resolverFIDPorAIDKids() {
+  if(!AID) return null;
+  try {
+    const snap = await get(ref(db, `assetIndex/${AID}`));
+    if(!snap.exists()) return null;
+    const val = snap.val();
+    return typeof val === 'string' ? val : (val?.fid || null);
+  } catch(e) {
+    console.warn('[KIDS] No se pudo resolver FID por AID:', e);
+    return null;
+  }
+}
+
+async function activarKidsDirecto(token) {
+  const tokenSnap = await get(ref(db, `admin/familyTokens/${token}`));
+  if(!tokenSnap.exists()) throw new Error('Token no encontrado. Comprueba que lo has escrito bien.');
+  const tokenData = tokenSnap.val() || {};
+  if((tokenData.mode || 'initial') !== 'initial') throw new Error('Este token no corresponde a una activación inicial.');
+  if(tokenData.status && tokenData.status !== 'available') throw new Error('Este token ya fue usado o ya no está disponible.');
+  if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
+
+  const assetSnap = await get(ref(db, `admin/assets/${AID}`));
+  if(!assetSnap.exists()) throw new Error('Este TO-K KIDS no tiene AID válido. Reprograma el chip.');
+  const assetData = assetSnap.val() || {};
+  if((assetData.productType || '').toUpperCase() !== 'KIDS') throw new Error('El AID escaneado no corresponde a un TO-K KIDS.');
+  if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K KIDS ya fue activado.');
+  if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K KIDS.');
+
+  const familyRef = push(ref(db, 'familias'));
+  const fid = familyRef.key;
+  const ts = Date.now();
+  const updates = {};
+
+  updates[`familias/${fid}/meta`] = {
+    fid,
+    status: 'active',
+    ownerUid: null,
+    ownerEmail: null,
+    createdFromToken: token,
+    createdFromAid: AID,
+    createdFromProduct: 'KIDS',
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  updates[`familias/${fid}/hogar`] = {
+    nombre: 'Mi hogar TO-K',
+    emoji: '🏠',
+    wifi: { ssid: '', pass: '', type: 'WPA' },
+    redirect: '',
+    creadoDesde: 'KIDS',
+    fechaCreacion: ts,
+  };
+  updates[`familias/${fid}/miembros/${MID}`] = {
+    ...CFG,
+  };
+  updates[`familias/${fid}/assets/${AID}`] = {
+    aid: AID,
+    productType: 'KIDS',
+    status: 'active',
+    linkedMid: MID,
+    linkedMidType: 'child',
+    orderId: assetData.orderId || tokenData.orderId || null,
+    packId: assetData.packId || tokenData.packId || null,
+    addedAt: ts,
+    activatedAt: ts,
+  };
+  updates[`admin/familyTokens/${token}`] = {
+    ...tokenData,
+    familyId: fid,
+    status: 'redeemed',
+    redeemedByUid: null,
+    redeemedByEmail: null,
+    redeemedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`admin/assets/${AID}`] = {
+    ...assetData,
+    familyId: fid,
+    linkedMid: MID,
+    linkedMidType: 'child',
+    mid: MID,
+    status: 'active',
+    activatedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`assetIndex/${AID}`] = {
+    fid,
+    productType: 'KIDS',
+    status: 'active',
+    linkedMid: MID,
+    updatedAt: ts,
+  };
+  updates[`midIndex/${MID}`] = fid;
+  if(tokenData.orderId) {
+    updates[`admin/orders/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/orders/${tokenData.orderId}/status`] = 'redeemed';
+    updates[`admin/orders/${tokenData.orderId}/updatedAt`] = ts;
+    updates[`admin/pedidos/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/fidAmpliacion`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/estado`] = 'activado';
+  }
+  if(tokenData.packId) {
+    updates[`admin/packs/${tokenData.packId}/familyId`] = fid;
+    updates[`admin/packs/${tokenData.packId}/updatedAt`] = ts;
+  }
+  updates[`activaciones/${token}`] = {
+    usado: true,
+    modo: 'initial',
+    familyId: fid,
+    pedido: tokenData.orderId || assetData.orderId || null,
+    orderId: tokenData.orderId || assetData.orderId || null,
+    cliente: tokenData.customerName || 'Regalo TO-K KIDS',
+    fecha_activacion: new Date(ts).toISOString(),
+    fecha_creacion: tokenData.createdAt ? new Date(tokenData.createdAt).toISOString() : new Date(ts).toISOString(),
+  };
+
+  await update(ref(db), updates);
+  return fid;
+}
 
 // ── NFC DETECTION ──
 function esNFC() {
@@ -549,25 +708,36 @@ window.selTema = function(k) {
 async function init() {
   lang = (navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang='es';
+  configurarSetupKids();
 
   // Redirigir si no es NFC
-  if(!esNFC() && !params.get('fid')) {
+  if(!esNFC() && !FID && !AID) {
     const redirect = 'https://linktr.ee/tallermemoriasstudio';
     window.location.replace(redirect);
     return;
   }
 
   if(!FID) {
+    const fidPorAid = await resolverFIDPorAIDKids();
+    if(fidPorAid) {
+      FID = fidPorAid;
+      localStorage.setItem('tok_fid', FID);
+    }
     const fidLocal = localStorage.getItem('tok_fid');
-    if(fidLocal) { location.href=location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
+    if(!FID && fidLocal) {
+      location.href = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      return;
+    }
     // Resolución automática: buscar FID por MID en el índice inverso (chip sin ?fid= en URL)
-    try {
-      const idxSnap = await get(ref(db, `midIndex/${MID}`));
-      if(idxSnap.exists()) {
-        FID = idxSnap.val();
-        localStorage.setItem('tok_fid', FID);
-      }
-    } catch(e) {}
+    if(!FID) {
+      try {
+        const idxSnap = await get(ref(db, `midIndex/${MID}`));
+        if(idxSnap.exists()) {
+          FID = idxSnap.val();
+          localStorage.setItem('tok_fid', FID);
+        }
+      } catch(e) {}
+    }
     if(!FID) {
       document.getElementById('loading').style.display='none';
       irA('setup-fid'); return;
@@ -592,8 +762,27 @@ window.conectarFID = async function() {
     const snap = await get(ref(db,`familias/${fid}/hogar`));
     if(!snap.exists()){ alert('Código no encontrado.'); return; }
     localStorage.setItem('tok_fid', fid);
-    location.href = location.pathname+'?fid='+fid+'&mid='+MID;
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
   } catch(e){ alert('Error de conexión.'); }
+}
+
+window.activarKidsRegalo = async function() {
+  const token = (document.getElementById('gift-token-input-kids')?.value || '').trim().toUpperCase();
+  const btn = document.getElementById('gift-activate-btn-kids');
+  if(!AID) { setGiftStatusKids('Este TO-K KIDS no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!token) { setGiftStatusKids('Introduce el token familiar incluido con el regalo.', true); return; }
+  setGiftStatusKids('Activando TO-K KIDS...');
+  if(btn) btn.disabled = true;
+  try {
+    const fid = await activarKidsDirecto(token);
+    localStorage.setItem('tok_fid', fid);
+    setGiftStatusKids('TO-K KIDS activado. Entrando...');
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}&aid=${encodeURIComponent(AID)}`;
+  } catch(e) {
+    console.error('[KIDS] Activación regalo fallida:', e);
+    setGiftStatusKids(e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.', true);
+    if(btn) btn.disabled = false;
+  }
 }
 
 window.irA = function(s) {
@@ -810,8 +999,23 @@ window.guardarConfig=async function(){
     if(newPin) CFG.pin=newPin;
     if(FID){
       await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);
-      // Índice inverso MID→FID: permite resolver el FID cuando el chip no lleva ?fid= en la URL
-      await set(ref(db,`midIndex/${MID}`),FID);
+      const ts = Date.now();
+      await update(ref(db), {
+        [`midIndex/${MID}`]: FID,
+        ...(AID ? {
+          [`familias/${FID}/assets/${AID}/aid`]: AID,
+          [`familias/${FID}/assets/${AID}/productType`]: 'KIDS',
+          [`familias/${FID}/assets/${AID}/status`]: 'active',
+          [`familias/${FID}/assets/${AID}/linkedMid`]: MID,
+          [`familias/${FID}/assets/${AID}/linkedMidType`]: 'child',
+          [`familias/${FID}/assets/${AID}/activatedAt`]: ts,
+          [`assetIndex/${AID}/fid`]: FID,
+          [`assetIndex/${AID}/productType`]: 'KIDS',
+          [`assetIndex/${AID}/status`]: 'active',
+          [`assetIndex/${AID}/linkedMid`]: MID,
+          [`assetIndex/${AID}/updatedAt`]: ts,
+        } : {}),
+      });
       toast('✓ Configuración guardada');
     } else toast('Sin código de familia — configura el HOME primero');
     renderFooters();

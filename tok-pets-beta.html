@@ -352,13 +352,20 @@ body::before{
   <div style="max-width:340px;width:100%;text-align:center;">
     <div style="margin-bottom:16px;"><img src="https://tmstudio-hub.github.io/tok/pets.svg" alt="TO-K PETS" style="height:60px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">🐾</div></div>
     <div style="font-size:1.4rem;font-weight:700;color:var(--c3);margin-bottom:8px;">TO-K PETS</div>
-    <div style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
+    <div id="setup-pets-copy" style="font-size:0.85rem;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
+    <div id="gift-activation-box-pets" style="display:none;background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+      <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;font-weight:700;">Activar este regalo</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-bottom:14px;line-height:1.6;">Si este <strong>TO-K PETS</strong> es la primera pieza del núcleo familiar, usa aquí el token familiar incluido.</div>
+      <input id="gift-token-input-pets" type="text" placeholder="TOK-XXXX-XXXX" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-size:0.82rem;font-family:var(--mono);color:#333;text-align:center;margin-bottom:12px;text-transform:uppercase;" oninput="this.value=this.value.trim().toUpperCase()">
+      <button id="gift-activate-btn-pets" onclick="activarPetsRegalo()" style="width:100%;padding:14px;border-radius:12px;background:var(--c1);color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Activar mi TO-K PETS →</button>
+      <div id="gift-activation-status-pets" style="display:none;margin-top:10px;font-size:0.72rem;font-family:var(--mono);line-height:1.55;"></div>
+    </div>
     <div style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;font-weight:700;">Código del hogar</div>
       <input id="fid-input" type="text" placeholder="Pega aquí tu código familiar" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);font-size:0.82rem;font-family:var(--mono);color:#333;text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim()">
       <button onclick="conectarFID()" style="width:100%;padding:14px;border-radius:12px;background:var(--c1);color:#fff;border:none;font-size:0.95rem;font-weight:700;cursor:pointer;touch-action:manipulation;">Conectar mi hogar →</button>
     </div>
-    <div style="font-size:0.72rem;color:var(--muted);">Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.</div>
+    <div id="setup-pets-note" style="font-size:0.72rem;color:var(--muted);">Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.</div>
   </div>
 </div>
 
@@ -573,7 +580,7 @@ body::before{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -590,6 +597,7 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 let FID = params.get('fid');
 const MID = params.get('mid') || 'pets_1';
+const AID = (params.get('aid') || '').trim().toUpperCase();
 
 let CFG = {
   tipo:'pets', nombre:'', raza:'', foto:'', animalEmoji:'🐾', pin:'1234',
@@ -616,6 +624,157 @@ const T = {
   en:{badge:'🐾 I FOUND A PET',estoy:"I'm with the pet — notifying owner",estoy_sent:'✓ Owner notified — thank you',loc:'Send my location',loc_sent:'✓ Location sent',loc_copy:'Location copied'},
   de:{badge:'🐾 ICH HABE EIN HAUSTIER GEFUNDEN',estoy:'Ich bin beim Haustier — Besitzer benachrichtigen',estoy_sent:'✓ Besitzer benachrichtigt',loc:'Meinen Standort senden',loc_sent:'✓ Standort gesendet',loc_copy:'Standort kopiert'},
 };
+
+function setGiftStatusPets(msg, isError=false) {
+  const el = document.getElementById('gift-activation-status-pets');
+  if(!el) return;
+  if(!msg) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.color = isError ? '#c44' : 'var(--c1)';
+}
+
+function configurarSetupPets() {
+  const giftBox = document.getElementById('gift-activation-box-pets');
+  const copyEl = document.getElementById('setup-pets-copy');
+  const noteEl = document.getElementById('setup-pets-note');
+  if(giftBox) giftBox.style.display = AID ? 'block' : 'none';
+  if(copyEl) {
+    copyEl.innerHTML = AID
+      ? 'Si este es tu primer TO-K, puedes iniciar aquí el núcleo familiar con el token incluido.<br>Si ya tienes hogar, conecta tu código familiar.'
+      : 'Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.';
+  }
+  if(noteEl) {
+    noteEl.innerHTML = AID
+      ? 'Una vez activado, este <strong>TO-K PETS</strong> mantendrá su flujo público para cuando alguien encuentre a la mascota.'
+      : 'Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.';
+  }
+  setGiftStatusPets('');
+}
+
+async function resolverFIDPorAIDPets() {
+  if(!AID) return null;
+  try {
+    const snap = await get(ref(db, `assetIndex/${AID}`));
+    if(!snap.exists()) return null;
+    const val = snap.val();
+    return typeof val === 'string' ? val : (val?.fid || null);
+  } catch(e) {
+    console.warn('[PETS] No se pudo resolver FID por AID:', e);
+    return null;
+  }
+}
+
+async function activarPetsDirecto(token) {
+  const tokenSnap = await get(ref(db, `admin/familyTokens/${token}`));
+  if(!tokenSnap.exists()) throw new Error('Token no encontrado. Comprueba que lo has escrito bien.');
+  const tokenData = tokenSnap.val() || {};
+  if((tokenData.mode || 'initial') !== 'initial') throw new Error('Este token no corresponde a una activación inicial.');
+  if(tokenData.status && tokenData.status !== 'available') throw new Error('Este token ya fue usado o ya no está disponible.');
+  if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
+
+  const assetSnap = await get(ref(db, `admin/assets/${AID}`));
+  if(!assetSnap.exists()) throw new Error('Este TO-K PETS no tiene AID válido. Reprograma el chip.');
+  const assetData = assetSnap.val() || {};
+  if((assetData.productType || '').toUpperCase() !== 'PETS') throw new Error('El AID escaneado no corresponde a un TO-K PETS.');
+  if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K PETS ya fue activado.');
+  if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K PETS.');
+
+  const familyRef = push(ref(db, 'familias'));
+  const fid = familyRef.key;
+  const ts = Date.now();
+  const updates = {};
+
+  updates[`familias/${fid}/meta`] = {
+    fid,
+    status: 'active',
+    ownerUid: null,
+    ownerEmail: null,
+    createdFromToken: token,
+    createdFromAid: AID,
+    createdFromProduct: 'PETS',
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  updates[`familias/${fid}/hogar`] = {
+    nombre: 'Mi hogar TO-K',
+    emoji: '🏠',
+    wifi: { ssid: '', pass: '', type: 'WPA' },
+    redirect: '',
+    creadoDesde: 'PETS',
+    fechaCreacion: ts,
+  };
+  updates[`familias/${fid}/miembros/${MID}`] = {
+    ...CFG,
+  };
+  updates[`familias/${fid}/assets/${AID}`] = {
+    aid: AID,
+    productType: 'PETS',
+    status: 'active',
+    linkedMid: MID,
+    linkedMidType: 'pet',
+    orderId: assetData.orderId || tokenData.orderId || null,
+    packId: assetData.packId || tokenData.packId || null,
+    addedAt: ts,
+    activatedAt: ts,
+  };
+  updates[`admin/familyTokens/${token}`] = {
+    ...tokenData,
+    familyId: fid,
+    status: 'redeemed',
+    redeemedByUid: null,
+    redeemedByEmail: null,
+    redeemedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`admin/assets/${AID}`] = {
+    ...assetData,
+    familyId: fid,
+    linkedMid: MID,
+    linkedMidType: 'pet',
+    mid: MID,
+    status: 'active',
+    activatedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`assetIndex/${AID}`] = {
+    fid,
+    productType: 'PETS',
+    status: 'active',
+    linkedMid: MID,
+    updatedAt: ts,
+  };
+  updates[`midIndex/${MID}`] = fid;
+  if(tokenData.orderId) {
+    updates[`admin/orders/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/orders/${tokenData.orderId}/status`] = 'redeemed';
+    updates[`admin/orders/${tokenData.orderId}/updatedAt`] = ts;
+    updates[`admin/pedidos/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/fidAmpliacion`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/estado`] = 'activado';
+  }
+  if(tokenData.packId) {
+    updates[`admin/packs/${tokenData.packId}/familyId`] = fid;
+    updates[`admin/packs/${tokenData.packId}/updatedAt`] = ts;
+  }
+  updates[`activaciones/${token}`] = {
+    usado: true,
+    modo: 'initial',
+    familyId: fid,
+    pedido: tokenData.orderId || assetData.orderId || null,
+    orderId: tokenData.orderId || assetData.orderId || null,
+    cliente: tokenData.customerName || 'Regalo TO-K PETS',
+    fecha_activacion: new Date(ts).toISOString(),
+    fecha_creacion: tokenData.createdAt ? new Date(tokenData.createdAt).toISOString() : new Date(ts).toISOString(),
+  };
+
+  await update(ref(db), updates);
+  return fid;
+}
 
 // ── TEMAS PETS ──
 const TEMAS={
@@ -648,18 +807,29 @@ function renderFooterP(){
 async function init() {
   lang=(navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang='es';
-  if(!esNFC()&&!FID){window.location.replace(CFG.redirect||'https://linktr.ee/tallermemoriasstudio');return;}
+  configurarSetupPets();
+  if(!esNFC()&&!FID&&!AID){window.location.replace(CFG.redirect||'https://linktr.ee/tallermemoriasstudio');return;}
   if(!FID){
+    const fidPorAid = await resolverFIDPorAIDPets();
+    if(fidPorAid) {
+      FID = fidPorAid;
+      localStorage.setItem('tok_fid', FID);
+    }
     const fidLocal=localStorage.getItem('tok_fid');
-    if(fidLocal){ location.href=location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
+    if(!FID && fidLocal){
+      location.href=`${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      return;
+    }
     // Resolución automática: buscar FID por MID en el índice inverso (chip sin ?fid= en URL)
-    try {
-      const idxSnap = await get(ref(db, `midIndex/${MID}`));
-      if(idxSnap.exists()) {
-        FID = idxSnap.val();
-        localStorage.setItem('tok_fid', FID);
-      }
-    } catch(e) {}
+    if(!FID) {
+      try {
+        const idxSnap = await get(ref(db, `midIndex/${MID}`));
+        if(idxSnap.exists()) {
+          FID = idxSnap.val();
+          localStorage.setItem('tok_fid', FID);
+        }
+      } catch(e) {}
+    }
     if(!FID) {
       document.getElementById('loading').style.display='none';
       irA('setup-fid'); return;
@@ -684,8 +854,27 @@ window.conectarFID=async function(){
     const snap=await get(ref(db,`familias/${fid}/hogar`));
     if(!snap.exists()){alert('Código no encontrado.');return;}
     localStorage.setItem('tok_fid',fid);
-    location.href=location.pathname+'?fid='+fid+'&mid='+MID;
+    location.href=`${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
   }catch(e){alert('Error de conexión.');}
+}
+
+window.activarPetsRegalo = async function() {
+  const token = (document.getElementById('gift-token-input-pets')?.value || '').trim().toUpperCase();
+  const btn = document.getElementById('gift-activate-btn-pets');
+  if(!AID) { setGiftStatusPets('Este TO-K PETS no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!token) { setGiftStatusPets('Introduce el token familiar incluido con el regalo.', true); return; }
+  setGiftStatusPets('Activando TO-K PETS...');
+  if(btn) btn.disabled = true;
+  try {
+    const fid = await activarPetsDirecto(token);
+    localStorage.setItem('tok_fid', fid);
+    setGiftStatusPets('TO-K PETS activado. Entrando...');
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}&aid=${encodeURIComponent(AID)}`;
+  } catch(e) {
+    console.error('[PETS] Activación regalo fallida:', e);
+    setGiftStatusPets(e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.', true);
+    if(btn) btn.disabled = false;
+  }
 }
 
 window.irA=function(s){
@@ -942,8 +1131,23 @@ window.guardarConfig=async function(){
     renderFooterP();
     if(FID){
       await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);
-      // Índice inverso MID→FID: permite resolver el FID cuando el chip no lleva ?fid= en la URL
-      await set(ref(db,`midIndex/${MID}`),FID);
+      const ts = Date.now();
+      await update(ref(db), {
+        [`midIndex/${MID}`]: FID,
+        ...(AID ? {
+          [`familias/${FID}/assets/${AID}/aid`]: AID,
+          [`familias/${FID}/assets/${AID}/productType`]: 'PETS',
+          [`familias/${FID}/assets/${AID}/status`]: 'active',
+          [`familias/${FID}/assets/${AID}/linkedMid`]: MID,
+          [`familias/${FID}/assets/${AID}/linkedMidType`]: 'pet',
+          [`familias/${FID}/assets/${AID}/activatedAt`]: ts,
+          [`assetIndex/${AID}/fid`]: FID,
+          [`assetIndex/${AID}/productType`]: 'PETS',
+          [`assetIndex/${AID}/status`]: 'active',
+          [`assetIndex/${AID}/linkedMid`]: MID,
+          [`assetIndex/${AID}/updatedAt`]: ts,
+        } : {}),
+      });
       toast('✓ Guardado');
     } else toast('Sin código de familia — configura el HOME primero');
     setTimeout(()=>irA('selector'),600);

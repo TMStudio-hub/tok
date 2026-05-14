@@ -340,13 +340,20 @@ body::before{
   <div style="max-width:340px;width:100%;text-align:center;">
     <div style="font-size:3rem;margin-bottom:16px;">👋</div>
     <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">Bienvenido a TO-K ONE</div>
-    <div style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Para empezar necesitas el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong> — toca el marco y configura el hogar primero.</div>
+    <div id="setup-one-copy" style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Si este es tu primer TO-K, actívalo desde aquí con el token familiar incluido.<br>Si ya tienes hogar, conecta tu código familiar.</div>
+    <div id="gift-activation-box-one" style="display:none;background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+      <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--violet);margin-bottom:12px;">Activar este regalo</div>
+      <div style="font-size:0.78rem;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.6;">Usa el token familiar que acompaña a este <strong>TO-K ONE</strong>. El chip ya lleva su identificador de pieza.</div>
+      <input id="gift-token-input-one" type="text" placeholder="TOK-XXXX-XXXX" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--mono);color:var(--ink);text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim().toUpperCase()">
+      <button id="gift-activate-btn-one" onclick="activarOneRegalo()" style="width:100%;padding:14px;border-radius:12px;background:var(--violet);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-style:italic;cursor:pointer;touch-action:manipulation;">Activar mi TO-K ONE →</button>
+      <div id="gift-activation-status-one" style="display:none;margin-top:10px;font-size:0.72rem;font-family:var(--mono);line-height:1.55;"></div>
+    </div>
     <div style="background:#fff;border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--violet);margin-bottom:12px;">Código del hogar</div>
       <input id="fid-input" type="text" placeholder="Pega aquí tu código familiar" style="width:100%;padding:12px 14px;border-radius:10px;border:1.5px solid var(--line);background:var(--paper);font-size:0.85rem;font-family:var(--mono);color:var(--ink);text-align:center;margin-bottom:12px;" oninput="this.value=this.value.trim()">
       <button onclick="conectarFID()" style="width:100%;padding:14px;border-radius:12px;background:var(--violet);color:#fff;border:none;font-family:var(--font);font-size:0.95rem;font-style:italic;cursor:pointer;touch-action:manipulation;">Conectar mi hogar →</button>
     </div>
-    <div style="font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.6;">¿No tienes código aún?<br>Toca primero el <strong>marco TO-K HOME</strong> y crea tu hogar.</div>
+    <div id="setup-one-note" style="font-size:0.72rem;font-style:italic;color:var(--muted);line-height:1.6;">Si todavía no tienes hogar, puedes empezar directamente desde este <strong>TO-K ONE</strong>.</div>
     <div style="margin-top:24px;font-family:var(--mono);font-size:0.6rem;color:rgba(0,0,0,0.2);letter-spacing:0.1em;">TO-K ONE BETA · El Taller de Memorias</div>
   </div>
 </div>
@@ -641,7 +648,7 @@ function renderQROne(wifiStr) {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -661,8 +668,9 @@ try { messaging = getMessaging(app); } catch(e) {}
 const VAPID_KEY = 'REEMPLAZA_CON_TU_VAPID_KEY';
 
 const params = new URLSearchParams(location.search);
-const FID = params.get('fid');
+let FID = params.get('fid');
 const MID = params.get('mid') || 'one_1';
+const AID = (params.get('aid') || '').trim().toUpperCase();
 
 let CFG = {
   nombre:'', bio:'', foto:'', pin:'1234', sesion_min:0,
@@ -681,19 +689,181 @@ const T = {
   de:{ wifi:'Heim-WLAN', connect:'Verbinden', vcard_title:'Zu Kontakten hinzufügen', vcard_sub:'Telefon, E-Mail und Socials — alles auf einmal', priv:'Mein privates Profil', exp_title:'Sitzung abgelaufen', exp_msg:'Aus Sicherheitsgründen sind diese Informationen nicht mehr verfügbar.' },
 };
 
+function setGiftStatusOne(msg, isError=false) {
+  const el = document.getElementById('gift-activation-status-one');
+  if(!el) return;
+  if(!msg) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.color = isError ? '#c44' : 'var(--violet)';
+}
+
+function configurarSetupOne() {
+  const giftBox = document.getElementById('gift-activation-box-one');
+  const copyEl = document.getElementById('setup-one-copy');
+  const noteEl = document.getElementById('setup-one-note');
+  if(giftBox) giftBox.style.display = AID ? 'block' : 'none';
+  if(copyEl) {
+    copyEl.innerHTML = AID
+      ? 'Si este es tu primer TO-K, actívalo desde aquí con el token familiar incluido.<br>Si ya tienes hogar, conecta tu código familiar.'
+      : 'Para empezar necesitas el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong> — toca el marco y configura el hogar primero.';
+  }
+  if(noteEl) {
+    noteEl.innerHTML = AID
+      ? 'Este <strong>TO-K ONE</strong> ya viene preparado para iniciar o unirse a tu núcleo familiar.'
+      : '¿No tienes código aún?<br>Toca primero el <strong>marco TO-K HOME</strong> y crea tu hogar.';
+  }
+  setGiftStatusOne('');
+}
+
+async function resolverFIDPorAIDOne() {
+  if(!AID) return null;
+  try {
+    const snap = await get(ref(db, `assetIndex/${AID}`));
+    if(!snap.exists()) return null;
+    const val = snap.val();
+    return typeof val === 'string' ? val : (val?.fid || null);
+  } catch(e) {
+    console.warn('[ONE] No se pudo resolver FID por AID:', e);
+    return null;
+  }
+}
+
+async function activarOneDirecto(token) {
+  const tokenSnap = await get(ref(db, `admin/familyTokens/${token}`));
+  if(!tokenSnap.exists()) throw new Error('Token no encontrado. Comprueba que lo has escrito bien.');
+  const tokenData = tokenSnap.val() || {};
+  if((tokenData.mode || 'initial') !== 'initial') throw new Error('Este token no corresponde a una activación inicial.');
+  if(tokenData.status && tokenData.status !== 'available') throw new Error('Este token ya fue usado o ya no está disponible.');
+  if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
+
+  const assetSnap = await get(ref(db, `admin/assets/${AID}`));
+  if(!assetSnap.exists()) throw new Error('Este TO-K ONE no tiene AID válido. Reprograma el chip.');
+  const assetData = assetSnap.val() || {};
+  if((assetData.productType || '').toUpperCase() !== 'ONE') throw new Error('El AID escaneado no corresponde a un TO-K ONE.');
+  if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K ONE ya fue activado.');
+  if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K ONE.');
+
+  const familyRef = push(ref(db, 'familias'));
+  const fid = familyRef.key;
+  const ts = Date.now();
+  const theme = CFG.tema || 'dia';
+  const updates = {};
+
+  updates[`familias/${fid}/meta`] = {
+    fid,
+    status: 'active',
+    ownerUid: null,
+    ownerEmail: null,
+    createdFromToken: token,
+    createdFromAid: AID,
+    createdFromProduct: 'ONE',
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  updates[`familias/${fid}/hogar`] = {
+    nombre: 'Mi hogar TO-K',
+    emoji: '🏠',
+    tema: theme,
+    wifi: { ssid: '', pass: '', type: 'WPA' },
+    redirect: '',
+    creadoDesde: 'ONE',
+    fechaCreacion: ts,
+  };
+  updates[`familias/${fid}/miembros/${MID}`] = {
+    ...CFG,
+    tema: theme,
+  };
+  updates[`familias/${fid}/assets/${AID}`] = {
+    aid: AID,
+    productType: 'ONE',
+    status: 'active',
+    linkedMid: MID,
+    linkedMidType: 'person',
+    orderId: assetData.orderId || tokenData.orderId || null,
+    packId: assetData.packId || tokenData.packId || null,
+    addedAt: ts,
+    activatedAt: ts,
+  };
+  updates[`admin/familyTokens/${token}`] = {
+    ...tokenData,
+    familyId: fid,
+    status: 'redeemed',
+    redeemedByUid: null,
+    redeemedByEmail: null,
+    redeemedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`admin/assets/${AID}`] = {
+    ...assetData,
+    familyId: fid,
+    linkedMid: MID,
+    linkedMidType: 'person',
+    mid: MID,
+    status: 'active',
+    activatedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`assetIndex/${AID}`] = {
+    fid,
+    productType: 'ONE',
+    status: 'active',
+    linkedMid: MID,
+    updatedAt: ts,
+  };
+  if(tokenData.orderId) {
+    updates[`admin/orders/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/orders/${tokenData.orderId}/status`] = 'redeemed';
+    updates[`admin/orders/${tokenData.orderId}/updatedAt`] = ts;
+    updates[`admin/pedidos/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/fidAmpliacion`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/estado`] = 'activado';
+  }
+  if(tokenData.packId) {
+    updates[`admin/packs/${tokenData.packId}/familyId`] = fid;
+    updates[`admin/packs/${tokenData.packId}/updatedAt`] = ts;
+  }
+  updates[`activaciones/${token}`] = {
+    usado: true,
+    modo: 'initial',
+    familyId: fid,
+    pedido: tokenData.orderId || assetData.orderId || null,
+    orderId: tokenData.orderId || assetData.orderId || null,
+    cliente: tokenData.customerName || 'Regalo TO-K ONE',
+    fecha_activacion: new Date(ts).toISOString(),
+    fecha_creacion: tokenData.createdAt ? new Date(tokenData.createdAt).toISOString() : new Date(ts).toISOString(),
+  };
+
+  await update(ref(db), updates);
+  return fid;
+}
+
 async function init() {
   lang = (navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang = 'es';
+  configurarSetupOne();
 
   // NFC check
-  if(!esNFC() && !FID) {
+  if(!esNFC() && !FID && !AID) {
     window.location.replace('https://linktr.ee/tallermemoriasstudio');
     return;
   }
 
   if(!FID) {
+    const fidPorAid = await resolverFIDPorAIDOne();
+    if(fidPorAid) {
+      FID = fidPorAid;
+      localStorage.setItem('tok_fid', FID);
+    }
     const fidLocal = localStorage.getItem('tok_fid');
-    if(fidLocal) { location.href = location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
+    if(!FID && fidLocal) {
+      location.href = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      return;
+    }
     document.getElementById('loading').style.display = 'none';
     irA('setup-fid'); return;
   }
@@ -733,8 +903,27 @@ window.conectarFID = async function() {
     if(!snap.exists()) { alert('Código no encontrado. Comprueba que has copiado bien el código del TO-K HOME.'); return; }
     // Guardar y redirigir con el FID
     localStorage.setItem('tok_fid', fid);
-    location.href = location.pathname + '?fid=' + fid + '&mid=' + MID;
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
   } catch(e) { alert('Error de conexión. Comprueba internet.'); }
+}
+
+window.activarOneRegalo = async function() {
+  const token = (document.getElementById('gift-token-input-one')?.value || '').trim().toUpperCase();
+  const btn = document.getElementById('gift-activate-btn-one');
+  if(!AID) { setGiftStatusOne('Este TO-K ONE no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!token) { setGiftStatusOne('Introduce el token familiar incluido con el regalo.', true); return; }
+  setGiftStatusOne('Activando TO-K ONE...');
+  if(btn) btn.disabled = true;
+  try {
+    const fid = await activarOneDirecto(token);
+    localStorage.setItem('tok_fid', fid);
+    setGiftStatusOne('TO-K ONE activado. Entrando...');
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}&aid=${encodeURIComponent(AID)}`;
+  } catch(e) {
+    console.error('[ONE] Activación regalo fallida:', e);
+    setGiftStatusOne(e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.', true);
+    if(btn) btn.disabled = false;
+  }
 }
 
 window.irA = function(s) {
@@ -1030,6 +1219,22 @@ window.guardarConfig=async function(){
     };
     if(FID) {
       await set(ref(db,`familias/${FID}/miembros/${MID}`),CFG);
+      if(AID) {
+        const ts = Date.now();
+        await update(ref(db), {
+          [`familias/${FID}/assets/${AID}/aid`]: AID,
+          [`familias/${FID}/assets/${AID}/productType`]: 'ONE',
+          [`familias/${FID}/assets/${AID}/status`]: 'active',
+          [`familias/${FID}/assets/${AID}/linkedMid`]: MID,
+          [`familias/${FID}/assets/${AID}/linkedMidType`]: 'person',
+          [`familias/${FID}/assets/${AID}/activatedAt`]: ts,
+          [`assetIndex/${AID}/fid`]: FID,
+          [`assetIndex/${AID}/productType`]: 'ONE',
+          [`assetIndex/${AID}/status`]: 'active',
+          [`assetIndex/${AID}/linkedMid`]: MID,
+          [`assetIndex/${AID}/updatedAt`]: ts,
+        });
+      }
       toast('✓ Perfil guardado');
     } else {
       // Sin FID — guardar solo local
