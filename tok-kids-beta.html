@@ -724,12 +724,12 @@ async function init() {
       localStorage.setItem('tok_fid', FID);
     }
     const fidLocal = localStorage.getItem('tok_fid');
-    if(!FID && fidLocal) {
+    if(!FID && !AID && fidLocal) {
       location.href = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
       return;
     }
     // Resolución automática: buscar FID por MID en el índice inverso (chip sin ?fid= en URL)
-    if(!FID) {
+    if(!FID && !AID) {
       try {
         const idxSnap = await get(ref(db, `midIndex/${MID}`));
         if(idxSnap.exists()) {

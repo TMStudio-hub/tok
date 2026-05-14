@@ -804,7 +804,7 @@ async function init() {
       localStorage.setItem('tok_fid', FID);
     }
     const fidLocal = localStorage.getItem('tok_fid');
-    if(!FID && fidLocal) {
+    if(!FID && !AID && fidLocal) {
       const nextUrl = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
       location.href = nextUrl;
       return;
