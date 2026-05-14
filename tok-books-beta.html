@@ -612,6 +612,8 @@ const STARTER_BOOKS_CATALOG = [
   { title:'Diary of a Wimpy Kid', author:'Jeff Kinney', pages:224, language:'en', source:'starter', sourceRank:15, cachedAt:1 },
   { title:'The Name of the Wind', author:'Patrick Rothfuss', pages:662, language:'en', source:'starter', sourceRank:16, cachedAt:1 },
   { title:'The Wise Man\'s Fear', author:'Patrick Rothfuss', pages:994, language:'en', source:'starter', sourceRank:17, cachedAt:1 },
+  { title:'El nombre del viento', author:'Patrick Rothfuss', pages:0, language:'es', source:'starter', sourceRank:26, cachedAt:1 },
+  { title:'El temor de un hombre sabio', author:'Patrick Rothfuss', pages:0, language:'es', source:'starter', sourceRank:27, cachedAt:1 },
   { title:'Harry Potter y la piedra filosofal', author:'J. K. Rowling', pages:254, language:'es', source:'starter', sourceRank:18, cachedAt:1 },
   { title:'Harry Potter y la cámara secreta', author:'J. K. Rowling', pages:286, language:'es', source:'starter', sourceRank:19, cachedAt:1 },
   { title:'Harry Potter y el prisionero de Azkaban', author:'J. K. Rowling', pages:360, language:'es', source:'starter', sourceRank:20, cachedAt:1 },
@@ -1044,6 +1046,26 @@ function simplificarTexto(v='') {
     .trim();
 }
 
+const RELATED_BOOK_TITLE_GROUPS = [
+  ['the name of the wind', 'el nombre del viento'],
+  ['the wise man s fear', 'el temor de un hombre sabio'],
+];
+
+function titulosRelacionadosLibro(v='') {
+  const normalized = simplificarTexto(v);
+  const group = RELATED_BOOK_TITLE_GROUPS.find(values => values.includes(normalized));
+  return group || [normalized];
+}
+
+function librosParecenIguales(a, b) {
+  const titlesA = titulosRelacionadosLibro(a?.title || '');
+  const titlesB = titulosRelacionadosLibro(b?.title || '');
+  if(!titlesA.some(title => titlesB.includes(title))) return false;
+  const authorA = simplificarTexto(a?.author || '');
+  const authorB = simplificarTexto(b?.author || '');
+  return !authorA || !authorB || authorA === authorB;
+}
+
 function claveLibro(item) {
   const autor = String(item.author || '').split(',')[0];
   return `${simplificarTexto(item.title)}|${simplificarTexto(autor)}`;
@@ -1421,7 +1443,7 @@ window.seleccionarLibro = function(idx) {
 
 async function seleccionarLibroAsync(idx) {
   const original=window._sr?.[idx]; if(!original) return;
-  if((DATA.libros||[]).find(l=>l.title===original.title)) { toast('Ya está en tu lista'); return; }
+  if((DATA.libros||[]).find(l=>librosParecenIguales(l, original))) { toast('Ya está en tu lista'); return; }
   let libro={...original,id:Date.now()};
   if(!(libro.pages||0)) libro = await enriquecerLibroPaginas(libro);
   DATA.libros = [...(DATA.libros||[]), libro];
@@ -1438,7 +1460,7 @@ async function seleccionarLibroAsync(idx) {
 
 window.añadirADeseos = function(idx) {
   const libro=window._sr?.[idx]; if(!libro) return;
-  const yaEsta=(DATA.listaWish||[]).find(l=>(typeof l==='string'?l:l.title)===libro.title);
+  const yaEsta=(DATA.listaWish||[]).find(l=>librosParecenIguales(typeof l==='string'?{ title:l } : l, libro));
   if(yaEsta) { toast('Ya está en tu lista de deseos'); return; }
   DATA.listaWish=[...(DATA.listaWish||[]),{title:libro.title,author:libro.author,cover:libro.cover,pages:libro.pages}];
   registrarResultadosEnCache([libro]);
@@ -1453,7 +1475,7 @@ window.añadirManual = function() {
   if(!titulo) { toast('Escribe el título del libro'); return; }
   const paginas=parseInt(document.getElementById('manual-paginas')?.value||'0',10)||0;
   const libro={title:titulo,author:'',pages:paginas,cover:'',pagActual:0,pagBase:0,id:Date.now()};
-  if((DATA.libros||[]).find(l=>l.title===titulo)) { toast('Ya está en tu lista'); return; }
+  if((DATA.libros||[]).find(l=>librosParecenIguales(l, libro))) { toast('Ya está en tu lista'); return; }
   DATA.libros=[...(DATA.libros||[]),libro];
   registrarResultadosEnCache([libro]);
   guardar();
