@@ -65,8 +65,8 @@ body::before{
 .books-welcome-title{font-family:var(--cinzel);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.04em;margin-bottom:10px;}
 .books-welcome-copy{font-size:15px;font-style:italic;color:var(--muted);line-height:1.55;margin-bottom:22px;}
 .books-welcome-note{font-size:13px;font-style:italic;color:var(--muted);line-height:1.55;margin-top:14px;}
-.books-brand-logo{height:70px;flex-shrink:0;filter:var(--books-logo-filter);opacity:var(--books-logo-opacity);transition:filter .2s,opacity .2s;}
-.books-brand-logo.welcome{height:94px;display:block;margin:0 auto 18px;}
+.books-brand-logo{height:84px;flex-shrink:0;filter:var(--books-logo-filter);opacity:var(--books-logo-opacity);transition:filter .2s,opacity .2s;}
+.books-brand-logo.welcome{height:104px;display:block;margin:0 auto 18px;}
 
 /* ── MAIN SCREEN ── */
 #screen-main{background:var(--bg);overflow-y:auto;}
@@ -237,8 +237,8 @@ body::before{
   content:'';position:absolute;inset:0;pointer-events:none;
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
-.tok-header-inner{position:relative;z-index:1;}
-.tok-badge-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.tok-header-inner{position:relative;z-index:1;text-align:center;}
+.tok-badge-row{display:flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative;min-height:88px;}
 .tok-badge{
   font-family:var(--cinzel);font-size:8px;letter-spacing:.3em;text-transform:uppercase;
   color:var(--gold);opacity:.8;border:1px solid rgba(184,150,90,.3);padding:4px 12px;border-radius:20px;
@@ -247,8 +247,10 @@ body::before{
   padding:6px 12px;border-radius:2px;background:rgba(245,240,232,.08);
   border:1px solid rgba(245,240,232,.15);color:rgba(245,240,232,.6);
   font-family:var(--cinzel);font-size:8px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
+  position:absolute;right:0;top:8px;
 }
 .books-header-title{font-family:var(--cinzel);font-size:clamp(18px,5vw,24px);color:#f5f0e8;letter-spacing:.05em;margin-top:2px;margin-bottom:10px;line-height:1.15;}
+.books-header-logo-wrap{display:flex;align-items:center;justify-content:center;width:100%;}
 
 /* Stats */
 .stats-row{display:flex;gap:0;margin-bottom:8px;}
@@ -398,8 +400,8 @@ body::before{
   transition:background .2s;
 }
 .fab-cfg:hover{background:var(--burdeos);}
-.books-footer-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.66rem;font-family:var(--mono);letter-spacing:0.08em;}
-.books-footer-logo{height:22px;width:auto;display:block;opacity:.95;}
+.books-footer-brand{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.66rem;font-family:var(--mono);letter-spacing:0.08em;text-align:center;}
+.books-footer-logo{height:34px;width:auto;display:block;opacity:.98;}
 </style>
 </head>
 <body>
@@ -449,7 +451,7 @@ body::before{
   <div class="tok-header">
     <div class="tok-header-inner">
       <div class="tok-badge-row">
-        <div style="display:flex;align-items:center;gap:12px;">
+        <div class="books-header-logo-wrap">
           <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" class="books-brand-logo"
             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
           <span style="display:none;font-family:var(--cinzel);font-size:1rem;letter-spacing:0.08em;color:#f5f0e8;">TO-K BOOKS</span>
@@ -582,6 +584,8 @@ const NIVELES = [
   {min:0,label:'⭐ Lector'},{min:100,label:'📖 Aficionado'},
   {min:300,label:'📚 Bibliófilo'},{min:600,label:'🎓 Erudito'},{min:1000,label:'✨ Maestro'},
 ];
+
+const SEARCH_TIMEOUT_MS = 3200;
 
 let DATA = { total:0, anual:0, puntos:0, libros:[], listaWish:[], listaDone:[] };
 let lang = 'es';
@@ -983,10 +987,74 @@ function normalizarResultadoLibro(item, idx) {
   };
 }
 
+function simplificarTexto(v='') {
+  return String(v)
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function claveLibro(item) {
+  const autor = String(item.author || '').split(',')[0];
+  return `${simplificarTexto(item.title)}|${simplificarTexto(autor)}`;
+}
+
+async function fetchJsonConTimeout(url, timeoutMs = SEARCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if(!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function mezclarResultadosLibros(openResults, googleResults) {
+  const merged = new Map();
+  for(const item of [...googleResults, ...openResults]) {
+    const key = claveLibro(item) || `fallback-${merged.size}`;
+    if(!merged.has(key)) {
+      merged.set(key, { ...item });
+      continue;
+    }
+    const prev = merged.get(key);
+    merged.set(key, {
+      ...prev,
+      pages: prev.pages || item.pages || 0,
+      cover: prev.cover || item.cover || '',
+      author: prev.author || item.author || 'Autor desconocido',
+      openEditionKey: prev.openEditionKey || item.openEditionKey || '',
+      openIsbn: prev.openIsbn || item.openIsbn || '',
+      googleVolumeId: prev.googleVolumeId || item.googleVolumeId || '',
+    });
+  }
+  return Array.from(merged.values()).slice(0, 8).map((item, idx) => ({ ...item, id: Date.now() + idx }));
+}
+
+async function enriquecerLibroPaginas(libro) {
+  if((libro.pages || 0) > 0) return libro;
+  if(libro.openEditionKey) {
+    try {
+      const data = await fetchJsonConTimeout(`https://openlibrary.org/books/${libro.openEditionKey}.json`, 2200);
+      if(data.number_of_pages) return { ...libro, pages: data.number_of_pages };
+    } catch(e) {}
+  }
+  if(libro.openIsbn) {
+    try {
+      const data = await fetchJsonConTimeout(`https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(libro.openIsbn)}&maxResults=1`, 2200);
+      const pages = data.items?.[0]?.volumeInfo?.pageCount || 0;
+      if(pages) return { ...libro, pages };
+    } catch(e) {}
+  }
+  return libro;
+}
+
 async function buscarOpenLibrary(q) {
-  const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
-  if(!res.ok) throw new Error(`Open Library ${res.status}`);
-  const data = await res.json();
+  const data = await fetchJsonConTimeout(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
   return (data.docs || [])
     .filter(doc => doc.title)
     .slice(0, 8)
@@ -995,14 +1063,14 @@ async function buscarOpenLibrary(q) {
       author: (doc.author_name || ['Autor desconocido']).slice(0, 2).join(', '),
       pages: doc.number_of_pages_median || 0,
       cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
+      openEditionKey: doc.edition_key?.[0] || '',
+      openIsbn: doc.isbn?.[0] || '',
     }, idx));
 }
 
 async function buscarGoogleBooks(q) {
   try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`);
-    if(!res.ok) return [];
-    const data = await res.json();
+    const data = await fetchJsonConTimeout(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`);
     return (data.items || []).slice(0, 8).map((item, idx) => {
       const info = item.volumeInfo || {};
       return normalizarResultadoLibro({
@@ -1010,6 +1078,8 @@ async function buscarGoogleBooks(q) {
         author: (info.authors || ['Autor desconocido']).join(', '),
         pages: info.pageCount || 0,
         cover: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
+        googleVolumeId: item.id || '',
+        openIsbn: info.industryIdentifiers?.[0]?.identifier || '',
       }, idx);
     });
   } catch(e) {
@@ -1022,15 +1092,20 @@ window.buscarLibro = async function() {
   if(!q) return;
   const loading = document.getElementById('search-loading');
   const box = document.getElementById('search-results');
+  const searchRun = Date.now();
+  window._booksSearchRun = searchRun;
   loading.style.display='block'; box.style.display='none'; box.innerHTML='';
+  document.getElementById('manual-form').style.display='none';
   try {
-    let results = [];
-    try {
-      results = await buscarOpenLibrary(q);
-    } catch(e) {}
-    if(!results.length) results = await buscarGoogleBooks(q);
+    const [openRes, googleRes] = await Promise.allSettled([
+      buscarOpenLibrary(q),
+      buscarGoogleBooks(q),
+    ]);
+    if(window._booksSearchRun !== searchRun) return;
+    const openResults = openRes.status === 'fulfilled' ? openRes.value : [];
+    const googleResults = googleRes.status === 'fulfilled' ? googleRes.value : [];
+    const results = mezclarResultadosLibros(openResults, googleResults);
     loading.style.display='none';
-    document.getElementById('manual-form').style.display='none';
     if(!results.length) {
       box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">Sin resultados — ¿añades el libro manualmente?</div>';
       box.style.display='block';
@@ -1059,9 +1134,14 @@ window.buscarLibro = async function() {
 }
 
 window.seleccionarLibro = function(idx) {
-  const libro=window._sr?.[idx]; if(!libro) return;
-  if((DATA.libros||[]).find(l=>l.title===libro.title)) { toast('Ya está en tu lista'); return; }
-  libro.id=Date.now();
+  seleccionarLibroAsync(idx);
+}
+
+async function seleccionarLibroAsync(idx) {
+  const original=window._sr?.[idx]; if(!original) return;
+  if((DATA.libros||[]).find(l=>l.title===original.title)) { toast('Ya está en tu lista'); return; }
+  let libro={...original,id:Date.now()};
+  if(!(libro.pages||0)) libro = await enriquecerLibroPaginas(libro);
   DATA.libros = [...(DATA.libros||[]), libro];
   guardar();
   registrarAlerta('libro_nuevo', libro.title);
@@ -1070,7 +1150,7 @@ window.seleccionarLibro = function(idx) {
   document.getElementById('search-input').value='';
   renderLibros();
   document.getElementById('stat-leyendo').textContent = DATA.libros.length;
-  toast('📖 Añadido: '+libro.title.slice(0,25));
+  toast(libro.pages ? `📖 Añadido · ${libro.pages} págs` : '📖 Añadido sin páginas detectadas');
 }
 
 window.añadirADeseos = function(idx) {
