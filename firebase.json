@@ -1,0 +1,16 @@
+{
+  "hosting": {
+    "site": "tm-ops-44e43",
+    "public": ".",
+    "ignore": [
+      "firebase.json",
+      ".firebaserc",
+      "**/.*",
+      "**/node_modules/**",
+      "auditoria/**",
+      "inventory-app/**",
+      "**/*.md",
+      "admin-cleanup-backup-*.json"
+    ]
+  }
+}
