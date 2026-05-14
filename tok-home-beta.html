@@ -578,7 +578,7 @@ function entrarConFID() {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, remove, onValue, runTransaction } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
 
 const firebaseConfig = {
@@ -734,6 +734,27 @@ function renderFooter() {
   if(el) el.innerHTML = html;
 }
 
+async function reclamarCodigoActivacion(codigo, fid) {
+  if(!codigo) throw new Error('Activa primero un código TO-K válido.');
+  const fechaActivacion = new Date().toISOString();
+  const tx = await runTransaction(ref(db, `activaciones/${codigo}`), current => {
+    if(current == null || current.usado) return;
+    return {
+      ...current,
+      usado: true,
+      familia_id: fid,
+      fecha_activacion: fechaActivacion,
+    };
+  });
+
+  if(tx.committed) return;
+  if(!tx.snapshot.exists()) throw new Error('Código no encontrado. Comprueba que lo has escrito bien.');
+
+  const actual = tx.snapshot.val() || {};
+  if(actual.usado) throw new Error('Este código ya fue activado. Contacta con El Taller de Memorias.');
+  throw new Error('No se pudo validar el código de activación.');
+}
+
 window.activarCodigo = async function() {
   const codigo = document.getElementById('codigo-activacion').value.trim().toUpperCase();
   const errEl = document.getElementById('codigo-error');
@@ -759,10 +780,10 @@ window.activarCodigo = async function() {
     window._codigoActivacion = codigo;
     irA('setup');
   } catch(e) {
-    // Si Firebase falla, permitir continuar en modo beta sin código
-    console.warn('Firebase check failed, allowing anyway:', e);
-    window._codigoActivacion = codigo || 'BETA';
-    irA('setup');
+    console.warn('Activation check failed:', e);
+    window._codigoActivacion = null;
+    errEl.textContent = 'No se pudo validar el código. Comprueba internet e inténtalo de nuevo.';
+    errEl.style.display = 'block';
   }
 }
 
@@ -1053,20 +1074,31 @@ window.guardarConfig = async function() {
   aplicarTema(CFG.tema);
   renderFooter();
   if(!FID) {
-    const newRef = push(ref(db, 'familias'));
-    FID = newRef.key;
-    await set(ref(db, `familias/${FID}/hogar`), CFG);
-    localStorage.setItem('tok_home_fid', FID);
-    // Marcar código de activación como usado
-    if(window._codigoActivacion && window._codigoActivacion !== 'BETA') {
-      await set(ref(db, `activaciones/${window._codigoActivacion}`), {
-        usado: true,
-        familia_id: FID,
-        fecha_activacion: new Date().toISOString()
-      });
+    if(!window._codigoActivacion) {
+      toast('Activa primero un código TO-K válido');
+      return;
     }
-    const newUrl = location.origin + location.pathname + '?fid=' + FID;
-    history.replaceState(null, '', '?fid=' + FID);
+
+    const newRef = push(ref(db, 'familias'));
+    const newFid = newRef.key;
+    try {
+      await set(ref(db, `familias/${newFid}/hogar`), CFG);
+      await reclamarCodigoActivacion(window._codigoActivacion, newFid);
+    } catch(e) {
+      try {
+        await remove(ref(db, `familias/${newFid}`));
+      } catch(cleanupError) {
+        console.warn('No se pudo limpiar el hogar provisional:', cleanupError);
+      }
+      toast(e?.message || 'No se pudo crear el hogar');
+      return;
+    }
+
+    FID = newFid;
+    window._codigoActivacion = null;
+    persistirFID(FID);
+    const newUrl = location.origin + location.pathname + '?fid=' + encodeURIComponent(FID);
+    history.replaceState(null, '', '?fid=' + encodeURIComponent(FID));
     toast('✓ Hogar creado');
     setTimeout(() => alert('✅ ¡Hogar creado!\n\nTu código de familia es:\n' + FID + '\n\nGuárdalo para conectar tus llaveros TO-K.\n\nURL completa:\n' + newUrl), 400);
   } else {
