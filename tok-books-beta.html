@@ -13,6 +13,7 @@
   --bg:#F5F0E8;--card:rgba(245,240,232,0.95);--muted:#7A5860;
   --line:rgba(184,150,90,0.22);--ink:#1E0A12;--rojo:#b91c1c;
   --sombra:rgba(74,24,40,0.1);
+  --books-logo-filter:none;--books-logo-opacity:1;
   --font:'Cormorant Garamond',Georgia,serif;
   --cinzel:'Cinzel',serif;
   --mono:'DM Mono',monospace;
@@ -58,6 +59,14 @@ body::before{
   cursor:pointer;touch-action:manipulation;transition:background .2s;
 }
 .fid-btn:hover{background:var(--burdeos);}
+
+#screen-welcome{background:var(--bg);align-items:center;justify-content:center;padding:40px 28px;}
+.books-welcome-shell{max-width:360px;width:100%;text-align:center;}
+.books-welcome-title{font-family:var(--cinzel);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.04em;margin-bottom:10px;}
+.books-welcome-copy{font-size:15px;font-style:italic;color:var(--muted);line-height:1.55;margin-bottom:22px;}
+.books-welcome-note{font-size:13px;font-style:italic;color:var(--muted);line-height:1.55;margin-top:14px;}
+.books-brand-logo{height:70px;flex-shrink:0;filter:var(--books-logo-filter);opacity:var(--books-logo-opacity);transition:filter .2s,opacity .2s;}
+.books-brand-logo.welcome{height:94px;display:block;margin:0 auto 18px;}
 
 /* ── MAIN SCREEN ── */
 #screen-main{background:var(--bg);overflow-y:auto;}
@@ -239,6 +248,7 @@ body::before{
   border:1px solid rgba(245,240,232,.15);color:rgba(245,240,232,.6);
   font-family:var(--cinzel);font-size:8px;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;
 }
+.books-header-title{font-family:var(--cinzel);font-size:clamp(18px,5vw,24px);color:#f5f0e8;letter-spacing:.05em;margin-top:2px;margin-bottom:10px;line-height:1.15;}
 
 /* Stats */
 .stats-row{display:flex;gap:0;margin-bottom:8px;}
@@ -388,6 +398,8 @@ body::before{
   transition:background .2s;
 }
 .fab-cfg:hover{background:var(--burdeos);}
+.books-footer-brand{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.66rem;font-family:var(--mono);letter-spacing:0.08em;}
+.books-footer-logo{height:22px;width:auto;display:block;opacity:.95;}
 </style>
 </head>
 <body>
@@ -419,20 +431,32 @@ body::before{
   </div>
 </div>
 
+<div class="screen" id="screen-welcome">
+  <div class="books-welcome-shell">
+    <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" class="books-brand-logo welcome"
+      onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+    <div style="display:none;font-family:var(--cinzel);font-size:1.3rem;letter-spacing:0.08em;color:var(--ink);margin-bottom:18px;">TO-K BOOKS</div>
+    <div class="books-welcome-title">Ponle nombre a tu biblioteca</div>
+    <div class="books-welcome-copy">Será lo primero que veas al entrar y también aparecerá en tus avisos de lectura.</div>
+    <input id="welcome-name-books" class="fid-inp" type="text" placeholder="Ana, Juan, Marta..." onkeydown="if(event.key==='Enter')guardarNombreInicialBooks()">
+    <button class="fid-btn" onclick="guardarNombreInicialBooks()">Entrar a mi biblioteca →</button>
+    <div class="books-welcome-note">Podrás cambiar el nombre y el tema más tarde desde ajustes.</div>
+  </div>
+</div>
+
 <!-- MAIN -->
 <div class="screen" id="screen-main">
   <div class="tok-header">
     <div class="tok-header-inner">
       <div class="tok-badge-row">
-        <div style="display:flex;align-items:center;gap:8px;">
-          <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:48px;flex-shrink:0;"
+        <div style="display:flex;align-items:center;gap:12px;">
+          <img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" class="books-brand-logo"
             onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
           <span style="display:none;font-family:var(--cinzel);font-size:1rem;letter-spacing:0.08em;color:#f5f0e8;">TO-K BOOKS</span>
-          <div class="tok-badge">TO-K BOOKS · BETA</div>
         </div>
         <button class="header-btn" onclick="resetAnio()">🔄 Año</button>
       </div>
-      <div id="books-header-title" style="font-family:var(--cinzel);font-size:13px;color:rgba(245,240,232,0.7);letter-spacing:0.06em;margin-top:4px;margin-bottom:2px;"></div>
+      <div id="books-header-title" class="books-header-title">Mi biblioteca</div>
       <div class="stats-row">
         <div class="stat-item"><span class="stat-num" id="stat-total">0</span><span class="stat-label">LEÍDOS</span></div>
         <div class="stat-item"><span class="stat-num" id="stat-anio">0</span><span class="stat-label">ESTE AÑO</span></div>
@@ -574,8 +598,11 @@ function aplicarTemaB(t){
   const tema=TEMAS_B[t]||TEMAS_B.dia;
   const r=document.documentElement.style;
   r.setProperty('--burdeos',tema.c1);r.setProperty('--bsoft',tema.c2);r.setProperty('--bdark',tema.c3);r.setProperty('--paper',tema.bg);
+  r.setProperty('--books-logo-filter',tema.dark?'brightness(0) invert(1) saturate(0) contrast(1.05)':'none');
+  r.setProperty('--books-logo-opacity',tema.dark?'0.94':'1');
   if(tema.dark){r.setProperty('--card','#1E1018');r.setProperty('--ink','#F0C0D0');r.setProperty('--muted','#C098A8');r.setProperty('--line','rgba(255,255,255,0.08)');}
   else{r.setProperty('--card','#FFFFFF');r.setProperty('--ink','#1A1015');r.setProperty('--muted','#9A8490');r.setProperty('--line','rgba(139,58,82,0.12)');}
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', tema.c3);
 }
 function renderTemaGridB(){
   const g=document.getElementById('tema-grid-books');if(!g)return;
@@ -586,8 +613,16 @@ window.selTemaB=function(k){DATA.tema=k;aplicarTemaB(k);renderTemaGridB();}
 function esNFC(){if(params.get('nfc')==='1')return true;return /Android|iPhone|iPad/i.test(navigator.userAgent)&&!document.referrer;}
 function renderFooterB(){
   const url=DATA.redirect||'https://linktr.ee/tallermemoriasstudio';
-  const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
+  const html=`<a class="books-footer-brand" href="${url}" target="_blank" rel="noopener"><img class="books-footer-logo" src="https://tm-ops-44e43.web.app/El%20Taller%20de%20memorias.png" alt="El Taller de Memorias" onerror="this.style.display='none'"><span>By El Taller de Memorias</span></a>`;
   const el=document.getElementById('tok-footer-books');if(el)el.innerHTML=html;
+}
+
+function renderWelcomeBooks() {
+  const input = document.getElementById('welcome-name-books');
+  if(input) {
+    input.value = DATA.nombre || '';
+    setTimeout(() => input.focus(), 40);
+  }
 }
 
 function setGiftStatus(msg, isError=false) {
@@ -825,6 +860,10 @@ async function init() {
     renderFooterB();
   } catch(e) { console.error(e); }
   document.getElementById('loading').style.display='none';
+  if(!DATA.nombre) {
+    irA('welcome');
+    return;
+  }
   irA('main');
 }
 
@@ -864,6 +903,17 @@ window.irA = function(s) {
   document.getElementById('screen-'+s).classList.add('active');
   if(s==='main') renderMain();
   if(s==='config') renderConfigBooks();
+  if(s==='welcome') renderWelcomeBooks();
+}
+
+window.guardarNombreInicialBooks = async function() {
+  const nombre = (document.getElementById('welcome-name-books')?.value || '').trim();
+  if(!nombre) { toast('Escribe tu nombre'); return; }
+  DATA.nombre = nombre;
+  await guardar();
+  actualizarHeaderBooks();
+  renderFooterB();
+  irA('main');
 }
 
 function renderConfigBooks() {
@@ -884,7 +934,7 @@ window.setLang = function(l,e) {
 
 function actualizarHeaderBooks() {
   const el = document.getElementById('books-header-title');
-  if(el) el.textContent = DATA.nombre ? `Biblioteca de ${DATA.nombre}` : '';
+  if(el) el.textContent = DATA.nombre ? `Biblioteca de ${DATA.nombre}` : 'Mi biblioteca';
 }
 
 function renderMain() {
@@ -924,7 +974,49 @@ async function guardar() {
   }
 }
 
-// GOOGLE BOOKS
+function normalizarResultadoLibro(item, idx) {
+  return {
+    ...item,
+    pagActual: 0,
+    pagBase: 0,
+    id: Date.now() + idx,
+  };
+}
+
+async function buscarOpenLibrary(q) {
+  const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
+  if(!res.ok) throw new Error(`Open Library ${res.status}`);
+  const data = await res.json();
+  return (data.docs || [])
+    .filter(doc => doc.title)
+    .slice(0, 8)
+    .map((doc, idx) => normalizarResultadoLibro({
+      title: doc.title,
+      author: (doc.author_name || ['Autor desconocido']).slice(0, 2).join(', '),
+      pages: doc.number_of_pages_median || 0,
+      cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
+    }, idx));
+}
+
+async function buscarGoogleBooks(q) {
+  try {
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`);
+    if(!res.ok) return [];
+    const data = await res.json();
+    return (data.items || []).slice(0, 8).map((item, idx) => {
+      const info = item.volumeInfo || {};
+      return normalizarResultadoLibro({
+        title: info.title || 'Sin título',
+        author: (info.authors || ['Autor desconocido']).join(', '),
+        pages: info.pageCount || 0,
+        cover: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
+      }, idx);
+    });
+  } catch(e) {
+    return [];
+  }
+}
+
 window.buscarLibro = async function() {
   const q = document.getElementById('search-input').value.trim();
   if(!q) return;
@@ -932,24 +1024,25 @@ window.buscarLibro = async function() {
   const box = document.getElementById('search-results');
   loading.style.display='block'; box.style.display='none'; box.innerHTML='';
   try {
-    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`);
-    const data = await res.json();
+    let results = [];
+    try {
+      results = await buscarOpenLibrary(q);
+    } catch(e) {}
+    if(!results.length) results = await buscarGoogleBooks(q);
     loading.style.display='none';
     document.getElementById('manual-form').style.display='none';
-    if(!data.items?.length) {
+    if(!results.length) {
       box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">Sin resultados — ¿añades el libro manualmente?</div>';
       box.style.display='block';
       document.getElementById('manual-form').style.display='block';
       return;
     }
-    window._sr = [];
-    box.innerHTML = data.items.map((item,idx)=>{
-      const info=item.volumeInfo;
-      const title=info.title||'Sin título';
-      const author=(info.authors||['Autor desconocido']).join(', ');
-      const pages=info.pageCount||0;
-      const cover=info.imageLinks?.thumbnail?.replace('http:','https:') || '';
-      window._sr[idx]={title,author,pages,cover,pagActual:0,pagBase:0,id:Date.now()+idx};
+    window._sr = results;
+    box.innerHTML = results.map((item,idx)=>{
+      const title=item.title||'Sin título';
+      const author=item.author||'Autor desconocido';
+      const pages=item.pages||0;
+      const cover=item.cover || '';
       const coverEl=cover?`<img class="result-cover" src="${cover}" alt="">`:`<div class="result-cover-ph">📖</div>`;
       return `<div class="result-item" style="display:flex;align-items:center;gap:0;">
         <div style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;" onclick="seleccionarLibro(${idx})">${coverEl}<div class="result-info"><div class="result-title">${title}</div><div class="result-author">${author}</div><div class="result-pages">${pages?pages+' págs':'Sin páginas'}</div></div></div>
@@ -957,7 +1050,12 @@ window.buscarLibro = async function() {
       </div>`;
     }).join('');
     box.style.display='block';
-  } catch(e) { loading.style.display='none'; box.innerHTML='<div style="text-align:center;padding:14px;color:#c44;">Error de conexión</div>'; box.style.display='block'; }
+  } catch(e) {
+    loading.style.display='none';
+    box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">No hemos podido consultar catálogos ahora mismo. Puedes añadir el libro manualmente.</div>';
+    box.style.display='block';
+    document.getElementById('manual-form').style.display='block';
+  }
 }
 
 window.seleccionarLibro = function(idx) {
