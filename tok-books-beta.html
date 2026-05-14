@@ -400,8 +400,8 @@ body::before{
   transition:background .2s;
 }
 .fab-cfg:hover{background:var(--burdeos);}
-.books-footer-brand{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.66rem;font-family:var(--mono);letter-spacing:0.08em;text-align:center;}
-.books-footer-logo{height:34px;width:auto;display:block;opacity:.98;}
+.books-footer-brand{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.7rem;font-family:var(--mono);letter-spacing:0.08em;text-align:center;}
+.books-footer-logo{height:42px;width:auto;display:block;opacity:.98;}
 </style>
 </head>
 <body>
@@ -517,7 +517,7 @@ body::before{
     </div>
   </div>
 
-  <div id="tok-footer-books" style="margin-top:4px;padding-bottom:80px;"></div>
+  <div id="tok-footer-books" style="margin-top:4px;padding-bottom:80px;text-align:center;"></div>
   <button class="fab-cfg" onclick="irA('config')" title="Configuración">⚙️</button>
 </div>
 
@@ -585,7 +585,9 @@ const NIVELES = [
   {min:300,label:'📚 Bibliófilo'},{min:600,label:'🎓 Erudito'},{min:1000,label:'✨ Maestro'},
 ];
 
-const SEARCH_TIMEOUT_MS = 3200;
+const SEARCH_TIMEOUT_MS = 60000;
+const GOOGLE_SEARCH_TIMEOUT_MS = 2500;
+const SEARCH_SLOW_HINT_MS = 2600;
 
 let DATA = { total:0, anual:0, puntos:0, libros:[], listaWish:[], listaDone:[] };
 let lang = 'es';
@@ -1003,14 +1005,32 @@ function claveLibro(item) {
 
 async function fetchJsonConTimeout(url, timeoutMs = SEARCH_TIMEOUT_MS) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  const useTimeout = Number.isFinite(timeoutMs) && timeoutMs > 0;
+  const timeoutId = useTimeout ? setTimeout(() => controller.abort(), timeoutMs) : null;
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, useTimeout ? { signal: controller.signal } : undefined);
     if(!res.ok) throw new Error(`HTTP ${res.status}`);
     return await res.json();
   } finally {
-    clearTimeout(timeoutId);
+    if(timeoutId) clearTimeout(timeoutId);
   }
+}
+
+function prepararFormularioManualBusqueda(q) {
+  const manualTitle = document.getElementById('manual-titulo');
+  const manualPages = document.getElementById('manual-paginas');
+  if(manualTitle) manualTitle.value = q;
+  if(manualPages && !manualPages.value) manualPages.value = '';
+}
+
+function mostrarEstadoBusquedaLenta(q, message, keepLoading = false) {
+  const loading = document.getElementById('search-loading');
+  const box = document.getElementById('search-results');
+  box.innerHTML = `<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">${message}</div>`;
+  box.style.display = 'block';
+  prepararFormularioManualBusqueda(q);
+  document.getElementById('manual-form').style.display = 'block';
+  if(!keepLoading) loading.style.display = 'none';
 }
 
 function mezclarResultadosLibros(openResults, googleResults) {
@@ -1069,22 +1089,18 @@ async function buscarOpenLibrary(q) {
 }
 
 async function buscarGoogleBooks(q) {
-  try {
-    const data = await fetchJsonConTimeout(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`);
-    return (data.items || []).slice(0, 8).map((item, idx) => {
-      const info = item.volumeInfo || {};
-      return normalizarResultadoLibro({
-        title: info.title || 'Sin título',
-        author: (info.authors || ['Autor desconocido']).join(', '),
-        pages: info.pageCount || 0,
-        cover: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
-        googleVolumeId: item.id || '',
-        openIsbn: info.industryIdentifiers?.[0]?.identifier || '',
-      }, idx);
-    });
-  } catch(e) {
-    return [];
-  }
+  const data = await fetchJsonConTimeout(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}&maxResults=8&printType=books`, GOOGLE_SEARCH_TIMEOUT_MS);
+  return (data.items || []).slice(0, 8).map((item, idx) => {
+    const info = item.volumeInfo || {};
+    return normalizarResultadoLibro({
+      title: info.title || 'Sin título',
+      author: (info.authors || ['Autor desconocido']).join(', '),
+      pages: info.pageCount || 0,
+      cover: info.imageLinks?.thumbnail?.replace('http:', 'https:') || '',
+      googleVolumeId: item.id || '',
+      openIsbn: info.industryIdentifiers?.[0]?.identifier || '',
+    }, idx);
+  });
 }
 
 window.buscarLibro = async function() {
@@ -1092,24 +1108,35 @@ window.buscarLibro = async function() {
   if(!q) return;
   const loading = document.getElementById('search-loading');
   const box = document.getElementById('search-results');
+  const manualForm = document.getElementById('manual-form');
   const searchRun = Date.now();
   window._booksSearchRun = searchRun;
+  loading.textContent='Buscando en catálogos...';
   loading.style.display='block'; box.style.display='none'; box.innerHTML='';
-  document.getElementById('manual-form').style.display='none';
+  manualForm.style.display='none';
+  prepararFormularioManualBusqueda(q);
+  const slowHintTimer = setTimeout(() => {
+    if(window._booksSearchRun !== searchRun) return;
+    loading.textContent='La búsqueda sigue en curso...';
+    mostrarEstadoBusquedaLenta(q, 'La búsqueda está tardando más de lo normal. Puedes seguir esperando o añadir el libro manualmente.', true);
+  }, SEARCH_SLOW_HINT_MS);
   try {
     const [openRes, googleRes] = await Promise.allSettled([
       buscarOpenLibrary(q),
       buscarGoogleBooks(q),
     ]);
+    clearTimeout(slowHintTimer);
     if(window._booksSearchRun !== searchRun) return;
+    const huboErrorCatalogo = openRes.status === 'rejected' || googleRes.status === 'rejected';
     const openResults = openRes.status === 'fulfilled' ? openRes.value : [];
     const googleResults = googleRes.status === 'fulfilled' ? googleRes.value : [];
     const results = mezclarResultadosLibros(openResults, googleResults);
     loading.style.display='none';
+    loading.textContent='Buscando...';
     if(!results.length) {
-      box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">Sin resultados — ¿añades el libro manualmente?</div>';
-      box.style.display='block';
-      document.getElementById('manual-form').style.display='block';
+      mostrarEstadoBusquedaLenta(q, huboErrorCatalogo
+        ? 'Los catálogos externos están lentos o temporalmente fuera de servicio. Puedes añadir el libro manualmente.'
+        : 'No hemos encontrado coincidencias ahora mismo. Puedes añadir el libro manualmente.');
       return;
     }
     window._sr = results;
@@ -1125,11 +1152,12 @@ window.buscarLibro = async function() {
       </div>`;
     }).join('');
     box.style.display='block';
+    manualForm.style.display='none';
   } catch(e) {
+    clearTimeout(slowHintTimer);
     loading.style.display='none';
-    box.innerHTML='<div style="text-align:center;padding:14px;font-style:italic;color:var(--muted);">No hemos podido consultar catálogos ahora mismo. Puedes añadir el libro manualmente.</div>';
-    box.style.display='block';
-    document.getElementById('manual-form').style.display='block';
+    loading.textContent='Buscando...';
+    mostrarEstadoBusquedaLenta(q, 'No hemos podido consultar catálogos ahora mismo. Puedes añadir el libro manualmente.');
   }
 }
 
@@ -1164,6 +1192,7 @@ window.añadirADeseos = function(idx) {
 }
 
 window.añadirManual = function() {
+  window._booksSearchRun = Date.now();
   const titulo=(document.getElementById('manual-titulo')?.value||'').trim();
   if(!titulo) { toast('Escribe el título del libro'); return; }
   const paginas=parseInt(document.getElementById('manual-paginas')?.value||'0',10)||0;
