@@ -1369,14 +1369,15 @@ window.buscarLibro = async function() {
     mostrarEstadoBusquedaLenta(q, 'La búsqueda está tardando más de lo normal. Puedes seguir esperando o añadir el libro manualmente.', true);
   }, SEARCH_SLOW_HINT_MS);
   try {
-    let googleResults = [];
-    let openResults = [];
-    let huboErrorCatalogo = false;
-    try {
-      googleResults = await buscarGoogleBooks(q);
-    } catch(e) {
-      huboErrorCatalogo = true;
-    }
+    const googleTask = buscarGoogleBooks(q)
+      .then(results => ({ ok:true, results }))
+      .catch(error => ({ ok:false, error }));
+    const openTask = buscarOpenLibrary(q)
+      .then(results => ({ ok:true, results }))
+      .catch(error => ({ ok:false, error }));
+
+    const googleState = await googleTask;
+    const googleResults = googleState.ok ? googleState.results : [];
     if(window._booksSearchRun !== searchRun) return;
     if(googleResults.length) {
       clearTimeout(slowHintTimer);
@@ -1388,17 +1389,16 @@ window.buscarLibro = async function() {
       manualForm.style.display='none';
       return;
     }
-    try {
-      openResults = await buscarOpenLibrary(q);
-    } catch(e) {
-      huboErrorCatalogo = true;
-    }
+
+    const openState = await openTask;
+    const openResults = openState.ok ? openState.results : [];
     clearTimeout(slowHintTimer);
     if(window._booksSearchRun !== searchRun) return;
     const results = ordenarResultadosBusqueda(mezclarResultadosLibros(localResults, openResults, googleResults), q);
     loading.style.display='none';
     loading.textContent='Buscando...';
     if(!results.length) {
+      const huboErrorCatalogo = !googleState.ok && !openState.ok;
       mostrarEstadoBusquedaLenta(q, huboErrorCatalogo
         ? 'Los catálogos externos están lentos o temporalmente fuera de servicio. Puedes añadir el libro manualmente.'
         : 'No hemos encontrado coincidencias ahora mismo. Puedes añadir el libro manualmente.');
