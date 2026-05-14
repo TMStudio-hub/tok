@@ -402,13 +402,20 @@ body::before{
   <div class="fid-setup-box">
     <div style="margin-bottom:16px;"><img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:60px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">📚</div></div>
     <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">TO-K BOOKS</div>
-    <div style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.</div>
-    <div style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+    <div id="setup-books-copy" style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Si este es tu primer TO-K, activa tu biblioteca con el token incluido.<br>Si ya tienes hogar, conecta con tu código familiar.</div>
+    <div id="gift-activation-box" style="display:none;background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
+      <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--burdeos);margin-bottom:12px;">Activar este regalo</div>
+      <div style="font-size:0.78rem;font-style:italic;color:var(--muted);margin-bottom:14px;line-height:1.6;">Usa el token familiar que viene con tu <strong>TO-K BOOKS</strong>. Este chip ya incluye su identificador de regalo.</div>
+      <input id="gift-token-input" class="fid-inp" type="text" placeholder="TOK-XXXX-XXXX" oninput="this.value=this.value.trim().toUpperCase()">
+      <button id="gift-activate-btn" class="fid-btn" onclick="activarBooksRegalo()">Activar mi biblioteca →</button>
+      <div id="gift-activation-status" style="display:none;margin-top:10px;font-size:0.72rem;font-family:var(--mono);line-height:1.55;"></div>
+    </div>
+    <div id="existing-home-box" style="background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
       <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--burdeos);margin-bottom:12px;">Código del hogar</div>
       <input id="fid-input" class="fid-inp" type="text" placeholder="Pega aquí tu código familiar" oninput="this.value=this.value.trim()">
       <button class="fid-btn" onclick="conectarFID()">Conectar mi hogar →</button>
     </div>
-    <div style="font-size:0.72rem;font-style:italic;color:var(--muted);">Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.</div>
+    <div id="setup-books-note" style="font-size:0.72rem;font-style:italic;color:var(--muted);">Si todavía no tienes hogar, puedes empezar directamente desde este <strong>TO-K BOOKS</strong>.</div>
   </div>
 </div>
 
@@ -517,7 +524,7 @@ body::before{
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, get, set, push } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -534,6 +541,7 @@ const db = getDatabase(app);
 const params = new URLSearchParams(location.search);
 let FID = params.get('fid');
 const MID = params.get('mid') || 'books_1';
+const AID = (params.get('aid') || '').trim().toUpperCase();
 
 // Server key — solo uso privado/beta. Reemplazar antes de producción.
 // Obtener en Firebase Console → Project Settings → Cloud Messaging → Server key (legacy)
@@ -580,6 +588,148 @@ function renderFooterB(){
   const url=DATA.redirect||'https://linktr.ee/tallermemoriasstudio';
   const html=`<div style="display:inline-flex;align-items:center;gap:8px;"><img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="El Taller de Memorias" style="height:20px;opacity:0.35;" onerror="this.style.display='none'"><a href="${url}" target="_blank" rel="noopener" style="text-decoration:none;color:var(--muted);font-size:0.6rem;font-family:var(--mono);letter-spacing:0.1em;"><span style="font-weight:800;color:var(--burdeos);">TO-K</span> · by El Taller de Memorias</a></div>`;
   const el=document.getElementById('tok-footer-books');if(el)el.innerHTML=html;
+}
+
+function setGiftStatus(msg, isError=false) {
+  const el = document.getElementById('gift-activation-status');
+  if(!el) return;
+  if(!msg) {
+    el.style.display = 'none';
+    el.textContent = '';
+    return;
+  }
+  el.style.display = 'block';
+  el.textContent = msg;
+  el.style.color = isError ? '#b94a48' : 'var(--burdeos)';
+}
+
+function configurarSetupBooks() {
+  const giftBox = document.getElementById('gift-activation-box');
+  const copyEl = document.getElementById('setup-books-copy');
+  const noteEl = document.getElementById('setup-books-note');
+  if(giftBox) giftBox.style.display = AID ? 'block' : 'none';
+  if(copyEl) {
+    copyEl.innerHTML = AID
+      ? 'Si este es tu primer TO-K, activa tu biblioteca con el token incluido.<br>Si ya tienes hogar, conecta con tu código familiar.'
+      : 'Introduce el código de tu hogar TO-K.<br>Lo encontrarás en el <strong>TO-K HOME</strong>.';
+  }
+  if(noteEl) {
+    noteEl.innerHTML = AID
+      ? 'Este <strong>TO-K BOOKS</strong> ya viene preparado para empezar tu núcleo familiar.'
+      : 'Toca primero el <strong>marco TO-K HOME</strong> para crear tu hogar.';
+  }
+  setGiftStatus('');
+}
+
+async function activarBooksDirecto(token) {
+  const tokenSnap = await get(ref(db, `admin/familyTokens/${token}`));
+  if(!tokenSnap.exists()) throw new Error('Token no encontrado. Comprueba que lo has escrito bien.');
+  const tokenData = tokenSnap.val() || {};
+  if((tokenData.mode || 'initial') !== 'initial') throw new Error('Este token no corresponde a una activación inicial.');
+  if(tokenData.status && tokenData.status !== 'available') throw new Error('Este token ya fue usado o ya no está disponible.');
+  if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto. Necesita activación asistida.');
+
+  const assetSnap = await get(ref(db, `admin/assets/${AID}`));
+  if(!assetSnap.exists()) throw new Error('Este TO-K BOOKS no tiene AID válido. Reprograma el chip.');
+  const assetData = assetSnap.val() || {};
+  if((assetData.productType || '').toUpperCase() !== 'BOOKS') throw new Error('El AID escaneado no corresponde a un TO-K BOOKS.');
+  if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K BOOKS ya fue activado.');
+  if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K BOOKS.');
+
+  const familyRef = push(ref(db, 'familias'));
+  const fid = familyRef.key;
+  const ts = Date.now();
+  const theme = DATA.tema || 'dia';
+  const updates = {};
+
+  updates[`familias/${fid}/meta`] = {
+    fid,
+    status: 'active',
+    ownerUid: null,
+    ownerEmail: null,
+    createdFromToken: token,
+    createdFromAid: AID,
+    createdFromProduct: 'BOOKS',
+    createdAt: ts,
+    updatedAt: ts,
+  };
+  updates[`familias/${fid}/hogar`] = {
+    nombre: 'Mi hogar TO-K',
+    emoji: '🏠',
+    tema,
+    wifi: { ssid: '', pass: '', type: 'WPA' },
+    redirect: '',
+    creadoDesde: 'BOOKS',
+    fechaCreacion: ts,
+  };
+  updates[`familias/${fid}/miembros/${MID}`] = {
+    ...DATA,
+    nombre: DATA.nombre || '',
+    tema,
+  };
+  updates[`familias/${fid}/assets/${AID}`] = {
+    aid: AID,
+    productType: 'BOOKS',
+    status: 'active',
+    linkedMid: MID,
+    linkedMidType: 'reader',
+    orderId: assetData.orderId || tokenData.orderId || null,
+    packId: assetData.packId || tokenData.packId || null,
+    addedAt: ts,
+    activatedAt: ts,
+  };
+  updates[`admin/familyTokens/${token}`] = {
+    ...tokenData,
+    familyId: fid,
+    status: 'redeemed',
+    redeemedByUid: null,
+    redeemedByEmail: null,
+    redeemedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`admin/assets/${AID}`] = {
+    ...assetData,
+    familyId: fid,
+    linkedMid: MID,
+    linkedMidType: 'reader',
+    mid: MID,
+    status: 'active',
+    activatedAt: ts,
+    updatedAt: ts,
+  };
+  updates[`assetIndex/${AID}`] = {
+    fid,
+    productType: 'BOOKS',
+    status: 'active',
+    linkedMid: MID,
+    updatedAt: ts,
+  };
+  updates[`midIndex/${MID}`] = fid;
+  if(tokenData.orderId) {
+    updates[`admin/orders/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/orders/${tokenData.orderId}/status`] = 'redeemed';
+    updates[`admin/orders/${tokenData.orderId}/updatedAt`] = ts;
+    updates[`admin/pedidos/${tokenData.orderId}/familyId`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/fidAmpliacion`] = fid;
+    updates[`admin/pedidos/${tokenData.orderId}/estado`] = 'activado';
+  }
+  if(tokenData.packId) {
+    updates[`admin/packs/${tokenData.packId}/familyId`] = fid;
+    updates[`admin/packs/${tokenData.packId}/updatedAt`] = ts;
+  }
+  updates[`activaciones/${token}`] = {
+    usado: true,
+    modo: 'initial',
+    familyId: fid,
+    pedido: tokenData.orderId || assetData.orderId || null,
+    orderId: tokenData.orderId || assetData.orderId || null,
+    cliente: tokenData.customerName || 'Regalo TO-K BOOKS',
+    fecha_activacion: new Date(ts).toISOString(),
+    fecha_creacion: tokenData.createdAt ? new Date(tokenData.createdAt).toISOString() : new Date(ts).toISOString(),
+  };
+
+  await update(ref(db), updates);
+  return fid;
 }
 
 // ── FCM PUSH ─────────────────────────────────────────────────────────────────
@@ -632,10 +782,15 @@ async function registrarAlerta(tipo, titulo, paginas) {
 async function init() {
   lang = (navigator.language||'es').slice(0,2);
   if(!['es','en','de'].includes(lang)) lang = 'es';
-  if(!esNFC()&&!FID){window.location.replace(DATA.redirect||'https://linktr.ee/tallermemoriasstudio');return;}
+  configurarSetupBooks();
+  if(!esNFC()&&!FID&&!AID){window.location.replace(DATA.redirect||'https://linktr.ee/tallermemoriasstudio');return;}
   if(!FID) {
     const fidLocal = localStorage.getItem('tok_fid');
-    if(fidLocal) { location.href = location.pathname+'?fid='+fidLocal+'&mid='+MID; return; }
+    if(fidLocal) {
+      const nextUrl = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      location.href = nextUrl;
+      return;
+    }
     document.getElementById('loading').style.display='none';
     irA('setup-fid'); return;
   }
@@ -657,8 +812,28 @@ window.conectarFID = async function() {
     const snap = await get(ref(db, `familias/${fid}/hogar`));
     if(!snap.exists()) { alert('Código no encontrado. Comprueba el código del TO-K HOME.'); return; }
     localStorage.setItem('tok_fid', fid);
-    location.href = location.pathname+'?fid='+fid+'&mid='+MID;
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
   } catch(e) { alert('Error de conexión.'); }
+}
+
+window.activarBooksRegalo = async function() {
+  const token = (document.getElementById('gift-token-input')?.value || '').trim().toUpperCase();
+  const btn = document.getElementById('gift-activate-btn');
+  if(!AID) { setGiftStatus('Este TO-K BOOKS no incluye AID. Reprograma el chip antes de entregarlo.', true); return; }
+  if(!token) { setGiftStatus('Introduce el token familiar incluido con el regalo.', true); return; }
+
+  setGiftStatus('Activando biblioteca...');
+  if(btn) btn.disabled = true;
+  try {
+    const fid = await activarBooksDirecto(token);
+    localStorage.setItem('tok_fid', fid);
+    setGiftStatus('Biblioteca activada. Entrando...');
+    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}&aid=${encodeURIComponent(AID)}`;
+  } catch(e) {
+    console.error('[BOOKS] Activación regalo fallida:', e);
+    setGiftStatus(e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.', true);
+    if(btn) btn.disabled = false;
+  }
 }
 
 window.irA = function(s) {
