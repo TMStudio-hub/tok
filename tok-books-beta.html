@@ -65,8 +65,8 @@ body::before{
 .books-welcome-title{font-family:var(--cinzel);font-size:20px;font-weight:500;color:var(--ink);letter-spacing:.04em;margin-bottom:10px;}
 .books-welcome-copy{font-size:15px;font-style:italic;color:var(--muted);line-height:1.55;margin-bottom:22px;}
 .books-welcome-note{font-size:13px;font-style:italic;color:var(--muted);line-height:1.55;margin-top:14px;}
-.books-brand-logo{height:84px;flex-shrink:0;filter:var(--books-logo-filter);opacity:var(--books-logo-opacity);transition:filter .2s,opacity .2s;}
-.books-brand-logo.welcome{height:104px;display:block;margin:0 auto 18px;}
+.books-brand-logo{height:112px;flex-shrink:0;filter:var(--books-logo-filter);opacity:var(--books-logo-opacity);transition:filter .2s,opacity .2s;}
+.books-brand-logo.welcome{height:138px;display:block;margin:0 auto 22px;}
 
 /* ── MAIN SCREEN ── */
 #screen-main{background:var(--bg);overflow-y:auto;}
@@ -238,7 +238,7 @@ body::before{
   background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
 }
 .tok-header-inner{position:relative;z-index:1;text-align:center;}
-.tok-badge-row{display:flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative;min-height:88px;}
+.tok-badge-row{display:flex;align-items:center;justify-content:center;margin-bottom:14px;position:relative;min-height:118px;}
 .tok-badge{
   font-family:var(--cinzel);font-size:8px;letter-spacing:.3em;text-transform:uppercase;
   color:var(--gold);opacity:.8;border:1px solid rgba(184,150,90,.3);padding:4px 12px;border-radius:20px;
@@ -400,8 +400,8 @@ body::before{
   transition:background .2s;
 }
 .fab-cfg:hover{background:var(--burdeos);}
-.books-footer-brand{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-decoration:none;color:var(--muted);font-size:0.7rem;font-family:var(--mono);letter-spacing:0.08em;text-align:center;}
-.books-footer-logo{height:42px;width:auto;display:block;opacity:.98;}
+.books-footer-brand{display:inline-flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-decoration:none;color:var(--muted);font-size:0.7rem;font-family:var(--mono);letter-spacing:0.08em;text-align:center;}
+.books-footer-logo{width:82px;height:82px;display:block;opacity:.98;object-fit:contain;border-radius:50%;padding:8px;background:rgba(255,255,255,.92);border:1px solid rgba(109,40,64,.14);box-shadow:0 8px 18px rgba(74,24,40,.12);}
 </style>
 </head>
 <body>
@@ -414,7 +414,7 @@ body::before{
 <!-- PRIMERA VEZ -->
 <div class="screen" id="screen-setup-fid">
   <div class="fid-setup-box">
-    <div style="margin-bottom:16px;"><img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:60px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">📚</div></div>
+    <div style="margin-bottom:18px;"><img src="https://tmstudio-hub.github.io/tok/books.svg" alt="TO-K BOOKS" style="height:88px;" onerror="this.style.display='none'"><div style="font-size:2rem;display:none;">📚</div></div>
     <div style="font-size:1.6rem;font-weight:300;font-style:italic;color:var(--ink);margin-bottom:8px;">TO-K BOOKS</div>
     <div id="setup-books-copy" style="font-size:0.85rem;font-style:italic;color:var(--muted);margin-bottom:28px;line-height:1.6;">Si este es tu primer TO-K, activa tu biblioteca con el token incluido.<br>Si ya tienes hogar, conecta con tu código familiar.</div>
     <div id="gift-activation-box" style="display:none;background:var(--card);border-radius:16px;padding:20px;border:1px solid var(--line);margin-bottom:16px;">
