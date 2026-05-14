@@ -74,20 +74,22 @@ Pasos:
 
 `https://tmstudio-hub.github.io/tok/tok-books-beta.html`
 
+Esta es la URL publica ya validada en uso real.
+
 ### URL publica alternativa de trabajo
 
 `https://tmstudio-hub.github.io/tok/tok-books-ready.html`
 
-La segunda existe para dar una ruta nueva de despliegue cuando la primera tarde en propagar cambios.
+La segunda existe para dar una ruta nueva de despliegue cuando la primera tarde en propagar cambios, pero puede tardar unos minutos en aparecer tras el push a GitHub Pages.
 
 ## 8. Incidencias conocidas y decision operativa
 
 - GitHub Pages puede tardar en servir la ultima version de `tok-books-beta.html` aunque GitHub ya tenga el commit correcto.
-- Por eso se mantiene `tok-books-ready.html` como ruta de salida limpia para pruebas y entregas cuando haga falta una URL nueva.
+- Por eso se mantiene `tok-books-ready.html` como ruta de salida limpia para pruebas y entregas cuando haga falta una URL nueva, aunque no siempre aparece al instante.
 - Si ambas rutas muestran lo mismo, se puede seguir usando la `beta` como principal.
 
 ## 9. Decision recomendada
 
-- Para entrega inmediata: usar la ruta que en ese momento refleje el commit nuevo.
-- Para operativa normal: mantener `tok-books-beta.html` como principal y `tok-books-ready.html` como respaldo de despliegue.
+- Para entrega inmediata: usar `tok-books-beta.html`, que ya esta validada publicamente.
+- Para operativa normal: mantener `tok-books-beta.html` como principal y `tok-books-ready.html` como respaldo de despliegue cuando Pages la publique.
 - Para el cliente final: no explicar la arquitectura interna; solo darle el chip o QR y, si hace falta, el codigo del hogar o el token familiar.
