@@ -246,6 +246,8 @@ La placa de una mascota deja de ser solo un nombre y un teléfono. Se convierte 
 
 TO-K BOOKS acompaña el hábito lector sin hacerlo pesado.
 
+Para el uso operativo diario y la entrega de este satélite, consultar también `README-OPERATIVO-TOK-BOOKS.md`.
+
 Acciones del satélite BOOKS:
 
 - Buscar libros por título o autor.
