@@ -591,6 +591,7 @@ const NIVELES = [
 const SEARCH_TIMEOUT_MS = 60000;
 const GOOGLE_SEARCH_TIMEOUT_MS = 2500;
 const SEARCH_SLOW_HINT_MS = 2600;
+const SEARCH_RESULT_ENRICH_LIMIT = 4;
 const SEARCH_CACHE_KEY = 'tok_books_catalog_cache_v1';
 const SEARCH_CACHE_LIMIT = 160;
 const STARTER_BOOKS_CATALOG = [
@@ -1047,6 +1048,11 @@ function simplificarTexto(v='') {
 }
 
 const RELATED_BOOK_TITLE_GROUPS = [
+  ['a game of thrones', 'juego de tronos'],
+  ['a clash of kings', 'choque de reyes'],
+  ['a storm of swords', 'tormenta de espadas'],
+  ['a feast for crows', 'festin de cuervos'],
+  ['a dance with dragons', 'danza de dragones'],
   ['the name of the wind', 'el nombre del viento'],
   ['the wise man s fear', 'el temor de un hombre sabio'],
 ];
@@ -1066,6 +1072,12 @@ function librosParecenIguales(a, b) {
   return !authorA || !authorB || authorA === authorB;
 }
 
+function haystackLibroBusqueda(item) {
+  const author = simplificarTexto(item?.author || '');
+  const titleVariants = titulosRelacionadosLibro(item?.title || '');
+  return `${titleVariants.join(' ')} ${author}`.trim();
+}
+
 function claveLibro(item) {
   const autor = String(item.author || '').split(',')[0];
   return `${simplificarTexto(item.title)}|${simplificarTexto(autor)}`;
@@ -1074,6 +1086,11 @@ function claveLibro(item) {
 function normalizarPaginas(v) {
   const n = parseInt(v, 10);
   return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function paginasDesdePaginacion(v='') {
+  const match = String(v || '').match(/(\d{2,5})/);
+  return match ? normalizarPaginas(match[1]) : 0;
 }
 
 function idiomaPreferidoBooks() {
@@ -1099,13 +1116,13 @@ function idiomaOpenLibrary(values) {
 
 function puntuarResultadoLibro(item, normalizedQ, tokens) {
   const title = simplificarTexto(item.title);
-  const author = simplificarTexto(item.author);
-  const haystack = `${title} ${author}`.trim();
+  const titleVariants = titulosRelacionadosLibro(item.title);
+  const haystack = haystackLibroBusqueda(item);
   const itemLang = normalizarIdiomaLibro(item.language);
   const preferredLang = idiomaPreferidoBooks();
   let score = 0;
-  if(title === normalizedQ) score += 90;
-  if(title.startsWith(normalizedQ)) score += 35;
+  if(titleVariants.includes(normalizedQ)) score += 90;
+  if(titleVariants.some(value => value.startsWith(normalizedQ))) score += 35;
   if(haystack.includes(normalizedQ)) score += 18;
   score += tokens.filter(token => haystack.includes(token)).length * 6;
   if(itemLang && itemLang === preferredLang) score += 20;
@@ -1124,8 +1141,8 @@ function ordenarResultadosBusqueda(items, q) {
   return [...items]
     .map(item => {
       const title = simplificarTexto(item.title);
-      const author = simplificarTexto(item.author);
-      const haystack = `${title} ${author}`.trim();
+      const titleVariants = titulosRelacionadosLibro(item.title);
+      const haystack = haystackLibroBusqueda(item);
       const includesWhole = haystack.includes(normalizedQ);
       const includesTokens = tokens.every(token => haystack.includes(token));
       if(!includesWhole && !includesTokens) return null;
@@ -1133,8 +1150,8 @@ function ordenarResultadosBusqueda(items, q) {
       return {
         item,
         score: puntuarResultadoLibro(item, normalizedQ, tokens),
-        exactTitle: title === normalizedQ ? 1 : 0,
-        startsWithQuery: title.startsWith(normalizedQ) ? 1 : 0,
+        exactTitle: titleVariants.includes(normalizedQ) ? 1 : 0,
+        startsWithQuery: titleVariants.some(value => value.startsWith(normalizedQ)) ? 1 : 0,
         includesWhole: includesWhole ? 1 : 0,
         languageMatch: itemLang && itemLang === preferredLang ? 1 : 0,
       };
@@ -1152,6 +1169,7 @@ function normalizarLibroCatalogo(item, idx = 0) {
     pages: normalizarPaginas(item.pages),
     cover: item.cover || '',
     openEditionKey: item.openEditionKey || '',
+    openWorkKey: item.openWorkKey || '',
     openIsbn: item.openIsbn || '',
     googleVolumeId: item.googleVolumeId || '',
     language: normalizarIdiomaLibro(item.language || ''),
@@ -1182,6 +1200,7 @@ function registrarResultadosEnCache(items = []) {
       pages: normalizarPaginas(item.pages),
       cover: item.cover || '',
       openEditionKey: item.openEditionKey || '',
+      openWorkKey: item.openWorkKey || '',
       openIsbn: item.openIsbn || '',
       googleVolumeId: item.googleVolumeId || '',
       language: normalizarIdiomaLibro(item.language || ''),
@@ -1202,6 +1221,7 @@ function registrarResultadosEnCache(items = []) {
       pages: Math.max(prev.pages || 0, normalized.pages || 0),
       cover: prev.cover || normalized.cover || '',
       openEditionKey: prev.openEditionKey || normalized.openEditionKey || '',
+      openWorkKey: prev.openWorkKey || normalized.openWorkKey || '',
       openIsbn: prev.openIsbn || normalized.openIsbn || '',
       googleVolumeId: prev.googleVolumeId || normalized.googleVolumeId || '',
       language: prev.language || normalized.language || '',
@@ -1294,6 +1314,7 @@ function mezclarResultadosLibros(...sources) {
       cover: prev.cover || item.cover || '',
       author: prev.author && prev.author !== 'Autor desconocido' ? prev.author : (item.author || 'Autor desconocido'),
       openEditionKey: prev.openEditionKey || item.openEditionKey || '',
+      openWorkKey: prev.openWorkKey || item.openWorkKey || '',
       openIsbn: prev.openIsbn || item.openIsbn || '',
       googleVolumeId: prev.googleVolumeId || item.googleVolumeId || '',
       language: prev.language || item.language || '',
@@ -1310,7 +1331,22 @@ async function enriquecerLibroPaginas(libro) {
   if(libro.openEditionKey) {
     try {
       const data = await fetchJsonConTimeout(`https://openlibrary.org/books/${libro.openEditionKey}.json`, 2200);
-      if(data.number_of_pages) return { ...libro, pages: data.number_of_pages };
+      const pages = normalizarPaginas(data.number_of_pages || paginasDesdePaginacion(data.pagination));
+      if(pages) return { ...libro, pages };
+    } catch(e) {}
+  }
+  if(libro.openWorkKey) {
+    try {
+      const data = await fetchJsonConTimeout(`https://openlibrary.org${libro.openWorkKey}/editions.json?limit=12`, 2600);
+      const edition = (data.entries || []).find(entry => normalizarPaginas(entry.number_of_pages || paginasDesdePaginacion(entry.pagination)) > 0);
+      const pages = normalizarPaginas(edition?.number_of_pages || paginasDesdePaginacion(edition?.pagination));
+      if(pages) return {
+        ...libro,
+        pages,
+        openEditionKey: libro.openEditionKey || edition?.key?.split('/').pop() || '',
+        openIsbn: libro.openIsbn || edition?.isbn_13?.[0] || edition?.isbn_10?.[0] || '',
+        cover: libro.cover || (edition?.covers?.[0] ? `https://covers.openlibrary.org/b/id/${edition.covers[0]}-M.jpg` : ''),
+      };
     } catch(e) {}
   }
   if(libro.openIsbn) {
@@ -1323,6 +1359,26 @@ async function enriquecerLibroPaginas(libro) {
   return libro;
 }
 
+async function enriquecerResultadosBusqueda(results, q) {
+  const candidates = results
+    .map((item, idx) => ({ item, idx }))
+    .filter(({ item }) => !(item.pages || 0) && (item.openEditionKey || item.openWorkKey || item.openIsbn))
+    .slice(0, SEARCH_RESULT_ENRICH_LIMIT);
+  if(!candidates.length) return results;
+  const enriched = await Promise.all(candidates.map(async ({ item, idx }) => ({ idx, item: await enriquecerLibroPaginas(item) })));
+  const next = [...results];
+  let changed = false;
+  for(const { idx, item } of enriched) {
+    if(!item) continue;
+    const prev = next[idx] || {};
+    if((item.pages || 0) !== (prev.pages || 0) || (item.cover || '') !== (prev.cover || '') || (item.openEditionKey || '') !== (prev.openEditionKey || '')) {
+      next[idx] = { ...prev, ...item };
+      changed = true;
+    }
+  }
+  return changed ? ordenarResultadosBusqueda(next, q) : results;
+}
+
 async function buscarOpenLibrary(q) {
   const data = await fetchJsonConTimeout(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`, 0);
   return (data.docs || [])
@@ -1333,7 +1389,8 @@ async function buscarOpenLibrary(q) {
       author: (doc.author_name || ['Autor desconocido']).slice(0, 2).join(', '),
       pages: doc.number_of_pages_median || 0,
       cover: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : '',
-      openEditionKey: doc.edition_key?.[0] || '',
+      openEditionKey: doc.cover_edition_key || doc.edition_key?.[0] || '',
+      openWorkKey: doc.key || '',
       openIsbn: doc.isbn?.[0] || '',
       language: idiomaOpenLibrary(doc.language),
       source: 'open',
@@ -1426,8 +1483,10 @@ window.buscarLibro = async function() {
         : 'No hemos encontrado coincidencias ahora mismo. Puedes añadir el libro manualmente.');
       return;
     }
-    registrarResultadosEnCache(results);
-    renderResultadosBusqueda(results);
+    const enrichedResults = await enriquecerResultadosBusqueda(results, q);
+    if(window._booksSearchRun !== searchRun) return;
+    registrarResultadosEnCache(enrichedResults);
+    renderResultadosBusqueda(enrichedResults);
     manualForm.style.display='none';
   } catch(e) {
     clearTimeout(slowHintTimer);
