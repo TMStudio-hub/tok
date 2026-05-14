@@ -636,6 +636,15 @@ function renderWelcomeBooks() {
   }
 }
 
+function buildBooksUrl(overrides = {}) {
+  const next = new URL(location.href);
+  for(const [key, value] of Object.entries(overrides)) {
+    if(value === null || value === undefined || value === '') next.searchParams.delete(key);
+    else next.searchParams.set(key, value);
+  }
+  return `${next.pathname}${next.search}`;
+}
+
 function setGiftStatus(msg, isError=false) {
   const el = document.getElementById('gift-activation-status');
   if(!el) return;
@@ -851,12 +860,12 @@ async function init() {
     }
     const fidLocal = localStorage.getItem('tok_fid');
     if(!FID && !AID && fidLocal) {
-      const nextUrl = `${location.pathname}?fid=${encodeURIComponent(fidLocal)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      const nextUrl = buildBooksUrl({ fid: fidLocal, mid: MID, aid: AID || null });
       location.href = nextUrl;
       return;
     }
     if(FID) {
-      const nextUrl = `${location.pathname}?fid=${encodeURIComponent(FID)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+      const nextUrl = buildBooksUrl({ fid: FID, mid: MID, aid: AID || null });
       location.href = nextUrl;
       return;
     }
@@ -886,7 +895,7 @@ window.conectarFID = async function() {
     const snap = await get(ref(db, `familias/${fid}/hogar`));
     if(!snap.exists()) { alert('Código no encontrado. Comprueba el código del TO-K HOME.'); return; }
     localStorage.setItem('tok_fid', fid);
-    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}${AID ? `&aid=${encodeURIComponent(AID)}` : ''}`;
+    location.href = buildBooksUrl({ fid, mid: MID, aid: AID || null });
   } catch(e) { alert('Error de conexión.'); }
 }
 
@@ -902,7 +911,7 @@ window.activarBooksRegalo = async function() {
     const fid = await activarBooksDirecto(token);
     localStorage.setItem('tok_fid', fid);
     setGiftStatus('Biblioteca activada. Entrando...');
-    location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}&aid=${encodeURIComponent(AID)}`;
+    location.href = buildBooksUrl({ fid, mid: MID, aid: AID });
   } catch(e) {
     console.error('[BOOKS] Activación regalo fallida:', e);
     setGiftStatus(e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.', true);
