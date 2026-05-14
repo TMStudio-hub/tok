@@ -333,6 +333,9 @@ body::before{
 .pag-input:focus{outline:none;border-color:var(--gold);}
 .pag-of{font-size:12px;font-style:italic;color:var(--muted);}
 .pag-total{font-family:var(--mono);font-size:12px;color:var(--muted);}
+.pag-total-input{width:78px;}
+.pag-total-suffix{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.pag-total-help{font-size:11px;font-style:italic;color:var(--muted);margin:-2px 0 8px;}
 .progress-bg{width:100%;height:4px;background:var(--bsoft);border-radius:2px;margin-bottom:4px;overflow:hidden;}
 .progress-fill{height:100%;background:var(--burdeos);border-radius:2px;transition:width .3s;}
 .progress-info{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;}
@@ -588,6 +591,8 @@ const NIVELES = [
 const SEARCH_TIMEOUT_MS = 60000;
 const GOOGLE_SEARCH_TIMEOUT_MS = 2500;
 const SEARCH_SLOW_HINT_MS = 2600;
+const SEARCH_CACHE_KEY = 'tok_books_catalog_cache_v1';
+const SEARCH_CACHE_LIMIT = 160;
 
 let DATA = { total:0, anual:0, puntos:0, libros:[], listaWish:[], listaDone:[] };
 let lang = 'es';
@@ -862,6 +867,7 @@ async function init() {
     const snap = await get(ref(db, `familias/${FID}/miembros/${MID}`));
     if(snap.exists()) DATA = { ...DATA, ...snap.val() };
     localStorage.setItem('tok_fid', FID);
+    registrarResultadosEnCache([...(DATA.libros||[]), ...(DATA.listaWish||[]), ...(DATA.listaDone||[])]);
     aplicarTemaB(DATA.tema||'dia');
     renderFooterB();
   } catch(e) { console.error(e); }
@@ -1003,6 +1009,106 @@ function claveLibro(item) {
   return `${simplificarTexto(item.title)}|${simplificarTexto(autor)}`;
 }
 
+function normalizarPaginas(v) {
+  const n = parseInt(v, 10);
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function normalizarLibroCatalogo(item, idx = 0) {
+  return normalizarResultadoLibro({
+    title: item.title || 'Sin título',
+    author: item.author || 'Autor desconocido',
+    pages: normalizarPaginas(item.pages),
+    cover: item.cover || '',
+    openEditionKey: item.openEditionKey || '',
+    openIsbn: item.openIsbn || '',
+    googleVolumeId: item.googleVolumeId || '',
+    cachedAt: item.cachedAt || Date.now(),
+  }, idx);
+}
+
+function leerCacheCatalogoBooks() {
+  try {
+    const raw = localStorage.getItem(SEARCH_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e) {
+    return [];
+  }
+}
+
+function registrarResultadosEnCache(items = []) {
+  const merged = new Map();
+  const now = Date.now();
+  for(const item of [...items, ...leerCacheCatalogoBooks()]) {
+    if(!item || !item.title) continue;
+    const normalized = {
+      title: item.title,
+      author: item.author || 'Autor desconocido',
+      pages: normalizarPaginas(item.pages),
+      cover: item.cover || '',
+      openEditionKey: item.openEditionKey || '',
+      openIsbn: item.openIsbn || '',
+      googleVolumeId: item.googleVolumeId || '',
+      cachedAt: item.cachedAt || now,
+    };
+    const key = claveLibro(normalized) || `fallback-${merged.size}`;
+    if(!merged.has(key)) {
+      merged.set(key, normalized);
+      continue;
+    }
+    const prev = merged.get(key);
+    merged.set(key, {
+      ...prev,
+      title: prev.title || normalized.title,
+      author: prev.author && prev.author !== 'Autor desconocido' ? prev.author : normalized.author,
+      pages: Math.max(prev.pages || 0, normalized.pages || 0),
+      cover: prev.cover || normalized.cover || '',
+      openEditionKey: prev.openEditionKey || normalized.openEditionKey || '',
+      openIsbn: prev.openIsbn || normalized.openIsbn || '',
+      googleVolumeId: prev.googleVolumeId || normalized.googleVolumeId || '',
+      cachedAt: Math.max(prev.cachedAt || 0, normalized.cachedAt || 0),
+    });
+  }
+  const ordered = Array.from(merged.values())
+    .sort((a,b) => (b.cachedAt || 0) - (a.cachedAt || 0))
+    .slice(0, SEARCH_CACHE_LIMIT);
+  try {
+    localStorage.setItem(SEARCH_CACHE_KEY, JSON.stringify(ordered));
+  } catch(e) {}
+}
+
+function buscarCatalogoLocal(q) {
+  const normalizedQ = simplificarTexto(q);
+  if(!normalizedQ) return [];
+  const tokens = normalizedQ.split(' ').filter(Boolean);
+  const mergedLocal = mezclarResultadosLibros(
+    leerCacheCatalogoBooks(),
+    DATA.libros || [],
+    DATA.listaWish || [],
+    DATA.listaDone || [],
+  );
+  return mergedLocal
+    .map(item => {
+      const title = simplificarTexto(item.title);
+      const author = simplificarTexto(item.author);
+      const haystack = `${title} ${author}`.trim();
+      const includesWhole = haystack.includes(normalizedQ);
+      const includesTokens = tokens.every(token => haystack.includes(token));
+      if(!includesWhole && !includesTokens) return null;
+      const score = (title === normalizedQ ? 50 : 0)
+        + (title.startsWith(normalizedQ) ? 20 : 0)
+        + (includesWhole ? 10 : 0)
+        + tokens.filter(token => haystack.includes(token)).length
+        + (item.pages ? 2 : 0);
+      return { item, score };
+    })
+    .filter(Boolean)
+    .sort((a,b) => b.score - a.score || (b.item.cachedAt || 0) - (a.item.cachedAt || 0))
+    .slice(0, 8)
+    .map(({ item }, idx) => normalizarLibroCatalogo(item, idx));
+}
+
 async function fetchJsonConTimeout(url, timeoutMs = SEARCH_TIMEOUT_MS) {
   const controller = new AbortController();
   const useTimeout = Number.isFinite(timeoutMs) && timeoutMs > 0;
@@ -1033,9 +1139,27 @@ function mostrarEstadoBusquedaLenta(q, message, keepLoading = false) {
   if(!keepLoading) loading.style.display = 'none';
 }
 
-function mezclarResultadosLibros(openResults, googleResults) {
+function renderResultadosBusqueda(results) {
+  const box = document.getElementById('search-results');
+  window._sr = results;
+  box.innerHTML = results.map((item,idx)=>{
+    const title=item.title||'Sin título';
+    const author=item.author||'Autor desconocido';
+    const pages=item.pages||0;
+    const cover=item.cover || '';
+    const coverEl=cover?`<img class="result-cover" src="${cover}" alt="">`:`<div class="result-cover-ph">📖</div>`;
+    return `<div class="result-item" style="display:flex;align-items:center;gap:0;">
+      <div style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;" onclick="seleccionarLibro(${idx})">${coverEl}<div class="result-info"><div class="result-title">${title}</div><div class="result-author">${author}</div><div class="result-pages">${pages?pages+' págs':'Sin páginas'}</div></div></div>
+      <button onclick="event.stopPropagation();añadirADeseos(${idx})" title="Añadir a lista de deseos" style="flex-shrink:0;padding:8px 10px;border-radius:3px;border:1px solid var(--line);background:var(--card);color:var(--burdeos);font-family:var(--cinzel);font-size:8px;letter-spacing:.1em;cursor:pointer;touch-action:manipulation;margin-right:8px;">+ Deseos</button>
+    </div>`;
+  }).join('');
+  box.style.display='block';
+}
+
+function mezclarResultadosLibros(...sources) {
   const merged = new Map();
-  for(const item of [...googleResults, ...openResults]) {
+  for(const item of sources.flat()) {
+    if(!item || !item.title) continue;
     const key = claveLibro(item) || `fallback-${merged.size}`;
     if(!merged.has(key)) {
       merged.set(key, { ...item });
@@ -1044,12 +1168,13 @@ function mezclarResultadosLibros(openResults, googleResults) {
     const prev = merged.get(key);
     merged.set(key, {
       ...prev,
-      pages: prev.pages || item.pages || 0,
+      pages: Math.max(prev.pages || 0, item.pages || 0),
       cover: prev.cover || item.cover || '',
-      author: prev.author || item.author || 'Autor desconocido',
+      author: prev.author && prev.author !== 'Autor desconocido' ? prev.author : (item.author || 'Autor desconocido'),
       openEditionKey: prev.openEditionKey || item.openEditionKey || '',
       openIsbn: prev.openIsbn || item.openIsbn || '',
       googleVolumeId: prev.googleVolumeId || item.googleVolumeId || '',
+      cachedAt: Math.max(prev.cachedAt || 0, item.cachedAt || 0),
     });
   }
   return Array.from(merged.values()).slice(0, 8).map((item, idx) => ({ ...item, id: Date.now() + idx }));
@@ -1074,7 +1199,7 @@ async function enriquecerLibroPaginas(libro) {
 }
 
 async function buscarOpenLibrary(q) {
-  const data = await fetchJsonConTimeout(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`);
+  const data = await fetchJsonConTimeout(`https://openlibrary.org/search.json?q=${encodeURIComponent(q)}&limit=8`, 0);
   return (data.docs || [])
     .filter(doc => doc.title)
     .slice(0, 8)
@@ -1110,27 +1235,42 @@ window.buscarLibro = async function() {
   const box = document.getElementById('search-results');
   const manualForm = document.getElementById('manual-form');
   const searchRun = Date.now();
+  const localResults = buscarCatalogoLocal(q);
   window._booksSearchRun = searchRun;
-  loading.textContent='Buscando en catálogos...';
+  loading.textContent=localResults.length?'Buscando más coincidencias...':'Buscando en catálogos...';
   loading.style.display='block'; box.style.display='none'; box.innerHTML='';
   manualForm.style.display='none';
   prepararFormularioManualBusqueda(q);
+  if(localResults.length) renderResultadosBusqueda(localResults);
   const slowHintTimer = setTimeout(() => {
     if(window._booksSearchRun !== searchRun) return;
+    if(localResults.length) {
+      loading.textContent='Comprobando catálogo externo...';
+      return;
+    }
     loading.textContent='La búsqueda sigue en curso...';
     mostrarEstadoBusquedaLenta(q, 'La búsqueda está tardando más de lo normal. Puedes seguir esperando o añadir el libro manualmente.', true);
   }, SEARCH_SLOW_HINT_MS);
   try {
-    const [openRes, googleRes] = await Promise.allSettled([
-      buscarOpenLibrary(q),
-      buscarGoogleBooks(q),
-    ]);
+    let openResults = [];
+    let googleResults = [];
+    let huboErrorCatalogo = false;
+    try {
+      openResults = await buscarOpenLibrary(q);
+    } catch(e) {
+      huboErrorCatalogo = true;
+    }
+    if(window._booksSearchRun !== searchRun) return;
+    if(!openResults.length) {
+      try {
+        googleResults = await buscarGoogleBooks(q);
+      } catch(e) {
+        huboErrorCatalogo = true;
+      }
+    }
     clearTimeout(slowHintTimer);
     if(window._booksSearchRun !== searchRun) return;
-    const huboErrorCatalogo = openRes.status === 'rejected' || googleRes.status === 'rejected';
-    const openResults = openRes.status === 'fulfilled' ? openRes.value : [];
-    const googleResults = googleRes.status === 'fulfilled' ? googleRes.value : [];
-    const results = mezclarResultadosLibros(openResults, googleResults);
+    const results = mezclarResultadosLibros(localResults, openResults, googleResults);
     loading.style.display='none';
     loading.textContent='Buscando...';
     if(!results.length) {
@@ -1139,19 +1279,8 @@ window.buscarLibro = async function() {
         : 'No hemos encontrado coincidencias ahora mismo. Puedes añadir el libro manualmente.');
       return;
     }
-    window._sr = results;
-    box.innerHTML = results.map((item,idx)=>{
-      const title=item.title||'Sin título';
-      const author=item.author||'Autor desconocido';
-      const pages=item.pages||0;
-      const cover=item.cover || '';
-      const coverEl=cover?`<img class="result-cover" src="${cover}" alt="">`:`<div class="result-cover-ph">📖</div>`;
-      return `<div class="result-item" style="display:flex;align-items:center;gap:0;">
-        <div style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer;padding:10px;" onclick="seleccionarLibro(${idx})">${coverEl}<div class="result-info"><div class="result-title">${title}</div><div class="result-author">${author}</div><div class="result-pages">${pages?pages+' págs':'Sin páginas'}</div></div></div>
-        <button onclick="event.stopPropagation();añadirADeseos(${idx})" title="Añadir a lista de deseos" style="flex-shrink:0;padding:8px 10px;border-radius:3px;border:1px solid var(--line);background:var(--card);color:var(--burdeos);font-family:var(--cinzel);font-size:8px;letter-spacing:.1em;cursor:pointer;touch-action:manipulation;margin-right:8px;">+ Deseos</button>
-      </div>`;
-    }).join('');
-    box.style.display='block';
+    registrarResultadosEnCache(results);
+    renderResultadosBusqueda(results);
     manualForm.style.display='none';
   } catch(e) {
     clearTimeout(slowHintTimer);
@@ -1171,6 +1300,7 @@ async function seleccionarLibroAsync(idx) {
   let libro={...original,id:Date.now()};
   if(!(libro.pages||0)) libro = await enriquecerLibroPaginas(libro);
   DATA.libros = [...(DATA.libros||[]), libro];
+  registrarResultadosEnCache([libro]);
   guardar();
   registrarAlerta('libro_nuevo', libro.title);
   document.getElementById('search-results').style.display='none';
@@ -1186,6 +1316,7 @@ window.añadirADeseos = function(idx) {
   const yaEsta=(DATA.listaWish||[]).find(l=>(typeof l==='string'?l:l.title)===libro.title);
   if(yaEsta) { toast('Ya está en tu lista de deseos'); return; }
   DATA.listaWish=[...(DATA.listaWish||[]),{title:libro.title,author:libro.author,cover:libro.cover,pages:libro.pages}];
+  registrarResultadosEnCache([libro]);
   guardar();
   renderListas();
   toast('📚 Añadido a deseos: '+libro.title.slice(0,25));
@@ -1199,6 +1330,7 @@ window.añadirManual = function() {
   const libro={title:titulo,author:'',pages:paginas,cover:'',pagActual:0,pagBase:0,id:Date.now()};
   if((DATA.libros||[]).find(l=>l.title===titulo)) { toast('Ya está en tu lista'); return; }
   DATA.libros=[...(DATA.libros||[]),libro];
+  registrarResultadosEnCache([libro]);
   guardar();
   registrarAlerta('libro_nuevo', titulo);
   document.getElementById('search-results').style.display='none';
@@ -1209,6 +1341,13 @@ window.añadirManual = function() {
   renderLibros();
   document.getElementById('stat-leyendo').textContent=DATA.libros.length;
   toast('📖 Añadido: '+titulo.slice(0,25));
+}
+
+function leerTotalLibro(li) {
+  const libro = DATA.libros?.[li];
+  if(!libro) return 0;
+  const fromInput = document.getElementById('total-'+li)?.value;
+  return normalizarPaginas(fromInput || libro.pages || 0);
 }
 
 function renderLibros() {
@@ -1223,6 +1362,7 @@ function renderLibros() {
     const nuevas=Math.max(0,pag-(libro.pagBase||0));
     const ptsAGanar=Math.floor(nuevas/10);
     const esFinish=pct>=100&&total>0;
+    const totalHelp=!total?`<div class="pag-total-help">Escribe aquí las páginas totales cuando el catálogo no las encuentre.</div>`:'';
     const coverEl=libro.cover?`<img class="libro-cover-big" src="${libro.cover}" alt="">`:`<div class="libro-cover-ph">📖</div>`;
     return `<div class="libro-card"><div class="libro-card-inner">${coverEl}<div class="libro-info">
       <div class="libro-title">${libro.title}</div>
@@ -1230,8 +1370,10 @@ function renderLibros() {
       <div class="pag-row">
         <input type="number" class="pag-input" id="pag-${li}" value="${pag}" min="0" max="${total||99999}" oninput="actualizarLibro(${li})">
         <span class="pag-of">de</span>
-        <span class="pag-total">${total?total+' págs':'? págs'}</span>
+        <input type="number" class="pag-input pag-total-input" id="total-${li}" value="${total||''}" min="1" placeholder="total" oninput="actualizarLibro(${li})">
+        <span class="pag-total-suffix">págs</span>
       </div>
+      ${totalHelp}
       <div class="progress-bg"><div class="progress-fill" id="fill-${li}" style="width:${pct}%"></div></div>
       <div class="progress-info"><span id="pct-${li}">${pct}% completado</span><span id="pts-prev-${li}" style="color:var(--burdeos);">${ptsAGanar>0?'+'+ptsAGanar+' pts':''}</span></div>
       <button class="btn-guardar ${esFinish?'finish':'normal'}" id="btn-${li}" onclick="guardarProgreso(${li})" style="touch-action:manipulation;">${esFinish?'🏆 ¡Terminar libro!':'Guardar progreso'}</button>
@@ -1241,9 +1383,16 @@ function renderLibros() {
 }
 
 window.actualizarLibro = function(li) {
-  const pag=parseInt(document.getElementById('pag-'+li)?.value||'0');
+  const pagInput=document.getElementById('pag-'+li);
+  let pag=parseInt(pagInput?.value||'0',10)||0;
   const libro=DATA.libros[li]; if(!libro) return;
-  const total=libro.pages||0, pct=total>0?Math.min(Math.round(pag/total*100),100):0;
+  const total=leerTotalLibro(li);
+  if(total>0 && pag>total) {
+    pag=total;
+    if(pagInput) pagInput.value=String(total);
+  }
+  if(pagInput) pagInput.max=String(total||99999);
+  const pct=total>0?Math.min(Math.round(pag/total*100),100):0;
   const nuevas=Math.max(0,pag-(libro.pagBase||0)), pts=Math.floor(nuevas/10);
   document.getElementById('fill-'+li).style.width=pct+'%';
   document.getElementById('pct-'+li).textContent=pct+'% completado';
@@ -1256,11 +1405,19 @@ window.actualizarLibro = function(li) {
 
 window.guardarProgreso = function(li) {
   const libro=DATA.libros[li]; if(!libro) return;
-  const pag=parseInt(document.getElementById('pag-'+li)?.value||'0');
-  const total=libro.pages||0, pct=total>0?Math.min(Math.round(pag/total*100),100):0;
+  const pagInput=document.getElementById('pag-'+li);
+  let pag=parseInt(pagInput?.value||'0',10)||0;
+  const total=leerTotalLibro(li);
+  if(total>0 && pag>total) {
+    pag=total;
+    if(pagInput) pagInput.value=String(total);
+  }
+  const pct=total>0?Math.min(Math.round(pag/total*100),100):0;
   const pagAnterior = libro.pagBase || 0;
   const nuevas=Math.max(0,pag-pagAnterior), ptsGanados=Math.floor(nuevas/10);
   DATA.libros[li].pagActual=pag;
+  DATA.libros[li].pages=total;
+  registrarResultadosEnCache([DATA.libros[li]]);
   if(ptsGanados>0) { DATA.libros[li].pagBase=pag; DATA.puntos=(DATA.puntos||0)+ptsGanados; sumarPuntos(ptsGanados,'páginas leídas'); }
   // Alerta lectura: si se ha cruzado al menos un múltiplo de 10 nuevo
   if(Math.floor(pag/10) > Math.floor(pagAnterior/10) && pag > 0) {
@@ -1320,7 +1477,11 @@ function renderListas() {
 window.addLista = function(tipo) {
   const inp=document.getElementById('in-'+tipo);
   if(!inp?.value.trim()) return;
-  if(tipo==='wish') { DATA.listaWish=[...(DATA.listaWish||[]),{title:inp.value.trim()}]; }
+  if(tipo==='wish') {
+    const libro={title:inp.value.trim()};
+    DATA.listaWish=[...(DATA.listaWish||[]),libro];
+    registrarResultadosEnCache([libro]);
+  }
   inp.value=''; guardar(); renderListas();
   document.getElementById('count-wish').textContent=(DATA.listaWish||[]).length+' libros';
 }
