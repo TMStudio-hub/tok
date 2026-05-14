@@ -669,7 +669,7 @@ async function activarBooksDirecto(token) {
   updates[`familias/${fid}/hogar`] = {
     nombre: 'Mi hogar TO-K',
     emoji: '🏠',
-    tema,
+    tema: theme,
     wifi: { ssid: '', pass: '', type: 'WPA' },
     redirect: '',
     creadoDesde: 'BOOKS',
@@ -678,7 +678,7 @@ async function activarBooksDirecto(token) {
   updates[`familias/${fid}/miembros/${MID}`] = {
     ...DATA,
     nombre: DATA.nombre || '',
-    tema,
+    tema: theme,
   };
   updates[`familias/${fid}/assets/${AID}`] = {
     aid: AID,
