@@ -912,62 +912,73 @@ window.generarPedido = async function() {
   let n = 1;
   Object.entries(QTY).forEach(([tipo, qty])=>{
     if(qty===0) return;
-      <div class="print-watermark" aria-hidden="true">
-        <img src="El Taller de memorias.png" alt="">
-      </div>
-      <div class="print-topline">Entrega preparada en El Taller de Memorias</div>
+    const info = CHIPS_INFO[tipo] || {};
+    const baseUrl = (info.url || '').split('?')[0];
+    for(let i = 0; i < qty; i += 1) {
+      const seq = (Number(workCounters[tipo] || 0) || 0) + 1;
+      workCounters[tipo] = seq;
 
-      <div class="print-hero">
-        <div class="print-brand">
-          <img src="https://tmstudio-hub.github.io/tok/tok.svg" alt="TO-K" class="print-brand-logo"
-            onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
-          <span style="display:none;font-family:var(--font);font-size:1.2rem;font-weight:800;color:var(--ink);">TO-K</span>
-          <div>
-            <div class="print-brand-kicker">EL TALLER DE MEMORIAS</div>
-            <div class="print-brand-title" id="print-titulo">Pedido #001</div>
-            <div style="font-family:var(--mono);font-size:0.6rem;color:var(--green);margin-bottom:2px;" id="print-order-id"></div>
-            <div class="print-brand-client" id="print-cliente">Cliente</div>
-          </div>
-        </div>
-        <div class="print-code-box">
-          <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:6px;" id="print-fecha"></div>
-          <div class="print-code-label" id="print-codigo-label">CÓDIGO DE ACTIVACIÓN</div>
-          <div class="print-code-value" id="print-codigo">TOK-XXXX-XXXX</div>
-        </div>
-      </div>
+      const aid = generarAID(tipo, seq);
+      const mid = tipo === 'home' ? null : `${tipo}_${seq}`;
+      const params = new URLSearchParams();
+      if(familyId) params.set('fid', familyId);
+      if(!familyId && tipo === 'home') params.set('nfc', '1');
+      if(mid) params.set('mid', mid);
+      if(tipo !== 'home') params.set('aid', aid);
 
-      <div class="print-manifesto">
-        <div class="print-manifesto-kicker">Una pieza nacida en el taller</div>
-        <div class="print-manifesto-quote">Donde el tiempo se detiene y la memoria cobra vida.</div>
-        <div class="print-manifesto-subquote">Tu historia comienza aquí.</div>
-      </div>
+      chips.push({
+        ...info,
+        n,
+        tipo,
+        aid,
+        mid,
+        url: params.toString() ? `${baseUrl}?${params.toString()}` : baseUrl,
+      });
+      n += 1;
+    }
+  });
+  _counters = { ...workCounters };
 
-      <div class="print-block">
-        <div class="print-block-title">Piezas incluidas · URLs a programar con NFC Tools</div>
-        <div id="print-chips"></div>
-      </div>
+  pedidoActual = {
+    orderId,
+    packId,
+    numPedido,
+    cliente,
+    canal,
+    email,
+    notas,
+    codigo,
+    fecha,
+    mode,
+    familyId,
+    fidAmpliacion: familyId,
+    estado: 'pendiente',
+    qty: { ...QTY },
+    chips,
+  };
 
-      <div class="print-grid">
-        <div>
-          <div class="print-block-title">Activa o abre tu TO-K</div>
-          <div class="print-body-copy">
-            Escanea el QR o abre este enlace para activar este TO-K. Si ya estaba activado, este mismo enlace lo abrirá directamente.
-          </div>
-          <div id="print-setup-url" style="font-family:var(--mono);font-size:0.72rem;color:var(--green);font-weight:700;word-break:break-all;"></div>
-          <div class="print-note" id="print-notas-internas"></div>
-        </div>
-        <div class="print-qr-panel">
-          <div id="print-qr-wrap"></div>
-          <div class="print-qr-caption">Escanear para activar o abrir</div>
-        </div>
-      </div>
+  const setupUrl = chips[0]?.url || (familyId
+    ? `${CHIPS_INFO.home.url}?fid=${encodeURIComponent(familyId)}`
+    : `${CHIPS_INFO.home.url}?nfc=1`);
 
-      <div class="print-footer">
-        <div class="print-footer-copy">
-          Gracias por confiar en <strong>El Taller de Memorias</strong>. Cada pedido está pensado para que la experiencia empiece antes incluso del primer toque.
-        </div>
-        <div class="print-footer-url">tallerdememorias.es</div>
-      </div>
+  document.getElementById('res-pedido-num').textContent = `PEDIDO #${numPedido}`;
+  document.getElementById('res-cliente-nombre').textContent = cliente;
+  document.getElementById('res-fecha').textContent = formatFecha(fecha);
+  document.getElementById('res-canal').textContent = canal || '';
+  document.getElementById('res-order-id').textContent = orderId;
+  document.getElementById('res-pack-id').textContent = packId;
+  document.getElementById('codigo-display').innerHTML = `${codigo}<button class="codigo-copy" onclick="copiarCodigo()">Copiar</button>`;
+
+  document.getElementById('print-titulo').textContent = `Pedido #${numPedido}`;
+  document.getElementById('print-cliente').textContent = cliente + (canal ? ` · ${canal}` : '');
+  document.getElementById('print-fecha').textContent = formatFecha(fecha);
+  document.getElementById('print-codigo').textContent = codigo;
+  document.getElementById('print-order-id').textContent = orderId;
+  document.getElementById('print-setup-url').textContent = setupUrl;
+
+  const codigoLabel = document.getElementById('resultado-codigo-label');
+  if(codigoLabel) {
+    codigoLabel.textContent = mode === 'expansion'
       ? 'REFERENCIA INTERNA DE AMPLIACIÓN'
       : 'TOKEN DE ACTIVACIÓN FAMILIAR';
   }

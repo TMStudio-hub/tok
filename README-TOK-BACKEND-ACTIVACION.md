@@ -562,6 +562,50 @@ Output:
 }
 ```
 
+## 7. WhatsApp Business API para avisos automáticos
+
+La salida automática a WhatsApp no debe depender de `wa.me` ni de una sesión local de WhatsApp Desktop. Si se quiere envío real sin intervención manual, el punto correcto es backend.
+
+Piezas previstas en Functions:
+
+- trigger `sendFamilyAlertWhatsApp` sobre `familias/{fid}/alertas/{alertId}`
+- callable admin `adminSendWhatsAppMessage` para TM Core o paneles internos
+
+Variables de entorno mínimas:
+
+- `ENABLE_TOK_ALERT_TRIGGER_EXPORT=true` solo en el proyecto que sea dueño de la RTDB `tok-familiar`; en `tm-ops-44e43` debe quedarse en `false` para evitar errores de deploy por trigger cross-project
+- `WHATSAPP_TRIGGER_ENABLED=true` para activar el trigger automático
+- `WHATSAPP_PHONE_NUMBER_ID=<phone-number-id de Meta>`
+- `WHATSAPP_ACCESS_TOKEN=<token permanente o rotado>`
+- `WHATSAPP_DEFAULT_TEMPLATE=<nombre de plantilla aprobada>` si se quiere iniciar conversaciones automáticas fuera de la ventana de 24h
+- `WHATSAPP_DEFAULT_TEMPLATE_LANG=es`
+- `WHATSAPP_ALERTS_DEFAULT_TO=346XXXXXXXX` como fallback global mientras no exista configuración por familia
+
+Configuración opcional por familia:
+
+```json
+{
+  "notifications": {
+    "whatsapp": {
+      "enabled": true,
+      "to": "346XXXXXXXX",
+      "mode": "template",
+      "templateName": "tok_alerta_v1",
+      "templateLanguageCode": "es",
+      "sendOnlyTypes": ["scan", "sos", "ubicacion", "estoy"]
+    }
+  }
+}
+```
+
+Esa estructura puede vivir en `familias/{fid}/meta` o `familias/{fid}/hogar`. Si no existe, el backend puede usar `WHATSAPP_ALERTS_DEFAULT_TO` como destino común.
+
+Notas operativas:
+
+- Para mensajes realmente automáticos a clientes o familias que no hayan escrito en las últimas 24h, Meta exige plantilla aprobada.
+- El modo `text` solo es válido cuando la conversación ya está abierta según la política de WhatsApp Business.
+- El trigger debe registrar logs y no depender de la sesión de WhatsApp Desktop del operador.
+
 ## Compatibilidad con las apps beta actuales
 
 Debe mantenerse durante la fase 1:
