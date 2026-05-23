@@ -190,37 +190,6 @@ body::before{
 </head>
 <body>
 
-<!-- PIN PROTECTION OVERLAY -->
-<div id="admin-pin-overlay">
-  <div style="position:fixed;inset:0;background:linear-gradient(160deg,rgba(13,61,92,0.96),rgba(29,111,164,0.90));z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px);">
-    <div style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.16);border-radius:24px;padding:32px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 28px 56px rgba(0,0,0,0.22);">
-      <div style="font-size:2.4rem;margin-bottom:8px;">⚽</div>
-      <div style="font-family:var(--font);font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px;">TO-K Game Admin</div>
-      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);margin-bottom:24px;text-transform:uppercase;">Generador de Comunidades NFC</div>
-      <div id="pin-dots" style="display:flex;justify-content:center;gap:14px;margin-bottom:22px;">
-        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
-        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
-        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
-        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:228px;margin:0 auto;">
-        <button onclick="pinKey('1')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">1</button>
-        <button onclick="pinKey('2')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">2</button>
-        <button onclick="pinKey('3')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">3</button>
-        <button onclick="pinKey('4')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">4</button>
-        <button onclick="pinKey('5')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">5</button>
-        <button onclick="pinKey('6')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">6</button>
-        <button onclick="pinKey('7')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">7</button>
-        <button onclick="pinKey('8')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">8</button>
-        <button onclick="pinKey('9')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">9</button>
-        <button onclick="pinKey('del')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">⌫</button>
-        <button onclick="pinKey('0')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">0</button>
-        <button onclick="pinKey('ok')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.18);color:#fff;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">✓</button>
-      </div>
-      <div id="pin-error" style="font-family:var(--mono);font-size:0.7rem;color:#ff9999;margin-top:14px;min-height:1.2em;letter-spacing:0.05em;"></div>
-    </div>
-  </div>
-</div>
 
 <!-- QR MODAL -->
 <div id="qr-modal">
@@ -471,61 +440,9 @@ body::before{
 <div class="toast" id="toast"></div>
 
 <script>
-// ── PIN ──────────────────────────────────────────────────────────────
-let _pinBuf = '';
-const _PIN  = '2810';
+// ── GLOBAL BASE URL ──────────────────────────────────────────────────
+const GAME_BASE_URL = 'https://to-k-games.web.app/porra-mundial-2026.html';
 
-function pinKey(k) {
-  const err = document.getElementById('pin-error');
-  if (k === 'del') { _pinBuf = _pinBuf.slice(0,-1); err.textContent=''; }
-  else if (k === 'ok') { _checkPin(); return; }
-  else { if (_pinBuf.length >= 4) return; _pinBuf += k; if (_pinBuf.length === 4) setTimeout(_checkPin,150); }
-  _updatePinDots();
-}
-function generarLlaveros() {
-  // ...existing code...
-  // Generate UUIDs for NFC tokens and a single web token (if needed)
-  let nfcTokens = [], webToken = null;
-  if (accessMode === 'nfc') {
-    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
-  } else if (accessMode === 'code') {
-    webToken = crypto.randomUUID();
-  } else if (accessMode === 'mixed') {
-    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
-    if (webCount > 0) webToken = crypto.randomUUID();
-  }
-  generatedTokens = [...nfcTokens];
-  if (webToken) generatedTokens.push(webToken);
-
-  // Store as pending order (not saved yet)
-  const _setupToken = crypto.randomUUID();
-  currentOrder = {
-    id: crypto.randomUUID(),
-    fecha: Date.now(),
-    communityName: name,
-    groupId,
-    siteCode,
-    buyerEmail,
-    accessMode,
-    maxParticipants,
-    maxGroups,
-    groupNames,
-    tokens: [...generatedTokens],
-    nfcTokens: [...nfcTokens],
-    webToken: webToken,
-    webCount: webCount,
-    setupToken: _setupToken
-  };
-  _pedidoGuardado = false;
-  setSaveStatus('pending');
-
-  renderResultado(name, groupId, siteCode, nfcTokens, webToken, webCount, accessMode);
-  document.getElementById('resultado').classList.add('show');
-  document.getElementById('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
-}
-    btn.classList.toggle('active', match && parseInt(match[1]) === nfcVal && parseInt(match[2]) === webVal);
-  });
-}
 
 // ── GENERATE ──────────────────────────────────────────────────────────
 function generarLlaveros() {
@@ -561,17 +478,13 @@ function generarLlaveros() {
     groupNames.push((el ? el.value.trim() : '') || ('Grupo ' + i));
   }
 
-  // Generate UUIDs for NFC tokens and web tokens (if needed)
-  let nfcTokens = [], webTokens = [];
-  if (accessMode === 'nfc') {
+  // Generate UUIDs for NFC tokens only.
+  // Web participants access via site code (pase de juego) — no individual URLs needed.
+  let nfcTokens = [];
+  if (accessMode === 'nfc' || accessMode === 'mixed') {
     nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
-  } else if (accessMode === 'code') {
-    webTokens = Array.from({ length: webCount }, () => crypto.randomUUID());
-  } else if (accessMode === 'mixed') {
-    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
-    webTokens = Array.from({ length: webCount }, () => crypto.randomUUID());
   }
-  generatedTokens = [...nfcTokens, ...webTokens];
+  generatedTokens = [...nfcTokens];
 
   // Store as pending order (not saved yet)
   const _setupToken = crypto.randomUUID();
@@ -588,63 +501,69 @@ function generarLlaveros() {
     groupNames,
     tokens: [...generatedTokens],
     nfcTokens: [...nfcTokens],
-    webTokens: [...webTokens],
+    webCount,
     setupToken: _setupToken
   };
   _pedidoGuardado = false;
   setSaveStatus('pending');
 
-  renderResultado(name, groupId, siteCode, nfcTokens, webTokens, accessMode);
+  renderResultado(name, groupId, siteCode, nfcTokens, webCount, accessMode);
   document.getElementById('resultado').classList.add('show');
   document.getElementById('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function renderResultado(name, groupId, siteCode, nfcTokens, webToken, webCount, accessMode) {
-  document.getElementById('res-badge').textContent    = 'COMUNIDAD · ' + groupId;
-  document.getElementById('res-title').textContent    = name;
+function renderResultado(name, groupId, siteCode, nfcTokens, webCount, accessMode) {
+  nfcTokens = nfcTokens || [];
+  webCount  = parseInt(webCount) || 0;
+  document.getElementById('res-badge').textContent = 'COMUNIDAD · ' + groupId;
+  document.getElementById('res-title').textContent = name;
   let meta = '';
-  if (accessMode === 'nfc') meta = `${nfcTokens.length} llaveros NFC`;
-  else if (accessMode === 'code') meta = `${webCount} accesos web (1 enlace)`;
-  else meta = `${nfcTokens.length} llaveros NFC + ${webCount} accesos web (1 enlace)`;
-  document.getElementById('res-meta').textContent     = meta + ' · LIGA DE PRONÓSTICOS MUNDIAL 2026';
-  document.getElementById('res-sitecode').innerHTML   =
+  if (accessMode === 'nfc')        meta = nfcTokens.length + ' llaveros NFC';
+  else if (accessMode === 'code')  meta = webCount + ' accesos web (código)';
+  else                             meta = nfcTokens.length + ' llaveros NFC + ' + webCount + ' accesos web (código)';
+  document.getElementById('res-meta').textContent = meta + ' · LIGA DE PRONÓSTICOS MUNDIAL 2026';
+  document.getElementById('res-sitecode').innerHTML =
     escHtml(siteCode) + '<button class="codigo-copy-btn" onclick="copiarSiteCode()">Copiar</button>';
   document.getElementById('res-sitecode-inline').textContent = siteCode;
-  let totalLinks = nfcTokens.length + (webToken ? 1 : 0);
+
+  const totalNfc = nfcTokens.length;
   document.getElementById('res-token-count').textContent =
-    totalLinks + ' URLS GENERADAS · GRABA CADA URL EN UN CHIP NFC O COMPARTE POR WEB';
+    (totalNfc > 0 ? totalNfc + ' URLS NFC GENERADAS · ' : '') +
+    (webCount > 0 ? webCount + ' ACCESOS WEB VÍA CÓDIGO · ' : '') +
+    'GRABA CADA URL EN UN CHIP NFC';
 
   const list = document.getElementById('token-list');
   let idx = 1;
   let html = '';
+
   if (nfcTokens.length) {
-    html += `<div style="font-size:0.8em;color:#fff;margin-bottom:4px;">Llaveros NFC</div>`;
-    html += nfcTokens.map((uuid, i) => {
-      const url  = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
-      const short = uuid.substring(0, 8) + '…';
+    html += '<div style="font-size:0.8em;color:#fff;margin-bottom:4px;">Llaveros NFC — graba cada URL en su chip</div>';
+    html += nfcTokens.map(function(uuid) {
+      const url        = GAME_BASE_URL + '?access=nfc&token=' + uuid;
+      const short      = uuid.substring(0, 8) + '…';
       const encodedUrl = encodeURIComponent(url);
-      return `<div class="token-entry">
-        <span class="t-num">${idx++}</span>
-        <span class="t-uuid" title="${escHtml(uuid)}">${escHtml(short)}</span>
-        <span class="t-url" title="${escHtml(url)}">${escHtml(url)}</span>
-        <button class="t-copy" onclick="copiarUrl(decodeURIComponent('${encodedUrl}'), this)">Copiar</button>
-        <button class="t-qr" onclick="mostrarQR(decodeURIComponent('${encodedUrl}'))">QR</button>
-      </div>`;
+      return '<div class="token-entry">' +
+        '<span class="t-num">' + (idx++) + '</span>' +
+        '<span class="t-uuid" title="' + escHtml(uuid) + '">' + escHtml(short) + '</span>' +
+        '<span class="t-url" title="' + escHtml(url) + '">' + escHtml(url) + '</span>' +
+        '<button class="t-copy" onclick="copiarUrl(decodeURIComponent(\'' + encodedUrl + '\'), this)">Copiar</button>' +
+        '<button class="t-qr" onclick="mostrarQR(decodeURIComponent(\'' + encodedUrl + '\'))">QR</button>' +
+        '</div>';
     }).join('');
   }
-  if (webToken) {
-    html += `<div style="font-size:0.8em;color:#fff;margin:8px 0 4px;">Acceso Web (${webCount} participantes, 1 enlace)</div>`;
-    const url  = PORRA_BASE_URL + '?access=web&token=' + webToken;
-    const short = webToken.substring(0, 8) + '…';
-    const encodedUrl = encodeURIComponent(url);
-    html += `<div class="token-entry">
-      <span class="t-num">${idx++}</span>
-      <span class="t-uuid" title="${escHtml(webToken)}">${escHtml(short)}</span>
-      <span class="t-url" title="${escHtml(url)}">${escHtml(url)}</span>
-      <button class="t-copy" onclick="copiarUrl(decodeURIComponent('${encodedUrl}'), this)">Copiar</button>
-      <button class="t-qr" onclick="mostrarQR(decodeURIComponent('${encodedUrl}'))">QR</button>
-    </div>`;
+
+  if (webCount > 0) {
+    const webUrl     = GAME_BASE_URL + '?code=' + encodeURIComponent(siteCode);
+    const encodedUrl = encodeURIComponent(webUrl);
+    html += '<div style="font-size:0.8em;color:rgba(255,255,255,0.7);margin:12px 0 6px;padding:10px 12px;background:rgba(255,255,255,0.08);border-radius:10px;line-height:1.5;">' +
+      '🌐 <strong style="color:#fff;">Acceso web (' + webCount + ' participantes)</strong><br>' +
+      'Los participantes web no necesitan URL individual. Comparte el <strong>código de acceso</strong> o el enlace directo:<br>' +
+      '<span style="font-family:var(--mono);font-size:0.82em;color:rgba(255,255,255,0.85);">' + escHtml(webUrl) + '</span>' +
+      ' <button style="margin-left:6px;background:rgba(255,255,255,0.15);border:none;color:#fff;padding:3px 10px;border-radius:6px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);" ' +
+      'onclick="copiarUrl(decodeURIComponent(\'' + encodedUrl + '\'),this)">Copiar enlace</button>' +
+      '</div>';
   }
+
   list.innerHTML = html;
 }
 
@@ -664,7 +583,7 @@ function copiarUrl(url, btn) {
 function copiarTodas() {
   if (!generatedTokens.length) return;
   const lines = generatedTokens.map((uuid, i) => {
-    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    const url = GAME_BASE_URL + '?access=nfc&token=' + uuid;
     return (i+1) + '\t' + uuid + '\t' + url;
   });
   navigator.clipboard.writeText(lines.join('\n'))
@@ -679,13 +598,13 @@ function compartirWhatsApp() {
   const groupId  = currentOrder ? currentOrder.groupId : (document.getElementById('community-id').value||'').trim();
   if (!tokens.length) { toast('Genera los llaveros primero'); return; }
 
-  let msg = '\uD83C\uDFC6 *PORRA MUNDIAL 2026*\n';
+  let msg = '\uD83C\uDFC6 *LIGA DE PRON\u00D3STICOS MUNDIAL 2026*\n';
   msg += '*' + name + '* \u00b7 ' + groupId + '\n';
   msg += 'C\u00f3digo de acceso: `' + siteCode + '`\n\n';
   msg += '\uD83D\uDCF1 URLs para grabar en chips NFC\n';
   msg += '(usa la app *NFC Tools* en tu m\u00f3vil):\n\n';
   tokens.forEach((uuid, i) => {
-    msg += (i+1) + '. ' + PORRA_BASE_URL + '?access=nfc&token=' + uuid + '\n';
+    msg += (i+1) + '. ' + GAME_BASE_URL + '?access=nfc&token=' + uuid + '\n';
   });
   msg += '\n_to-k-games.web.app_';
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
@@ -723,7 +642,7 @@ function imprimirFicha() {
   // Build chips table
   const printChips = document.getElementById('print-chips');
   printChips.innerHTML = generatedTokens.map((uuid, i) => {
-    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    const url = GAME_BASE_URL + '?access=nfc&token=' + uuid;
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;${i%2===0?'background:rgba(29,111,164,0.04);':'background:transparent;'}border-radius:8px;margin-bottom:2px;">
       <span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);width:22px;text-align:right;flex-shrink:0;">${i+1}</span>
       <span style="font-family:var(--mono);font-size:0.58rem;color:var(--muted);width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(uuid)}">${uuid.substring(0,8)}…</span>
@@ -751,7 +670,7 @@ function exportarCSV() {
   const sc      = (document.getElementById('site-code').value     || '').trim();
   const rows    = [['#','UUID','URL_NFC','Grupo','Comunidad','SiteCode','Estado']];
   generatedTokens.forEach((uuid, i) => {
-    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    const url = GAME_BASE_URL + '?access=nfc&token=' + uuid;
     rows.push([i+1, uuid, url, groupId, name, sc, 'LIBRE']);
   });
   const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
@@ -794,6 +713,22 @@ function toast(msg, dur=2400) {
 // ── UTILS ─────────────────────────────────────────────────────────────
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── PRESET BUTTONS ───────────────────────────────────────────────────
+function setNfcWebPreset(nfc, web) {
+  document.getElementById('nfc-count').value = nfc;
+  document.getElementById('web-count').value = web;
+  updatePresetHighlight(nfc, web);
+}
+
+function updatePresetHighlight(nfcVal, webVal) {
+  if (nfcVal === undefined) nfcVal = parseInt(document.getElementById('nfc-count').value) || 0;
+  if (webVal === undefined) webVal = parseInt(document.getElementById('web-count').value) || 0;
+  document.querySelectorAll('.cp-preset').forEach(function(btn) {
+    var match = (btn.getAttribute('onclick') || '').match(/setNfcWebPreset\((\d+),\s*(\d+)\)/);
+    btn.classList.toggle('active', !!(match && parseInt(match[1]) === nfcVal && parseInt(match[2]) === webVal));
+  });
 }
 
 // ── RANDOM CODE GENERATOR ───────────────────────────────────────────
@@ -880,7 +815,7 @@ function renderHistItem(order) {
     ? `<button class="hi-btn" onclick="upgradeToOpen('${safeId}')" title="Activar juego abierto" style="color:#f59e0b;">🔓</button>`
     : '';
   const tokenRows = order.tokens.map((uuid, i) => {
-    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    const url = GAME_BASE_URL + '?access=nfc&token=' + uuid;
     return `<div class="hi-token-row">
       <span class="hi-t-num">${i+1}</span>
       <span class="hi-t-uuid" title="${escHtml(uuid)}">${uuid.substring(0,8)}…</span>
@@ -959,7 +894,9 @@ function reimprimirOrden(id) {
   currentCommunityName = order.communityName;
   setTab('nuevo');
   setTimeout(() => {
-    renderResultado(order.communityName, order.groupId, order.siteCode, order.tokens);
+    const _nfcT    = order.nfcTokens || order.tokens || [];
+    const _webCnt  = order.webCount || 0;
+    renderResultado(order.communityName, order.groupId, order.siteCode, _nfcT, _webCnt, order.accessMode || 'nfc');
     document.getElementById('resultado').classList.add('show');
     imprimirFicha();
   }, 200);
@@ -1033,13 +970,13 @@ function upgradeToOpen(id) {
 function compartirWhatsAppOrden(id) {
   const order = _historial.find(o => o.id === id);
   if (!order) return;
-  let msg = '\uD83C\uDFC6 *PORRA MUNDIAL 2026*\n';
+  let msg = '\uD83C\uDFC6 *LIGA DE PRON\u00D3STICOS MUNDIAL 2026*\n';
   msg += '*' + order.communityName + '* \u00b7 ' + order.groupId + '\n';
   msg += 'C\u00f3digo de acceso: `' + order.siteCode + '`\n\n';
   msg += '\uD83D\uDCF1 URLs para grabar en chips NFC\n';
   msg += '(usa la app *NFC Tools* en tu m\u00f3vil):\n\n';
   order.tokens.forEach((uuid, i) => {
-    msg += (i+1) + '. ' + PORRA_BASE_URL + '?access=nfc&token=' + uuid + '\n';
+    msg += (i+1) + '. ' + GAME_BASE_URL + '?access=nfc&token=' + uuid + '\n';
   });
   msg += '\n_to-k-games.web.app_';
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
@@ -1050,7 +987,7 @@ function exportarCSVOrden(id) {
   if (!order) return;
   const rows = [['#','UUID','URL_NFC','Grupo','Comunidad','SiteCode','Estado']];
   order.tokens.forEach((uuid, i) => {
-    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    const url = GAME_BASE_URL + '?access=nfc&token=' + uuid;
     rows.push([i+1, uuid, url, order.groupId, order.communityName, order.siteCode, 'LIBRE']);
   });
   const csv  = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
