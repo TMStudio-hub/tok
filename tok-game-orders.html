@@ -482,45 +482,47 @@ function pinKey(k) {
   else { if (_pinBuf.length >= 4) return; _pinBuf += k; if (_pinBuf.length === 4) setTimeout(_checkPin,150); }
   _updatePinDots();
 }
-function _updatePinDots() {
-  document.querySelectorAll('#admin-pin-overlay .pd').forEach((d,i)=>{
-    d.style.background = i < _pinBuf.length ? '#fff' : 'rgba(255,255,255,0.2)';
-  });
-}
-function _checkPin() {
-  if (_pinBuf === _PIN) {
-    document.getElementById('admin-pin-overlay').style.display='none';
-  } else {
-    document.getElementById('pin-error').textContent='PIN incorrecto';
-    _pinBuf=''; _updatePinDots();
+function generarLlaveros() {
+  // ...existing code...
+  // Generate UUIDs for NFC tokens and a single web token (if needed)
+  let nfcTokens = [], webToken = null;
+  if (accessMode === 'nfc') {
+    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
+  } else if (accessMode === 'code') {
+    webToken = crypto.randomUUID();
+  } else if (accessMode === 'mixed') {
+    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
+    if (webCount > 0) webToken = crypto.randomUUID();
   }
-}
+  generatedTokens = [...nfcTokens];
+  if (webToken) generatedTokens.push(webToken);
 
-// ── STATE ─────────────────────────────────────────────────────────────
-const PORRA_BASE_URL = 'https://to-k-games.web.app/porra-mundial-2026.html';
-let memberCount = 10;
-let generatedTokens = [];
-let currentSiteCode = '';
-let currentCommunityName = '';
-let currentOrder = null;
-let _pedidoGuardado = false;
+  // Store as pending order (not saved yet)
+  const _setupToken = crypto.randomUUID();
+  currentOrder = {
+    id: crypto.randomUUID(),
+    fecha: Date.now(),
+    communityName: name,
+    groupId,
+    siteCode,
+    buyerEmail,
+    accessMode,
+    maxParticipants,
+    maxGroups,
+    groupNames,
+    tokens: [...generatedTokens],
+    nfcTokens: [...nfcTokens],
+    webToken: webToken,
+    webCount: webCount,
+    setupToken: _setupToken
+  };
+  _pedidoGuardado = false;
+  setSaveStatus('pending');
 
-// ── PARTICIPANT SPLIT (NFC/WEB) ──────────────────────────────────────
-function setNfcWebPreset(nfc, web) {
-  document.getElementById('nfc-count').value = nfc;
-  document.getElementById('web-count').value = web;
-  updatePresetHighlight(nfc, web);
+  renderResultado(name, groupId, siteCode, nfcTokens, webToken, webCount, accessMode);
+  document.getElementById('resultado').classList.add('show');
+  document.getElementById('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
 }
-function updatePresetHighlight(nfc, web) {
-  // Highlight correct preset for current values
-  const nfcVal = typeof nfc === 'number' ? nfc : parseInt(document.getElementById('nfc-count').value) || 0;
-  const webVal = typeof web === 'number' ? web : parseInt(document.getElementById('web-count').value) || 0;
-  document.querySelectorAll('#nfc-presets .cp-preset').forEach(btn => {
-    const match = btn.textContent.match(/(\d+)/);
-    btn.classList.toggle('active', match && parseInt(match[1]) === nfcVal && webVal === 0);
-  });
-  document.querySelectorAll('#mixed-presets .cp-preset').forEach(btn => {
-    const match = btn.textContent.match(/(\d+)\s*NFC\s*\+\s*(\d+)\s*Web/);
     btn.classList.toggle('active', match && parseInt(match[1]) === nfcVal && parseInt(match[2]) === webVal);
   });
 }
@@ -597,19 +599,20 @@ function generarLlaveros() {
   document.getElementById('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
-function renderResultado(name, groupId, siteCode, nfcTokens, webTokens, accessMode) {
+function renderResultado(name, groupId, siteCode, nfcTokens, webToken, webCount, accessMode) {
   document.getElementById('res-badge').textContent    = 'COMUNIDAD · ' + groupId;
   document.getElementById('res-title').textContent    = name;
   let meta = '';
   if (accessMode === 'nfc') meta = `${nfcTokens.length} llaveros NFC`;
-  else if (accessMode === 'code') meta = `${webTokens.length} accesos web`;
-  else meta = `${nfcTokens.length} llaveros NFC + ${webTokens.length} accesos web`;
+  else if (accessMode === 'code') meta = `${webCount} accesos web (1 enlace)`;
+  else meta = `${nfcTokens.length} llaveros NFC + ${webCount} accesos web (1 enlace)`;
   document.getElementById('res-meta').textContent     = meta + ' · LIGA DE PRONÓSTICOS MUNDIAL 2026';
   document.getElementById('res-sitecode').innerHTML   =
     escHtml(siteCode) + '<button class="codigo-copy-btn" onclick="copiarSiteCode()">Copiar</button>';
   document.getElementById('res-sitecode-inline').textContent = siteCode;
+  let totalLinks = nfcTokens.length + (webToken ? 1 : 0);
   document.getElementById('res-token-count').textContent =
-    (nfcTokens.length + webTokens.length) + ' URLS GENERADAS · GRABA CADA URL EN UN CHIP NFC O COMPARTE POR WEB';
+    totalLinks + ' URLS GENERADAS · GRABA CADA URL EN UN CHIP NFC O COMPARTE POR WEB';
 
   const list = document.getElementById('token-list');
   let idx = 1;
@@ -629,20 +632,18 @@ function renderResultado(name, groupId, siteCode, nfcTokens, webTokens, accessMo
       </div>`;
     }).join('');
   }
-  if (webTokens.length) {
-    html += `<div style="font-size:0.8em;color:#fff;margin:8px 0 4px;">Accesos Web</div>`;
-    html += webTokens.map((uuid, i) => {
-      const url  = PORRA_BASE_URL + '?access=web&token=' + uuid;
-      const short = uuid.substring(0, 8) + '…';
-      const encodedUrl = encodeURIComponent(url);
-      return `<div class="token-entry">
-        <span class="t-num">${idx++}</span>
-        <span class="t-uuid" title="${escHtml(uuid)}">${escHtml(short)}</span>
-        <span class="t-url" title="${escHtml(url)}">${escHtml(url)}</span>
-        <button class="t-copy" onclick="copiarUrl(decodeURIComponent('${encodedUrl}'), this)">Copiar</button>
-        <button class="t-qr" onclick="mostrarQR(decodeURIComponent('${encodedUrl}'))">QR</button>
-      </div>`;
-    }).join('');
+  if (webToken) {
+    html += `<div style="font-size:0.8em;color:#fff;margin:8px 0 4px;">Acceso Web (${webCount} participantes, 1 enlace)</div>`;
+    const url  = PORRA_BASE_URL + '?access=web&token=' + webToken;
+    const short = webToken.substring(0, 8) + '…';
+    const encodedUrl = encodeURIComponent(url);
+    html += `<div class="token-entry">
+      <span class="t-num">${idx++}</span>
+      <span class="t-uuid" title="${escHtml(webToken)}">${escHtml(short)}</span>
+      <span class="t-url" title="${escHtml(url)}">${escHtml(url)}</span>
+      <button class="t-copy" onclick="copiarUrl(decodeURIComponent('${encodedUrl}'), this)">Copiar</button>
+      <button class="t-qr" onclick="mostrarQR(decodeURIComponent('${encodedUrl}'))">QR</button>
+    </div>`;
   }
   list.innerHTML = html;
 }
