@@ -5,11 +5,13 @@ const logger = require("firebase-functions/logger");
 const { onValueCreated } = require("firebase-functions/v2/database");
 
 if (!admin.apps.length) {
-  admin.initializeApp();
+  admin.initializeApp({ databaseURL: normalizeOptionalString(process.env.TOK_DATABASE_URL) || "https://tok-familiar-default-rtdb.firebaseio.com" });
 }
 
-const REGION = process.env.FUNCTIONS_REGION || "europe-west1";
+const REGION = "us-central1";
 const TOK_DATABASE_INSTANCE = String(process.env.TOK_DATABASE_INSTANCE || "").trim();
+const TOK_DATABASE_URL = normalizeOptionalString(process.env.TOK_DATABASE_URL) || "https://tok-familiar-default-rtdb.firebaseio.com";
+const TOK_SKIP_FAMILY_LOOKUPS = isTruthyFlag(process.env.TOK_SKIP_FAMILY_LOOKUPS, true);
 const WHATSAPP_TRIGGER_ENABLED = isTruthyFlag(process.env.WHATSAPP_TRIGGER_ENABLED, false);
 const WHATSAPP_GRAPH_API_VERSION = process.env.WHATSAPP_GRAPH_API_VERSION || "v25.0";
 const WHATSAPP_PHONE_NUMBER_ID = normalizePhoneNumber(process.env.WHATSAPP_PHONE_NUMBER_ID);
@@ -19,6 +21,8 @@ const WHATSAPP_DEFAULT_MODE = WHATSAPP_DEFAULT_MODE_RAW === "template" ? "templa
 const WHATSAPP_DEFAULT_TEMPLATE = normalizeOptionalString(process.env.WHATSAPP_DEFAULT_TEMPLATE);
 const WHATSAPP_DEFAULT_TEMPLATE_LANG =
   normalizeOptionalString(process.env.WHATSAPP_DEFAULT_TEMPLATE_LANG).toLowerCase() || "en_us";
+const WHATSAPP_TEMPLATE_PARAM_MODE =
+  normalizeOptionalString(process.env.WHATSAPP_TEMPLATE_PARAM_MODE).toLowerCase() || "alert5";
 const WHATSAPP_ALERTS_DEFAULT_TO = normalizePhoneNumber(process.env.WHATSAPP_ALERTS_DEFAULT_TO);
 
 const ALERT_TYPE_LABELS = {
@@ -133,7 +137,17 @@ async function sendWhatsAppApiPayload(payload, settings) {
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const message = body?.error?.message || `WhatsApp API respondió ${response.status}.`;
+    const metaError = body?.error || {};
+    const detailParts = [
+      metaError.code ? `code=${metaError.code}` : null,
+      metaError.error_subcode ? `subcode=${metaError.error_subcode}` : null,
+      metaError.type ? `type=${metaError.type}` : null,
+      `http=${response.status}`,
+    ].filter(Boolean);
+    const message = [
+      metaError.message || `WhatsApp API respondió ${response.status}.`,
+      detailParts.length ? `(${detailParts.join(", ")})` : null,
+    ].filter(Boolean).join(" ");
     throw new Error(message);
   }
 
@@ -256,6 +270,11 @@ function buildAlertTemplateParameters(familyId, home, alert) {
   const when = truncateText(buildAlertTimeText(alert) || new Date(alert?.ts || nowTs()).toLocaleString("es-ES"), 80);
   const location = truncateText(alert?.url || "Sin ubicación adjunta", 240);
   const label = truncateText(ALERT_TYPE_LABELS[type] || type || "alerta", 80);
+
+   if (WHATSAPP_TEMPLATE_PARAM_MODE === "compact3") {
+    return normalizeTemplateParameters([subject, familyId || label, when]);
+  }
+
   return normalizeTemplateParameters([label, subject, familyId, when, location]);
 }
 
@@ -283,16 +302,21 @@ exports.sendFamilyAlertWhatsApp = onValueCreated(
       return null;
     }
 
-    const db = admin.database();
-    const [metaSnap, homeSnap, membersSnap] = await Promise.all([
-      db.ref(`familias/${familyId}/meta`).get(),
-      db.ref(`familias/${familyId}/hogar`).get(),
-      db.ref(`familias/${familyId}/miembros`).get(),
-    ]);
+    let meta = {};
+    let home = {};
+    let members = {};
+    if (!TOK_SKIP_FAMILY_LOOKUPS) {
+      const db = admin.database();
+      const [metaSnap, homeSnap, membersSnap] = await Promise.all([
+        db.ref(`familias/${familyId}/meta`).get(),
+        db.ref(`familias/${familyId}/hogar`).get(),
+        db.ref(`familias/${familyId}/miembros`).get(),
+      ]);
 
-    const meta = asObject(metaSnap.val());
-    const home = asObject(homeSnap.val());
-    const members = asObject(membersSnap.val());
+      meta = asObject(metaSnap.val());
+      home = asObject(homeSnap.val());
+      members = asObject(membersSnap.val());
+    }
     const config = resolveFamilyWhatsAppConfig(meta, home, members, runtimeSettings);
 
     if (!config.enabled) {
@@ -351,7 +375,8 @@ exports.sendFamilyAlertWhatsApp = onValueCreated(
         alertId,
         tipo: alert.tipo,
         to: maskPhoneNumber(config.to),
-        message: error?.message || String(error),
+        errorMessage: error?.message || String(error),
+        errorStack: error?.stack || null,
       });
     }
 

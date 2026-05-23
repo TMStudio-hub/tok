@@ -1,0 +1,1299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<style id="auth-gate">html{visibility:hidden;pointer-events:none}</style>
+<script type="module">
+  import { guardPage, logOut } from './tmcore-auth.js';
+  await guardPage();
+  document.getElementById('auth-gate').remove();
+  const _nav = document.querySelector('.admin-nav');
+  if (_nav) {
+    const _b = document.createElement('button');
+    _b.type = 'button'; _b.textContent = 'Salir'; _b.className = 'nav-btn';
+    _b.style.cssText = 'border-color:rgba(192,57,43,0.5);color:#e74c3c';
+    _b.addEventListener('click', () => logOut()); _nav.appendChild(_b);
+  }
+</script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TO-K Game · Generador de Comunidades · LIGA DE PRONÓSTICOS MUNDIAL 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{
+  --green:#4A6741;--gsoft:#EBF2E9;--gdark:#1E3A1A;--gold:#C9A84C;
+  --ink:#1A2018;--paper:#F5F7F4;--card:#fff;--muted:#8A9E86;
+  --line:rgba(74,103,65,0.12);--red:#C0392B;--blue:#2980B9;
+  --shadow:rgba(30,58,26,0.08);--shadow-strong:rgba(30,58,26,0.16);
+  --font:'Syne',system-ui;--mono:'DM Mono',monospace;
+  /* Mundial accent */
+  --mundial:#1d6fa4;--mundial-soft:#e8f3fb;--mundial-dark:#0d3d5c;
+  --porra:#1d6fa4;--porra-soft:#e8f3fb;--porra-dark:#0d3d5c;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--font);background:var(--paper);color:var(--ink);min-height:100vh;position:relative;}
+
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 10% 8%,rgba(201,168,76,0.10),transparent 28%),
+             radial-gradient(circle at 90% 12%,rgba(29,111,164,0.08),transparent 24%),
+             linear-gradient(180deg,rgba(255,255,255,0.78),rgba(245,247,244,0.96));
+  z-index:0;
+}
+
+/* HEADER */
+.admin-header{
+  position:sticky;top:0;z-index:40;
+  background:linear-gradient(160deg,var(--mundial-dark),var(--mundial));
+  padding:22px clamp(16px,3vw,32px);
+  display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  box-shadow:0 14px 40px rgba(13,61,92,0.28);
+}
+.admin-title{color:#fff;font-size:1.1rem;font-weight:800;letter-spacing:0.01em;}
+.admin-badge{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.52);border:1px solid rgba(255,255,255,0.18);padding:5px 12px;border-radius:999px;background:rgba(255,255,255,0.06);display:inline-flex;align-items:center;}
+.admin-nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end;align-items:center;max-width:100%;}
+.nav-btn{padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,0.16);background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.76);font-size:0.78rem;cursor:pointer;font-family:var(--font);font-weight:700;transition:all 0.18s;display:inline-flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);text-decoration:none;}
+.nav-btn:hover{background:rgba(255,255,255,0.14);color:#fff;transform:translateY(-1px);}
+.nav-btn.active{background:#fff;color:var(--porra-dark);border-color:#fff;box-shadow:0 8px 18px rgba(0,0,0,0.12);}
+
+/* LAYOUT */
+.main{max-width:900px;margin:0 auto;padding:32px 20px 72px;position:relative;z-index:1;}
+.section-title{font-family:var(--mono);font-size:0.64rem;letter-spacing:0.24em;text-transform:uppercase;color:#73866f;margin-bottom:16px;}
+
+/* CARDS */
+.card{background:rgba(255,255,255,0.88);backdrop-filter:blur(16px);border-radius:24px;padding:24px;border:1px solid rgba(74,103,65,0.10);margin-bottom:18px;box-shadow:0 20px 40px var(--shadow);position:relative;overflow:hidden;}
+.card::before{content:'';position:absolute;top:0;left:24px;right:24px;height:2px;background:linear-gradient(90deg,transparent,rgba(29,111,164,0.8),transparent);opacity:0.85;}
+.card h2{font-size:1.02rem;font-weight:800;color:var(--ink);margin-bottom:6px;}
+.card-sub{font-size:0.83rem;color:var(--muted);margin-bottom:18px;line-height:1.55;}
+
+/* FORM */
+.form-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap;align-items:flex-start;}
+.form-group{flex:1;min-width:140px;}
+.lbl{font-size:0.75rem;color:var(--muted);margin-bottom:5px;display:block;font-family:var(--mono);letter-spacing:0.05em;}
+.inp{width:100%;padding:12px 14px;border-radius:14px;border:1.5px solid rgba(74,103,65,0.10);background:rgba(255,255,255,0.82);color:var(--ink);font-size:0.92rem;font-family:var(--font);transition:border-color 0.15s,box-shadow 0.15s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.55);}
+.inp:focus{outline:none;border-color:rgba(29,111,164,0.5);box-shadow:0 0 0 4px rgba(29,111,164,0.08);}
+.inp.mono{font-family:var(--mono);letter-spacing:0.08em;}
+
+/* BTN */
+.btn{padding:12px 18px;border-radius:14px;border:none;font-size:0.9rem;font-weight:800;font-family:var(--font);cursor:pointer;transition:all 0.15s;touch-action:manipulation;display:inline-flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 12px 24px var(--shadow);}
+.btn-primary{background:var(--porra);color:#fff;}
+.btn-primary:hover{background:var(--porra-dark);transform:translateY(-1px);}
+.btn-secondary{background:transparent;border:1.5px solid var(--porra);color:var(--porra);}
+.btn-secondary:hover{background:rgba(29,111,164,0.06);transform:translateY(-1px);}
+.btn-ghost{background:rgba(0,0,0,0.04);color:var(--muted);border:none;}
+.btn-ghost:hover{background:rgba(0,0,0,0.08);transform:translateY(-1px);}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;}
+
+/* MEMBER COUNT PICKER */
+.count-picker{display:flex;align-items:center;gap:14px;}
+.cp-btn{width:44px;height:44px;border-radius:50%;border:1.5px solid rgba(74,103,65,0.14);background:#fff;color:var(--ink);cursor:pointer;font-size:1.3rem;font-weight:700;display:flex;align-items:center;justify-content:center;transition:all 0.15s;box-shadow:0 8px 16px rgba(30,58,26,0.07);}
+.cp-btn:hover{border-color:rgba(29,111,164,0.4);background:var(--porra-soft);transform:translateY(-1px);}
+.cp-num{font-family:var(--mono);font-size:2.2rem;font-weight:700;color:var(--porra);min-width:52px;text-align:center;line-height:1;}
+.cp-presets{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.cp-preset{padding:6px 14px;border-radius:999px;border:1.5px solid rgba(74,103,65,0.12);background:rgba(255,255,255,0.8);color:var(--muted);cursor:pointer;font-size:0.75rem;font-family:var(--mono);font-weight:700;transition:all 0.15s;}
+.cp-preset:hover,.cp-preset.active{border-color:rgba(29,111,164,0.4);color:var(--porra);background:var(--porra-soft);}
+
+/* RESULTADO */
+.resultado{background:linear-gradient(135deg,var(--porra-dark),var(--porra));border-radius:24px;padding:24px;color:#fff;margin-bottom:16px;display:none;box-shadow:0 24px 48px rgba(13,61,92,0.22);}
+.resultado.show{display:block;}
+.res-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;gap:16px;flex-wrap:wrap;}
+.res-badge{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);margin-bottom:4px;}
+.res-title{font-size:1.2rem;font-weight:800;}
+.codigo-box{background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.18);border-radius:16px;padding:14px 18px;font-family:var(--mono);font-size:1.1rem;letter-spacing:0.18em;color:#fff;text-align:center;position:relative;}
+.codigo-copy-btn{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.15);border:none;color:#fff;padding:5px 10px;border-radius:8px;cursor:pointer;font-size:0.72rem;font-family:var(--mono);transition:background 0.15s;}
+.codigo-copy-btn:hover{background:rgba(255,255,255,0.25);}
+
+/* TOKEN LIST */
+.token-list-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:18px;}
+.token-list-label{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);}
+.token-entry{display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.09);border-radius:12px;margin-bottom:6px;}
+.token-entry .t-num{font-family:var(--mono);font-size:0.7rem;color:rgba(255,255,255,0.35);width:22px;flex-shrink:0;text-align:right;}
+.token-entry .t-uuid{font-family:var(--mono);font-size:0.62rem;color:rgba(255,255,255,0.45);width:90px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.token-entry .t-url{font-family:var(--mono);font-size:0.6rem;color:rgba(255,255,255,0.6);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.token-entry .t-copy{background:rgba(255,255,255,0.10);border:none;color:rgba(255,255,255,0.7);padding:4px 10px;border-radius:7px;cursor:pointer;font-size:0.65rem;font-family:var(--mono);flex-shrink:0;transition:background 0.15s;}
+.token-entry .t-copy:hover{background:rgba(255,255,255,0.20);}
+.token-entry .t-qr{background:rgba(255,255,255,0.10);border:none;color:rgba(255,255,255,0.55);padding:4px 8px;border-radius:7px;cursor:pointer;font-size:0.65rem;flex-shrink:0;transition:background 0.15s;}
+.token-entry .t-qr:hover{background:rgba(255,255,255,0.20);}
+
+/* QR MODAL */
+#qr-modal{position:fixed;inset:0;background:rgba(13,61,92,0.85);z-index:1000;display:none;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);}
+#qr-modal.show{display:flex;}
+.qr-modal-inner{background:#fff;border-radius:20px;padding:24px;text-align:center;box-shadow:0 28px 56px rgba(0,0,0,0.22);max-width:280px;width:100%;}
+.qr-modal-url{font-family:var(--mono);font-size:0.6rem;color:var(--muted);word-break:break-all;margin-top:10px;line-height:1.5;}
+
+/* PRINT CARD */
+.print-card{background:#fff;border:2px solid var(--porra);border-radius:24px;padding:28px;display:none;box-shadow:0 16px 36px rgba(13,61,92,0.10);}
+.print-card.show{display:block;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:rgba(13,61,92,0.95);color:#fff;padding:12px 20px;border-radius:999px;font-size:0.82rem;font-family:var(--mono);z-index:300;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;box-shadow:0 18px 36px rgba(0,0,0,0.18);}
+.toast.show{opacity:1;}
+
+/* TAB PANELS */
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+
+/* HISTORIAL */
+.hist-item{background:rgba(255,255,255,0.88);backdrop-filter:blur(16px);border-radius:18px;border:1px solid rgba(74,103,65,0.10);margin-bottom:10px;box-shadow:0 12px 24px var(--shadow);overflow:hidden;}
+.hist-item-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;cursor:pointer;transition:background 0.15s;}
+.hist-item-header:hover{background:rgba(29,111,164,0.03);}
+.hist-item-main{flex:1;min-width:0;}
+.hist-item-name{font-size:0.95rem;font-weight:800;color:var(--ink);margin-bottom:5px;}
+.hist-item-meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.hi-group{font-family:var(--mono);font-size:0.7rem;font-weight:700;color:var(--porra);background:var(--porra-soft);padding:3px 10px;border-radius:999px;}
+.hi-code{font-family:var(--mono);font-size:0.7rem;color:var(--muted);}
+.hi-chips{font-family:var(--mono);font-size:0.68rem;color:var(--muted);}
+.hi-fecha{font-family:var(--mono);font-size:0.65rem;color:var(--muted);margin-left:auto;}
+.hist-item-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.hi-btn{padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.78);color:var(--muted);cursor:pointer;font-size:0.82rem;transition:all 0.15s;}
+.hi-btn:hover{border-color:rgba(29,111,164,0.25);color:var(--porra);transform:translateY(-1px);}
+.hi-del:hover{border-color:rgba(192,57,43,0.25) !important;color:var(--red) !important;}
+.hi-chevron{padding:7px 12px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,0.78);color:var(--muted);cursor:pointer;font-size:0.82rem;font-weight:700;transition:all 0.15s;}
+.hist-tokens-list{padding:0 18px 16px;border-top:1px solid var(--line);}
+.hi-token-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;margin-bottom:3px;}
+.hi-token-row:nth-child(odd){background:rgba(29,111,164,0.03);}
+.hi-t-num{font-family:var(--mono);font-size:0.65rem;color:var(--muted);width:22px;text-align:right;flex-shrink:0;}
+.hi-t-uuid{font-family:var(--mono);font-size:0.6rem;color:var(--muted);width:82px;flex-shrink:0;white-space:nowrap;overflow:hidden;}
+.hi-t-url{font-family:var(--mono);font-size:0.62rem;color:var(--porra);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.hi-t-copy{background:var(--porra-soft);border:none;color:var(--porra);padding:3px 10px;border-radius:6px;cursor:pointer;font-size:0.65rem;font-family:var(--mono);flex-shrink:0;transition:background 0.15s;}
+.hi-t-copy:hover{background:rgba(29,111,164,0.18);}
+
+/* PRINT STYLES */
+@media print{
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+  body{background:#fff !important;margin:0;padding:0;}
+  body::before{display:none !important;}
+  #admin-pin-overlay,.admin-header,.card,.resultado,.btn-row,.nav-btn,.toast,#qr-modal{display:none !important;}
+  .print-card{display:block !important;border:none !important;box-shadow:none !important;margin:0 !important;padding:12px !important;border-radius:0 !important;}
+}
+
+@media(max-width:640px){
+  .admin-header{padding:18px 16px 20px;align-items:flex-start;}
+  .admin-nav{width:100%;justify-content:flex-start;}
+  .nav-btn{flex:1 1 calc(50% - 5px);min-width:0;}
+  .hist-item-header{flex-wrap:wrap;}
+  .hi-fecha{margin-left:0;}
+  .hist-item-actions{width:100%;}
+  .hi-token-row{flex-wrap:wrap;}
+  .hi-t-url{width:100%;order:3;}
+  .main{padding:24px 14px 56px;}
+  .card,.resultado,.print-card{border-radius:20px;padding:20px;}
+  .btn{width:100%;}
+  .btn-row{flex-direction:column;}
+  .token-entry{flex-wrap:wrap;}
+  .token-entry .t-url{width:100%;order:3;}
+  .res-header{flex-direction:column;}
+  .codigo-box{font-size:0.9rem;letter-spacing:0.1em;padding-right:80px;}
+}
+</style>
+</head>
+<body>
+
+<!-- PIN PROTECTION OVERLAY -->
+<div id="admin-pin-overlay">
+  <div style="position:fixed;inset:0;background:linear-gradient(160deg,rgba(13,61,92,0.96),rgba(29,111,164,0.90));z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(10px);">
+    <div style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.16);border-radius:24px;padding:32px 24px;text-align:center;width:100%;max-width:340px;box-shadow:0 28px 56px rgba(0,0,0,0.22);">
+      <div style="font-size:2.4rem;margin-bottom:8px;">⚽</div>
+      <div style="font-family:var(--font);font-size:1.1rem;font-weight:800;color:#fff;margin-bottom:4px;">TO-K Game Admin</div>
+      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.2em;color:rgba(255,255,255,0.4);margin-bottom:24px;text-transform:uppercase;">Generador de Comunidades NFC</div>
+      <div id="pin-dots" style="display:flex;justify-content:center;gap:14px;margin-bottom:22px;">
+        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
+        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
+        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
+        <div class="pd" style="width:13px;height:13px;border-radius:50%;background:rgba(255,255,255,0.2);transition:background .15s;"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:228px;margin:0 auto;">
+        <button onclick="pinKey('1')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">1</button>
+        <button onclick="pinKey('2')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">2</button>
+        <button onclick="pinKey('3')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">3</button>
+        <button onclick="pinKey('4')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">4</button>
+        <button onclick="pinKey('5')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">5</button>
+        <button onclick="pinKey('6')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">6</button>
+        <button onclick="pinKey('7')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">7</button>
+        <button onclick="pinKey('8')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">8</button>
+        <button onclick="pinKey('9')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">9</button>
+        <button onclick="pinKey('del')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">⌫</button>
+        <button onclick="pinKey('0')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-size:1.2rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">0</button>
+        <button onclick="pinKey('ok')" style="height:54px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.18);color:#fff;font-size:1rem;font-weight:700;font-family:var(--font);cursor:pointer;transition:all .15s;">✓</button>
+      </div>
+      <div id="pin-error" style="font-family:var(--mono);font-size:0.7rem;color:#ff9999;margin-top:14px;min-height:1.2em;letter-spacing:0.05em;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- QR MODAL -->
+<div id="qr-modal">
+  <div class="qr-modal-inner">
+    <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:12px;">URL A GRABAR EN CHIP NFC</div>
+    <div id="qr-modal-canvas"></div>
+    <div id="qr-modal-url" class="qr-modal-url"></div>
+    <button onclick="closeQrModal()" style="margin-top:16px;width:100%;padding:10px;border-radius:12px;border:1.5px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;font-family:var(--mono);font-size:0.8rem;">Cerrar</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="admin-header">
+  <div style="display:flex;align-items:center;gap:14px;">
+    <div style="width:44px;height:44px;border-radius:12px;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:1.6rem;flex-shrink:0;">⚽</div>
+    <div>
+      <div class="admin-title">TO-K Game · LIGA DE PRONÓSTICOS MUNDIAL 2026</div>
+      <div class="admin-badge">GENERADOR DE COMUNIDADES · EL TALLER DE MEMORIAS</div>
+    </div>
+  </div>
+  <div class="admin-nav">
+    <button class="nav-btn active" id="tab-btn-nuevo" onclick="setTab('nuevo')">⚡ Nuevo pedido</button>
+    <button class="nav-btn" id="tab-btn-historial" onclick="setTab('historial')">📋 Historial <span id="hist-count-badge" style="display:none;background:rgba(255,255,255,0.25);border-radius:999px;padding:1px 8px;font-size:0.65rem;margin-left:2px;"></span></button>
+    <a href="tok-admin.html" class="nav-btn">← TO-K Admin</a>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="tab-panel active" id="panel-nuevo">
+  <div class="section-title">Nuevo pedido de llaveros NFC / Participantes</div>
+
+  <!-- CARD: DATOS DE LA COMUNIDAD -->
+  <div class="card">
+    <h2>Datos de la Comunidad</h2>
+    <div class="card-sub">
+      Configura tu comunidad para la LIGA DE PRONÓSTICOS MUNDIAL 2026. Asegúrate de haber creado el grupo en la app y
+      haber guardado su <strong>Código de Acceso</strong> en el panel de admin antes de generar.
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <span class="lbl">Nombre de la comunidad</span>
+        <input class="inp" id="community-name" type="text" placeholder="Ej: Amigos del Mundial, Familia López…" maxlength="64" autocomplete="off"/>
+      </div>
+      <div class="form-group" style="flex:0 0 200px;">
+        <span class="lbl">ID de grupo</span>
+        <input class="inp mono" id="community-id" type="text" placeholder="Ej: MUNDIAL2026" maxlength="32" autocapitalize="characters" autocomplete="off" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_-]/g,'')"/>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <span class="lbl">Código de acceso de la comunidad</span>
+        <div style="display:flex;gap:8px;">
+          <input class="inp mono" id="site-code" type="text" placeholder="El código que usará el admin y los participantes" maxlength="32" autocomplete="off" style="flex:1;"/>
+          <button class="btn btn-secondary" onclick="generarCodigoAleatorio()" title="Generar código aleatorio" style="padding:12px 14px;flex-shrink:0;font-size:0.82rem;white-space:nowrap;">🎲 Generar</button>
+        </div>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:5px;line-height:1.5;">Este código aparecerá en la ficha de entrega para que el participante lo introduzca al escanear su llavero o acceder por web.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <span class="lbl">Email del organizador · Admin General de la comunidad</span>
+        <input class="inp" id="buyer-email" type="email" placeholder="email@ejemplo.com" maxlength="128" autocomplete="off"/>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:5px;line-height:1.5;">Este email tendrá acceso como Admin General para gestionar esta comunidad.</div>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <span class="lbl">Modo de acceso</span>
+        <select class="inp" id="access-mode" onchange="onAccessModeChange()">
+          <option value="nfc">🔑 Solo NFC — solo llaveros físicos</option>
+          <option value="code">🌐 Solo web — cualquiera con el código</option>
+          <option value="mixed">🔀 Mixto — NFC + web</option>
+        </select>
+        <div id="access-mode-hint" style="font-size:0.7rem;color:var(--muted);margin-top:5px;line-height:1.5;">Solo los participantes con llavero NFC pueden registrarse.</div>
+      </div>
+      <div class="form-group" style="flex:0 0 190px;display:none;" id="max-participants-group">
+        <span class="lbl">Límite de participantes</span>
+        <input class="inp mono" id="max-participants" type="number" min="1" placeholder="Sin límite"/>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:5px;">Vacío = sin límite</div>
+      </div>
+    </div>
+
+    <div class="form-row" style="margin-bottom:12px;">
+      <div class="form-group" style="flex:0 0 260px;">
+        <span class="lbl">Grupos · subdivisiones de la comunidad</span>
+        <input class="inp mono" id="max-groups" type="number" min="0" max="20" value="3"
+               oninput="onMaxGroupsChange()" placeholder="0 = sin grupos" style="max-width:130px;"/>
+        <div style="font-size:0.7rem;color:var(--muted);margin-top:5px;line-height:1.5;">0 = sin grupos · Escribe cuántos grupos quieres (máx. 20). El comprador puede renombrarlos.</div>
+      </div>
+    </div>
+
+    <div id="group-names-section" style="margin-bottom:12px;">
+      <span class="lbl" style="display:block;margin-bottom:8px;">Nombres de grupos (opcional)</span>
+      <div id="group-names-inputs"></div>
+    </div>
+
+    <div id="nfc-count-section" style="margin-bottom:20px;">
+      <span class="lbl" style="margin-bottom:10px;">Participantes por tipo de acceso</span>
+      <div class="form-row" style="gap:24px;align-items:flex-end;">
+        <div class="form-group" style="max-width:180px;">
+          <span class="lbl">Llaveros NFC</span>
+          <input class="inp mono" id="nfc-count" type="number" min="0" max="50" value="10" style="max-width:100px;"/>
+        </div>
+        <div class="form-group" id="web-count-group" style="max-width:180px;display:none;">
+          <span class="lbl">Accesos Web</span>
+          <input class="inp mono" id="web-count" type="number" min="0" max="50" value="0" style="max-width:100px;"/>
+        </div>
+      </div>
+      <div class="cp-presets" id="nfc-presets">
+        <button class="cp-preset" onclick="setNfcWebPreset(5,0)">5 NFC</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(8,0)">8 NFC</button>
+        <button class="cp-preset active" onclick="setNfcWebPreset(10,0)">10 NFC</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(15,0)">15 NFC</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(20,0)">20 NFC</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(25,0)">25 NFC</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(30,0)">30 NFC</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(50,0)">50 NFC</button>
+      </div>
+      <div class="cp-presets" id="mixed-presets" style="display:none;gap:6px;">
+        <button class="cp-preset" onclick="setNfcWebPreset(5,5)">5 NFC + 5 Web</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(8,2)">8 NFC + 2 Web</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(10,5)">10 NFC + 5 Web</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(10,10)">10 NFC + 10 Web</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(15,5)">15 NFC + 5 Web</button>
+        <button class="cp-preset" onclick="setNfcWebPreset(20,10)">20 NFC + 10 Web</button>
+      </div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:5px;line-height:1.5;">En modo mixto, puedes definir cuántos participantes tendrán llavero NFC y cuántos solo acceso web.</div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btn-generar" onclick="generarLlaveros()">⚡ Generar llaveros / participantes</button>
+      <button class="btn btn-ghost" onclick="resetForm()">↺ Limpiar</button>
+    </div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div class="resultado" id="resultado">
+    <div class="res-header">
+      <div>
+        <div class="res-badge" id="res-badge">COMUNIDAD</div>
+        <div class="res-title" id="res-title">—</div>
+        <div style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-top:2px;" id="res-meta">—</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:var(--mono);font-size:0.6rem;color:rgba(255,255,255,0.35);margin-bottom:6px;">CÓDIGO DE ACCESO</div>
+        <div class="codigo-box" id="res-sitecode" style="min-width:180px;">
+          —
+          <button class="codigo-copy-btn" onclick="copiarSiteCode()">Copiar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INFO BOX -->
+    <div style="background:rgba(255,255,255,0.08);border-radius:14px;padding:14px 16px;margin-bottom:4px;font-size:0.8rem;color:rgba(255,255,255,0.65);line-height:1.6;">
+      💡 <strong style="color:rgba(255,255,255,0.9);">Instrucción para los participantes:</strong>
+      Escanea tu llavero NFC o accede por web → introduce el código <span id="res-sitecode-inline" style="font-family:var(--mono);background:rgba(255,255,255,0.12);padding:1px 7px;border-radius:5px;">—</span>
+      y tu apodo → ¡a jugar!
+    </div>
+
+    <!-- TOKEN LIST -->
+    <div class="token-list-header">
+      <div class="token-list-label" id="res-token-count">0 URLS GENERADAS · GRABA CADA URL EN UN CHIP NFC O COMPARTE POR WEB</div>
+      <button onclick="copiarTodas()" style="background:rgba(255,255,255,0.12);border:none;color:rgba(255,255,255,0.8);padding:6px 14px;border-radius:8px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">📋 Copiar todas</button>
+    </div>
+    <div id="token-list"></div>
+
+    <!-- GUARDAR EN FIREBASE -->
+    <div id="save-status-box" style="margin-top:16px;padding:12px 16px;background:rgba(255,255,255,0.08);border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span id="save-icon" style="font-size:1.1rem;">💾</span>
+        <span id="save-text" style="font-family:var(--mono);font-size:0.72rem;color:rgba(255,255,255,0.75);">Pedido generado · Revísalo y pulsa <strong style="color:#fff;">Guardar</strong> para registrarlo en Firebase</span>
+      </div>
+      <button id="btn-guardar-fb" class="btn" onclick="guardarPedido()" style="background:rgba(255,255,255,0.92);color:var(--porra-dark);font-weight:800;flex-shrink:0;border:none;padding:10px 18px;">☁️ Guardar pedido</button>
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn" style="background:rgba(37,211,102,0.28);color:#fff;border:1.5px solid rgba(37,211,102,0.5);" onclick="compartirWhatsApp()">💬 WhatsApp</button>
+      <button class="btn" style="background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.22);" onclick="imprimirFicha()">🖨️ Imprimir</button>
+      <button class="btn" style="background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.8);" onclick="exportarCSV()">📥 CSV</button>
+      <button class="btn btn-ghost" onclick="resetForm()" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">↺ Nueva</button>
+    </div>
+  </div>
+
+  <!-- PRINT CARD -->
+  <div class="print-card" id="print-card">
+    <!-- print header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2.5px solid var(--porra);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:2.4rem;line-height:1;">⚽</div>
+        <div>
+          <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.2em;color:var(--muted);">EL TALLER DE MEMORIAS · TO-K GAME</div>
+          <div style="font-size:1.2rem;font-weight:800;color:var(--ink);" id="print-titulo">Comunidad</div>
+          <div style="font-size:0.82rem;color:var(--muted);" id="print-meta">LIGA DE PRONÓSTICOS MUNDIAL 2026</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:var(--mono);font-size:0.6rem;color:var(--muted);margin-bottom:6px;" id="print-fecha"></div>
+        <div style="background:var(--porra-soft);border:2px solid var(--porra);border-radius:10px;padding:8px 16px;">
+          <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.12em;color:var(--muted);margin-bottom:2px;">CÓDIGO DE ACCESO AL JUEGO</div>
+          <div style="font-family:var(--mono);font-size:1.1rem;font-weight:700;color:var(--porra);letter-spacing:0.12em;" id="print-sitecode">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- instrucciones para jugadores -->
+    <div style="background:var(--porra-soft);border-left:4px solid var(--porra);border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:18px;">
+      <div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.15em;color:var(--mundial);margin-bottom:5px;text-transform:uppercase;">Instrucciones para los participantes</div>
+      <div style="font-size:0.88rem;color:var(--ink);line-height:1.6;">
+        1. Escanea el chip NFC de tu llavero o accede por web.<br>
+        2. En la pantalla de activación, introduce el código <strong id="print-sitecode-inst">—</strong> y tu apodo.<br>
+        3. ¡Tu llavero o acceso web queda vinculado a tu perfil y podrás entrar directamente en el futuro!
+      </div>
+    </div>
+
+    <!-- chips table -->
+    <div>
+      <div style="font-family:var(--mono);font-size:0.52rem;letter-spacing:0.15em;color:var(--muted);margin-bottom:8px;text-transform:uppercase;">URLs a grabar en cada chip NFC o compartir por web · usar NFC Tools o similar</div>
+      <div id="print-chips"></div>
+    </div>
+
+    <!-- footer -->
+    <div style="margin-top:16px;padding-top:12px;border-top:1px dashed rgba(74,103,65,0.22);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div style="font-size:0.78rem;color:var(--muted);line-height:1.5;">
+        Generado con <strong style="color:var(--mundial);">TO-K Admin</strong> · El Taller de Memorias<br>
+        Juego disponible en <strong>to-k-games.web.app</strong>
+      </div>
+      <div id="print-qr-wrap" style="flex-shrink:0;"></div>
+    </div>
+  </div>
+  </div><!-- /panel-nuevo -->
+
+  <div class="tab-panel" id="panel-historial">
+    <div class="section-title">Historial de pedidos</div>
+    <div id="historial-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;gap:10px;color:var(--muted);text-align:center;">
+      <div style="font-size:2.8rem;margin-bottom:4px;">📋</div>
+      <div style="font-size:0.9rem;font-weight:800;color:var(--ink);">Sin pedidos guardados</div>
+      <div style="font-size:0.8rem;line-height:1.6;">Genera un pedido y pulsa <strong>Guardar</strong> para registrarlo en Firebase.</div>
+    </div>
+    <div id="historial-list"></div>
+  </div>
+
+</div><!-- /main -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── PIN ──────────────────────────────────────────────────────────────
+let _pinBuf = '';
+const _PIN  = '2810';
+
+function pinKey(k) {
+  const err = document.getElementById('pin-error');
+  if (k === 'del') { _pinBuf = _pinBuf.slice(0,-1); err.textContent=''; }
+  else if (k === 'ok') { _checkPin(); return; }
+  else { if (_pinBuf.length >= 4) return; _pinBuf += k; if (_pinBuf.length === 4) setTimeout(_checkPin,150); }
+  _updatePinDots();
+}
+function _updatePinDots() {
+  document.querySelectorAll('#admin-pin-overlay .pd').forEach((d,i)=>{
+    d.style.background = i < _pinBuf.length ? '#fff' : 'rgba(255,255,255,0.2)';
+  });
+}
+function _checkPin() {
+  if (_pinBuf === _PIN) {
+    document.getElementById('admin-pin-overlay').style.display='none';
+  } else {
+    document.getElementById('pin-error').textContent='PIN incorrecto';
+    _pinBuf=''; _updatePinDots();
+  }
+}
+
+// ── STATE ─────────────────────────────────────────────────────────────
+const PORRA_BASE_URL = 'https://to-k-games.web.app/porra-mundial-2026.html';
+let memberCount = 10;
+let generatedTokens = [];
+let currentSiteCode = '';
+let currentCommunityName = '';
+let currentOrder = null;
+let _pedidoGuardado = false;
+
+// ── PARTICIPANT SPLIT (NFC/WEB) ──────────────────────────────────────
+function setNfcWebPreset(nfc, web) {
+  document.getElementById('nfc-count').value = nfc;
+  document.getElementById('web-count').value = web;
+  updatePresetHighlight(nfc, web);
+}
+function updatePresetHighlight(nfc, web) {
+  // Highlight correct preset for current values
+  const nfcVal = typeof nfc === 'number' ? nfc : parseInt(document.getElementById('nfc-count').value) || 0;
+  const webVal = typeof web === 'number' ? web : parseInt(document.getElementById('web-count').value) || 0;
+  document.querySelectorAll('#nfc-presets .cp-preset').forEach(btn => {
+    const match = btn.textContent.match(/(\d+)/);
+    btn.classList.toggle('active', match && parseInt(match[1]) === nfcVal && webVal === 0);
+  });
+  document.querySelectorAll('#mixed-presets .cp-preset').forEach(btn => {
+    const match = btn.textContent.match(/(\d+)\s*NFC\s*\+\s*(\d+)\s*Web/);
+    btn.classList.toggle('active', match && parseInt(match[1]) === nfcVal && parseInt(match[2]) === webVal);
+  });
+}
+
+// ── GENERATE ──────────────────────────────────────────────────────────
+function generarLlaveros() {
+  const name     = (document.getElementById('community-name').value || '').trim();
+  const groupId  = (document.getElementById('community-id').value  || '').trim().toUpperCase();
+  const siteCode = (document.getElementById('site-code').value     || '').trim();
+  const buyerEmail = (document.getElementById('buyer-email').value || '').trim().toLowerCase();
+  if (!name)       { toast('Introduce el nombre de la comunidad'); return; }
+  if (!groupId)    { toast('Introduce el ID de grupo (Ej: MUNDIAL2026)'); return; }
+  if (!siteCode)   { toast('Introduce el código de acceso de la comunidad'); return; }
+  if (!buyerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerEmail)) { toast('Introduce el email del organizador (Admin General)'); return; }
+
+  currentCommunityName = name;
+  currentSiteCode = siteCode;
+  const accessMode = (document.getElementById('access-mode').value || 'nfc');
+  let nfcCount = 0, webCount = 0;
+  if (accessMode === 'nfc') {
+    nfcCount = parseInt(document.getElementById('nfc-count').value) || 0;
+    if (nfcCount < 1) { toast('Debes asignar al menos 1 llavero NFC'); return; }
+  } else if (accessMode === 'code') {
+    webCount = parseInt(document.getElementById('max-participants').value) || 0;
+    if (webCount < 1) { toast('Debes asignar al menos 1 acceso web'); return; }
+  } else if (accessMode === 'mixed') {
+    nfcCount = parseInt(document.getElementById('nfc-count').value) || 0;
+    webCount = parseInt(document.getElementById('web-count').value) || 0;
+    if (nfcCount < 1 && webCount < 1) { toast('Debes asignar al menos 1 llavero NFC o acceso web'); return; }
+  }
+  const maxParticipants = (accessMode === 'nfc') ? nfcCount : (accessMode === 'code' ? webCount : nfcCount + webCount);
+  const maxGroups = parseInt(document.getElementById('max-groups').value) || 0;
+  const groupNames = [];
+  for (let i = 1; i <= maxGroups; i++) {
+    const el = document.getElementById('group-name-' + i);
+    groupNames.push((el ? el.value.trim() : '') || ('Grupo ' + i));
+  }
+
+  // Generate UUIDs for NFC tokens and web tokens (if needed)
+  let nfcTokens = [], webTokens = [];
+  if (accessMode === 'nfc') {
+    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
+  } else if (accessMode === 'code') {
+    webTokens = Array.from({ length: webCount }, () => crypto.randomUUID());
+  } else if (accessMode === 'mixed') {
+    nfcTokens = Array.from({ length: nfcCount }, () => crypto.randomUUID());
+    webTokens = Array.from({ length: webCount }, () => crypto.randomUUID());
+  }
+  generatedTokens = [...nfcTokens, ...webTokens];
+
+  // Store as pending order (not saved yet)
+  const _setupToken = crypto.randomUUID();
+  currentOrder = {
+    id: crypto.randomUUID(),
+    fecha: Date.now(),
+    communityName: name,
+    groupId,
+    siteCode,
+    buyerEmail,
+    accessMode,
+    maxParticipants,
+    maxGroups,
+    groupNames,
+    tokens: [...generatedTokens],
+    nfcTokens: [...nfcTokens],
+    webTokens: [...webTokens],
+    setupToken: _setupToken
+  };
+  _pedidoGuardado = false;
+  setSaveStatus('pending');
+
+  renderResultado(name, groupId, siteCode, nfcTokens, webTokens, accessMode);
+  document.getElementById('resultado').classList.add('show');
+  document.getElementById('resultado').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function renderResultado(name, groupId, siteCode, nfcTokens, webTokens, accessMode) {
+  document.getElementById('res-badge').textContent    = 'COMUNIDAD · ' + groupId;
+  document.getElementById('res-title').textContent    = name;
+  let meta = '';
+  if (accessMode === 'nfc') meta = `${nfcTokens.length} llaveros NFC`;
+  else if (accessMode === 'code') meta = `${webTokens.length} accesos web`;
+  else meta = `${nfcTokens.length} llaveros NFC + ${webTokens.length} accesos web`;
+  document.getElementById('res-meta').textContent     = meta + ' · LIGA DE PRONÓSTICOS MUNDIAL 2026';
+  document.getElementById('res-sitecode').innerHTML   =
+    escHtml(siteCode) + '<button class="codigo-copy-btn" onclick="copiarSiteCode()">Copiar</button>';
+  document.getElementById('res-sitecode-inline').textContent = siteCode;
+  document.getElementById('res-token-count').textContent =
+    (nfcTokens.length + webTokens.length) + ' URLS GENERADAS · GRABA CADA URL EN UN CHIP NFC O COMPARTE POR WEB';
+
+  const list = document.getElementById('token-list');
+  let idx = 1;
+  let html = '';
+  if (nfcTokens.length) {
+    html += `<div style="font-size:0.8em;color:#fff;margin-bottom:4px;">Llaveros NFC</div>`;
+    html += nfcTokens.map((uuid, i) => {
+      const url  = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+      const short = uuid.substring(0, 8) + '…';
+      const encodedUrl = encodeURIComponent(url);
+      return `<div class="token-entry">
+        <span class="t-num">${idx++}</span>
+        <span class="t-uuid" title="${escHtml(uuid)}">${escHtml(short)}</span>
+        <span class="t-url" title="${escHtml(url)}">${escHtml(url)}</span>
+        <button class="t-copy" onclick="copiarUrl(decodeURIComponent('${encodedUrl}'), this)">Copiar</button>
+        <button class="t-qr" onclick="mostrarQR(decodeURIComponent('${encodedUrl}'))">QR</button>
+      </div>`;
+    }).join('');
+  }
+  if (webTokens.length) {
+    html += `<div style="font-size:0.8em;color:#fff;margin:8px 0 4px;">Accesos Web</div>`;
+    html += webTokens.map((uuid, i) => {
+      const url  = PORRA_BASE_URL + '?access=web&token=' + uuid;
+      const short = uuid.substring(0, 8) + '…';
+      const encodedUrl = encodeURIComponent(url);
+      return `<div class="token-entry">
+        <span class="t-num">${idx++}</span>
+        <span class="t-uuid" title="${escHtml(uuid)}">${escHtml(short)}</span>
+        <span class="t-url" title="${escHtml(url)}">${escHtml(url)}</span>
+        <button class="t-copy" onclick="copiarUrl(decodeURIComponent('${encodedUrl}'), this)">Copiar</button>
+        <button class="t-qr" onclick="mostrarQR(decodeURIComponent('${encodedUrl}'))">QR</button>
+      </div>`;
+    }).join('');
+  }
+  list.innerHTML = html;
+}
+
+// ── COPY / SHARE ──────────────────────────────────────────────────────
+function copiarSiteCode() {
+  navigator.clipboard.writeText(currentSiteCode).then(() => toast('Código copiado ✓'));
+}
+
+function copiarUrl(url, btn) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    setTimeout(() => { btn.textContent = orig; }, 1200);
+  });
+}
+
+function copiarTodas() {
+  if (!generatedTokens.length) return;
+  const lines = generatedTokens.map((uuid, i) => {
+    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    return (i+1) + '\t' + uuid + '\t' + url;
+  });
+  navigator.clipboard.writeText(lines.join('\n'))
+    .then(() => toast('¡' + lines.length + ' URLs copiadas al portapapeles ✓'));
+}
+
+// ── WHATSAPP SHARE ────────────────────────────────────────────────────
+function compartirWhatsApp() {
+  const tokens   = currentOrder ? currentOrder.tokens : generatedTokens;
+  const name     = currentOrder ? currentOrder.communityName : (document.getElementById('community-name').value||'').trim();
+  const siteCode = currentOrder ? currentOrder.siteCode : currentSiteCode;
+  const groupId  = currentOrder ? currentOrder.groupId : (document.getElementById('community-id').value||'').trim();
+  if (!tokens.length) { toast('Genera los llaveros primero'); return; }
+
+  let msg = '\uD83C\uDFC6 *PORRA MUNDIAL 2026*\n';
+  msg += '*' + name + '* \u00b7 ' + groupId + '\n';
+  msg += 'C\u00f3digo de acceso: `' + siteCode + '`\n\n';
+  msg += '\uD83D\uDCF1 URLs para grabar en chips NFC\n';
+  msg += '(usa la app *NFC Tools* en tu m\u00f3vil):\n\n';
+  tokens.forEach((uuid, i) => {
+    msg += (i+1) + '. ' + PORRA_BASE_URL + '?access=nfc&token=' + uuid + '\n';
+  });
+  msg += '\n_to-k-games.web.app_';
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+// ── QR MODAL ──────────────────────────────────────────────────────────
+function mostrarQR(url) {
+  const wrap = document.getElementById('qr-modal-canvas');
+  wrap.innerHTML = '';
+  new QRCode(wrap, { text: url, width: 180, height: 180, colorDark: '#0d3d5c', colorLight: '#ffffff' });
+  document.getElementById('qr-modal-url').textContent = url;
+  document.getElementById('qr-modal').classList.add('show');
+}
+function closeQrModal() {
+  document.getElementById('qr-modal').classList.remove('show');
+}
+document.getElementById('qr-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeQrModal();
+});
+
+// ── PRINT ─────────────────────────────────────────────────────────────
+function imprimirFicha() {
+  if (!generatedTokens.length) { toast('Genera los llaveros primero'); return; }
+  const name     = (document.getElementById('community-name').value || '').trim();
+  const groupId  = (document.getElementById('community-id').value  || '').trim().toUpperCase();
+  const siteCode = (document.getElementById('site-code').value     || '').trim();
+  const fecha    = new Date().toLocaleDateString('es-ES', {day:'2-digit',month:'2-digit',year:'numeric'});
+
+  document.getElementById('print-titulo').textContent       = name + ' · ' + groupId;
+  document.getElementById('print-meta').textContent         = 'Porra Mundial 2026 · ' + generatedTokens.length + ' llaveros NFC';
+  document.getElementById('print-fecha').textContent        = fecha;
+  document.getElementById('print-sitecode').textContent     = siteCode;
+  document.getElementById('print-sitecode-inst').textContent = siteCode;
+
+  // Build chips table
+  const printChips = document.getElementById('print-chips');
+  printChips.innerHTML = generatedTokens.map((uuid, i) => {
+    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;${i%2===0?'background:rgba(29,111,164,0.04);':'background:transparent;'}border-radius:8px;margin-bottom:2px;">
+      <span style="font-family:var(--mono);font-size:0.7rem;color:var(--muted);width:22px;text-align:right;flex-shrink:0;">${i+1}</span>
+      <span style="font-family:var(--mono);font-size:0.58rem;color:var(--muted);width:80px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escHtml(uuid)}">${uuid.substring(0,8)}…</span>
+      <span style="font-family:var(--mono);font-size:0.62rem;color:var(--porra);font-weight:600;flex:1;word-break:break-all;">${escHtml(url)}</span>
+    </div>`;
+  }).join('');
+
+  // QR for app URL
+  document.getElementById('print-qr-wrap').innerHTML = '';
+  new QRCode(document.getElementById('print-qr-wrap'), {
+    text: 'https://to-k-games.web.app/porra-mundial-2026.html',
+    width: 72, height: 72,
+    colorDark: '#0d3d5c', colorLight: '#ffffff'
+  });
+
+  document.getElementById('print-card').classList.add('show');
+  setTimeout(() => window.print(), 400);
+}
+
+// ── EXPORT CSV ────────────────────────────────────────────────────────
+function exportarCSV() {
+  if (!generatedTokens.length) { toast('Genera los llaveros primero'); return; }
+  const name    = (document.getElementById('community-name').value || '').trim().replace(/"/g,'');
+  const groupId = (document.getElementById('community-id').value  || '').trim().toUpperCase();
+  const sc      = (document.getElementById('site-code').value     || '').trim();
+  const rows    = [['#','UUID','URL_NFC','Grupo','Comunidad','SiteCode','Estado']];
+  generatedTokens.forEach((uuid, i) => {
+    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    rows.push([i+1, uuid, url, groupId, name, sc, 'LIBRE']);
+  });
+  const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'tok-game-' + groupId + '-' + new Date().toISOString().slice(0,10) + '.csv';
+  link.click();
+  toast('CSV descargado ✓');
+}
+
+// ── RESET ─────────────────────────────────────────────────────────────
+function resetForm() {
+  document.getElementById('community-name').value = '';
+  document.getElementById('community-id').value   = '';
+  document.getElementById('site-code').value      = '';
+  document.getElementById('buyer-email').value    = '';
+  document.getElementById('nfc-count').value      = 10;
+  document.getElementById('web-count').value      = 0;
+  updatePresetHighlight(10, 0);
+  generatedTokens = [];
+  document.getElementById('access-mode').value = 'nfc';
+  document.getElementById('max-participants').value = '';
+  document.getElementById('max-groups').value = '3';
+  onMaxGroupsChange();
+  onAccessModeChange();
+  document.getElementById('resultado').classList.remove('show');
+  document.getElementById('print-card').classList.remove('show');
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────
+function toast(msg, dur=2400) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// ── UTILS ─────────────────────────────────────────────────────────────
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── RANDOM CODE GENERATOR ───────────────────────────────────────────
+const PALABRAS_CODIGO = ['GOLES','CAMPO','PORRA','MUNDIAL','LIGA','COPA','META','JUEGO','FINAL','ARENA','GRUPO','TITULO','TORNEO','CLUBS','SCORE'];
+function generarCodigoAleatorio() {
+  const word = PALABRAS_CODIGO[Math.floor(Math.random() * PALABRAS_CODIGO.length)];
+  const num  = String(1000 + Math.floor(Math.random() * 9000));
+  const code = 'TO-K-' + word + num;
+  document.getElementById('site-code').value = code;
+  document.getElementById('site-code').focus();
+  toast('Código generado: ' + code);
+}
+
+// ── TABS ─────────────────────────────────────────────────────────────
+function setTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('[id^="tab-btn-"]').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  const btn = document.getElementById('tab-btn-' + name);
+  if (btn) btn.classList.add('active');
+  if (name === 'historial') renderHistorial();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── HISTORIAL ─────────────────────────────────────────────────────────
+const HIST_KEY = 'tok_game_orders_hist';
+let _historial = [];
+
+function cargarHistorial() {
+  try { _historial = JSON.parse(localStorage.getItem(HIST_KEY) || '[]'); } catch(_) { _historial = []; }
+  actualizarBadge();
+}
+
+function guardarEnHistorial(order) {
+  _historial.unshift(order);
+  if (_historial.length > 200) _historial = _historial.slice(0, 200);
+  localStorage.setItem(HIST_KEY, JSON.stringify(_historial));
+  actualizarBadge();
+}
+
+function actualizarBadge() {
+  const b = document.getElementById('hist-count-badge');
+  if (!b) return;
+  if (_historial.length > 0) { b.textContent = _historial.length; b.style.display = 'inline-flex'; }
+  else { b.textContent = ''; b.style.display = 'none'; }
+}
+
+async function renderHistorial() {
+  const list  = document.getElementById('historial-list');
+  const empty = document.getElementById('historial-empty');
+  if (!list) return;
+  // Try syncing from Firebase
+  if (window.fbLoadHistory) {
+    try {
+      const fbOrders = await window.fbLoadHistory();
+      if (fbOrders.length > 0) {
+        const localIds = new Set(_historial.map(o => o.id));
+        fbOrders.forEach(o => { if (!localIds.has(o.id)) _historial.push(o); });
+        _historial.sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+        localStorage.setItem(HIST_KEY, JSON.stringify(_historial.slice(0, 200)));
+        actualizarBadge();
+      }
+    } catch(e) {
+      console.warn('[renderHistorial] Firebase sync failed, using localStorage:', e);
+    }
+  }
+  if (_historial.length === 0) {
+    list.innerHTML = '';
+    if (empty) empty.style.display = 'flex';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  list.innerHTML = _historial.map(renderHistItem).join('');
+}
+
+function renderHistItem(order) {
+  const d = new Date(order.fecha);
+  const fecha = d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}) +
+    ' ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const safeId = escHtml(order.id);
+  const modeLabel = { nfc: '🔑 NFC', code: '🔓 Código', mixed: '🔀 Mixto' }[order.accessMode] || '🔑 NFC';
+  const modeColor = order.accessMode === 'code' ? '#34d399' : order.accessMode === 'mixed' ? '#f59e0b' : '#93c5fd';
+  const upgradeBtn = (!order.accessMode || order.accessMode === 'nfc')
+    ? `<button class="hi-btn" onclick="upgradeToOpen('${safeId}')" title="Activar juego abierto" style="color:#f59e0b;">🔓</button>`
+    : '';
+  const tokenRows = order.tokens.map((uuid, i) => {
+    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    return `<div class="hi-token-row">
+      <span class="hi-t-num">${i+1}</span>
+      <span class="hi-t-uuid" title="${escHtml(uuid)}">${uuid.substring(0,8)}…</span>
+      <span class="hi-t-url" title="${escHtml(url)}">${escHtml(url)}</span>
+      <button class="hi-t-copy" onclick="copiarUrl('${escHtml(url)}',this)">Copiar</button>
+    </div>`;
+  }).join('');
+  return `<div class="hist-item" id="hi-${safeId}">
+    <div class="hist-item-header" onclick="toggleDetalle('${safeId}')">
+      <div class="hist-item-main">
+        <div class="hist-item-name">${escHtml(order.communityName)}</div>
+        <div class="hist-item-meta">
+          <span class="hi-group">${escHtml(order.groupId)}</span>
+          <span style="font-family:var(--mono);font-size:0.65rem;padding:1px 7px;border-radius:5px;background:rgba(255,255,255,0.08);color:${modeColor};">${modeLabel}</span>
+          <span class="hi-code" style="background:rgba(255,255,255,0.08);padding:2px 8px;border-radius:6px;cursor:pointer;" onclick="copiarUrl('${escHtml(order.siteCode)}',this)" title="Clic para copiar">🔑 <strong>${escHtml(order.siteCode)}</strong> 📋</span>
+          <span class="hi-chips">⚽ ${order.tokens.length} llaveros</span>
+          <span class="hi-fecha">${fecha}</span>
+        </div>
+      </div>
+      <div class="hist-item-actions" onclick="event.stopPropagation()">
+        ${upgradeBtn}
+        ${order.setupToken ? `<button class="hi-btn" onclick="copiarUrl('https://to-k-games.web.app/setup.html?order=${escHtml(order.setupToken)}',this)" title="Copiar enlace cliente" style="color:#86efac;">🔗</button>` : ''}
+        <button class="hi-btn" onclick="compartirWhatsAppOrden('${safeId}')" title="Enviar por WhatsApp" style="color:#25d366;">📲</button>
+        <button class="hi-btn" onclick="reimprimirOrden('${safeId}')" title="Reimprimir">🖨️</button>
+        <button class="hi-btn" onclick="exportarCSVOrden('${safeId}')" title="Exportar CSV">📥</button>
+        <button class="hi-btn hi-del" onclick="eliminarOrden('${safeId}')" title="Eliminar">🗑️</button>
+        <button class="hi-chevron" id="chev-${safeId}">▾</button>
+      </div>
+    </div>
+    <div class="hist-tokens-list" id="det-${safeId}" style="display:none;">
+      <div style="padding:10px 0 8px;font-family:var(--mono);font-size:0.6rem;letter-spacing:0.15em;color:var(--muted);">URLS NFC GENERADAS · ${order.tokens.length} LLAVEROS</div>
+      ${tokenRows}
+    </div>
+  </div>`;
+}
+
+function toggleDetalle(id) {
+  const det  = document.getElementById('det-' + id);
+  const chev = document.getElementById('chev-' + id);
+  if (!det) return;
+  const open = det.style.display !== 'none';
+  det.style.display = open ? 'none' : 'block';
+  if (chev) chev.textContent = open ? '▾' : '▴';
+}
+
+function eliminarOrden(id) {
+  if (!confirm('¿Eliminar este pedido del historial? Esta acción no se puede deshacer.')) return;
+  _historial = _historial.filter(o => o.id !== id);
+  localStorage.setItem(HIST_KEY, JSON.stringify(_historial));
+  actualizarBadge();
+  renderHistorial();
+  toast('Pedido eliminado');
+}
+
+function reimprimirOrden(id) {
+  const order = _historial.find(o => o.id === id);
+  if (!order) return;
+  document.getElementById('community-name').value   = order.communityName;
+  document.getElementById('community-id').value     = order.groupId;
+  document.getElementById('site-code').value        = order.siteCode;
+  document.getElementById('buyer-email').value      = order.buyerEmail || '';
+  document.getElementById('access-mode').value      = order.accessMode || 'nfc';
+  document.getElementById('max-participants').value = order.maxParticipants || '';
+  document.getElementById('max-groups').value        = order.maxGroups || '0';
+  onMaxGroupsChange();
+  if (order.groupNames) {
+    order.groupNames.forEach(function(n, i) {
+      const el = document.getElementById('group-name-' + (i + 1));
+      if (el) el.value = n;
+    });
+  }
+  onAccessModeChange();
+  memberCount      = order.tokens.length;
+  generatedTokens  = [...order.tokens];
+  currentSiteCode  = order.siteCode;
+  currentCommunityName = order.communityName;
+  setTab('nuevo');
+  setTimeout(() => {
+    renderResultado(order.communityName, order.groupId, order.siteCode, order.tokens);
+    document.getElementById('resultado').classList.add('show');
+    imprimirFicha();
+  }, 200);
+}
+
+function onMaxGroupsChange() {
+  const n         = parseInt(document.getElementById('max-groups').value) || 0;
+  const section   = document.getElementById('group-names-section');
+  const container = document.getElementById('group-names-inputs');
+  if (n >= 2) {
+    section.style.display = '';
+    const prev = container ? Array.from(container.querySelectorAll('input')).map(el => el.value) : [];
+    container.innerHTML = Array.from({ length: n }, (_, i) =>
+      `<input class="inp" id="group-name-${i+1}" type="text" maxlength="32" placeholder="Grupo ${i+1}" style="margin-bottom:8px;" autocomplete="off"/>`
+    ).join('');
+    prev.forEach(function(v, i) {
+      const el = document.getElementById('group-name-' + (i + 1));
+      if (el && v) el.value = v;
+    });
+  } else {
+    if (section)    section.style.display = 'none';
+    if (container)  container.innerHTML = '';
+  }
+}
+
+function onAccessModeChange() {
+  const mode        = document.getElementById('access-mode').value;
+  const maxGrp      = document.getElementById('max-participants-group');
+  const hint        = document.getElementById('access-mode-hint');
+  const nfcSection  = document.getElementById('nfc-count-section');
+  const btnGenerar  = document.getElementById('btn-generar');
+  const webGroup    = document.getElementById('web-count-group');
+  const nfcPresets  = document.getElementById('nfc-presets');
+  const mixedPresets= document.getElementById('mixed-presets');
+  if (maxGrp)     maxGrp.style.display    = (mode === 'code' || mode === 'mixed') ? 'block' : 'none';
+  if (nfcSection) nfcSection.style.display = (mode === 'code') ? 'none' : '';
+  if (btnGenerar) btnGenerar.textContent   = (mode === 'code') ? '🌐 Crear comunidad web' : '⚡ Generar llaveros / participantes';
+  if (webGroup)   webGroup.style.display   = (mode === 'mixed') ? 'block' : 'none';
+  if (nfcPresets) nfcPresets.style.display = (mode === 'nfc') ? 'flex' : 'none';
+  if (mixedPresets) mixedPresets.style.display = (mode === 'mixed') ? 'flex' : 'none';
+  const hints = {
+    nfc:   'Solo los participantes con llavero NFC pueden registrarse.',
+    code:  'Cualquiera con el código de acceso puede registrarse (con límite opcional).',
+    mixed: 'Puedes asignar cuántos participantes tendrán llavero NFC y cuántos solo acceso web.'
+  };
+  if (hint) hint.textContent = hints[mode] || hints.nfc;
+}
+
+function upgradeToOpen(id) {
+  const order = _historial.find(o => o.id === id);
+  if (!order) return;
+  const maxStr = prompt('🔓 Activar Juego Abierto para "' + order.communityName + '"\n\n¿Límite de jugadores máximo?\n(deja vacío o 0 para sin límite)');
+  if (maxStr === null) return;
+  const maxP = parseInt(maxStr) || 0;
+  const comunidadId = order.groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+  if (!window.fbUpgradeOrder) { toast('Firebase no disponible'); return; }
+  window.fbUpgradeOrder(comunidadId, 'code', maxP)
+    .then(() => {
+      const idx = _historial.findIndex(o => o.id === id);
+      if (idx !== -1) {
+        _historial[idx].accessMode = 'code';
+        _historial[idx].maxParticipants = maxP;
+        localStorage.setItem(HIST_KEY, JSON.stringify(_historial));
+      }
+      toast('✅ Juego abierto activado' + (maxP ? ' · máx ' + maxP + ' jugadores' : ''));
+      renderHistorial();
+    })
+    .catch(err => toast('Error: ' + ((err && err.message) || err)));
+}
+
+function compartirWhatsAppOrden(id) {
+  const order = _historial.find(o => o.id === id);
+  if (!order) return;
+  let msg = '\uD83C\uDFC6 *PORRA MUNDIAL 2026*\n';
+  msg += '*' + order.communityName + '* \u00b7 ' + order.groupId + '\n';
+  msg += 'C\u00f3digo de acceso: `' + order.siteCode + '`\n\n';
+  msg += '\uD83D\uDCF1 URLs para grabar en chips NFC\n';
+  msg += '(usa la app *NFC Tools* en tu m\u00f3vil):\n\n';
+  order.tokens.forEach((uuid, i) => {
+    msg += (i+1) + '. ' + PORRA_BASE_URL + '?access=nfc&token=' + uuid + '\n';
+  });
+  msg += '\n_to-k-games.web.app_';
+  window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
+}
+
+function exportarCSVOrden(id) {
+  const order = _historial.find(o => o.id === id);
+  if (!order) return;
+  const rows = [['#','UUID','URL_NFC','Grupo','Comunidad','SiteCode','Estado']];
+  order.tokens.forEach((uuid, i) => {
+    const url = PORRA_BASE_URL + '?access=nfc&token=' + uuid;
+    rows.push([i+1, uuid, url, order.groupId, order.communityName, order.siteCode, 'LIBRE']);
+  });
+  const csv  = rows.map(r => r.map(v => '"' + String(v).replace(/"/g,'""') + '"').join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = 'tok-game-' + order.groupId + '-' + new Date(order.fecha).toISOString().slice(0,10) + '.csv';
+  link.click();
+  toast('CSV descargado ✓');
+}
+
+// ── SAVE STATUS & FIREBASE SAVE ─────────────────────────────────────
+function setSaveStatus(state) {
+  const icon = document.getElementById('save-icon');
+  const text = document.getElementById('save-text');
+  const btn  = document.getElementById('btn-guardar-fb');
+  if (!icon || !text || !btn) return;
+  if (state === 'pending') {
+    icon.textContent = '💾';
+    text.innerHTML = 'Pedido generado · Revísalo y pulsa <strong style="color:#fff;">Guardar</strong> para registrarlo en Firebase';
+    text.style.color = 'rgba(255,255,255,0.75)';
+    btn.disabled = false; btn.style.opacity = '1';
+    btn.textContent = '☁️ Guardar pedido';
+  } else if (state === 'saving') {
+    icon.textContent = '⏳';
+    text.innerHTML = 'Guardando en Firebase…';
+    text.style.color = 'rgba(255,255,255,0.75)';
+    btn.disabled = true; btn.style.opacity = '0.5';
+    btn.textContent = '⏳ Guardando…';
+  } else if (state === 'saved') {
+    icon.textContent = '✅';
+    const _setupUrl = currentOrder && currentOrder.setupToken
+      ? 'https://to-k-games.web.app/setup.html?order=' + currentOrder.setupToken
+      : '';
+    text.innerHTML = 'Pedido guardado ✓' + (_setupUrl
+      ? ' &nbsp;·&nbsp; <a href="' + escHtml(_setupUrl) + '" target="_blank" style="color:#86efac;text-decoration:underline;">Enlace cliente →</a> <button onclick="copiarUrl(\'' + escHtml(_setupUrl) + '\',this)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:2px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">Copiar</button>'
+      : ' &nbsp;Tokens pre-registrados en Porra');
+    text.style.color = 'rgba(120,255,150,0.9)';
+    btn.disabled = true; btn.style.opacity = '0.5';
+    btn.textContent = '✓ Guardado';
+  } else if (state === 'error') {
+    icon.textContent = '⚠️';
+    text.innerHTML = 'Error al guardar · Puedes usar Imprimir / CSV como respaldo';
+    text.style.color = 'rgba(255,200,100,0.9)';
+    btn.disabled = false; btn.style.opacity = '1';
+    btn.textContent = '↺ Reintentar';
+  }
+}
+
+async function guardarPedido() {
+  if (!currentOrder || _pedidoGuardado) return;
+  if (!window.fbSaveOrder) { toast('Firebase aún no disponible, espera un momento'); return; }
+  setSaveStatus('saving');
+  try {
+    const savedToken = await window.fbSaveOrder(currentOrder);
+    if (savedToken && !currentOrder.setupToken) currentOrder.setupToken = savedToken;
+    _pedidoGuardado = true;
+    guardarEnHistorial(currentOrder); // cache local
+    setSaveStatus('saved');
+    toast('¡Pedido guardado en Firebase ✓');
+  } catch(err) {
+    console.error('[guardarPedido]', err);
+    setSaveStatus('error');
+    toast('Error al guardar: ' + (err.message || err), 3500);
+  }
+}
+
+// Init
+updatePresetHighlight();
+onMaxGroupsChange();
+cargarHistorial();
+</script>
+<!-- FIREBASE MODULE: tok-admin orders + porra token pre-registration -->
+<script type="module">
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+// tok-familiar Firebase — stores order records for tok-admin
+const FB_ADMIN = {
+  apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
+  authDomain: "tok-familiar.firebaseapp.com",
+  databaseURL: "https://tok-familiar-default-rtdb.firebaseio.com",
+  projectId: "tok-familiar",
+  storageBucket: "tok-familiar.firebasestorage.app",
+  messagingSenderId: "530434764197",
+  appId: "1:530434764197:web:32a8ca1b42e09131dacc4c"
+};
+// to-k-games Firebase — pre-registers NFC tokens so the porra app can validate them
+const FB_PORRA = {
+  apiKey: "AIzaSyB85B57xRxsSHO45rNLwfxa2_qKaNBmBuY",
+  authDomain: "to-k-games.firebaseapp.com",
+  databaseURL: "https://to-k-games-default-rtdb.firebaseio.com",
+  projectId: "to-k-games",
+  storageBucket: "to-k-games.firebasestorage.app",
+  messagingSenderId: "459297538388",
+  appId: "1:459297538388:web:c2ed8642c97eceb8a408c1"
+};
+
+const appAdmin = getApps().find(a => a.name === 'tok-admin') || initializeApp(FB_ADMIN, 'tok-admin');
+const appPorra = getApps().find(a => a.name === 'tok-porra') || initializeApp(FB_PORRA, 'tok-porra');
+const dbAdmin  = getDatabase(appAdmin);
+const dbPorra  = getDatabase(appPorra);
+
+// Save order record + pre-register each token + register the pase de juego
+window.fbSaveOrder = async function(order) {
+  const now          = Date.now();
+  const siteCodeKey  = order.siteCode.trim().toUpperCase();
+  const comunidadId  = order.groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+  // 1. Pre-register each NFC token — comunidadId enables isolated community lookup in porra app
+  const maxGrps        = order.maxGroups || 0;
+  const defaultGrupoId = maxGrps >= 2 ? (comunidadId + '_g1') : order.groupId;
+  if (order.tokens && order.tokens.length > 0) {
+    await Promise.all(order.tokens.map(uuid =>
+      set(ref(dbPorra, 'porra_mundial_2026/nfc_tokens/' + uuid), {
+        comunidadId:   comunidadId,
+        grupoId:       defaultGrupoId,
+        siteCode:      order.siteCode,
+        communityName: order.communityName,
+        status:        'pending',
+        createdAt:     now
+      })
+    ));
+  }
+
+  // 2. Register the pase de juego — includes comunidadId for community-scoped access
+  await set(ref(dbPorra, 'porra_mundial_2026/pases_juego/' + siteCodeKey), {
+    activo:      true,
+    comunidadId: comunidadId,
+    grupoId:     order.groupId,
+    siteId:      order.groupId,
+    label:       order.communityName,
+    createdAt:   now
+  });
+
+  // 3. Create community meta (admin email) + root site within the community
+  // Non-critical: skip if already exists
+  try {
+    // Community meta — stores the Admin General email (set once, immutable)
+    await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/meta'), {
+      generalAdminEmail: order.buyerEmail || '',
+      label:             order.communityName,
+      createdAt:         now,
+      updatedAt:         now
+    });
+    // Create site(s) within the community
+    const maxGrpsC  = order.maxGroups || 0;
+    const grpNames  = order.groupNames || [];
+    if (maxGrpsC >= 2) {
+      // Multi-group: one site per group, flagged setupPending so buyer can rename
+      for (let i = 0; i < maxGrpsC; i++) {
+        const siteKey    = comunidadId + '_g' + (i + 1);
+        const groupLabel = (grpNames[i] || '').trim() || ('Grupo ' + (i + 1));
+        await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + siteKey + '/settings'), {
+          id:              siteKey,
+          label:           groupLabel,
+          siteCode:        order.siteCode,
+          accessMode:      order.accessMode || 'nfc',
+          maxParticipants: Math.floor((order.maxParticipants || 0) / maxGrpsC),
+          active:          true,
+          setupPending:    true,
+          createdAt:       now,
+          updatedAt:       now
+        });
+      }
+    } else {
+      // Single site — same ID as community
+      await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + comunidadId + '/settings'), {
+        id:              comunidadId,
+        label:           order.communityName,
+        siteCode:        order.siteCode,
+        accessMode:      order.accessMode || 'nfc',
+        maxParticipants: order.maxParticipants || 0,
+        active:          true,
+        createdAt:       now,
+        updatedAt:       now
+      });
+    }
+  } catch(e) {
+    console.info('[fbSaveOrder] Community setup skipped (may already exist):', e.message);
+  }
+
+  // 4. Save order record to tok-familiar (optional — may fail if auth required)
+  try {
+    await set(ref(dbAdmin, 'admin/tok-game-orders/' + order.id), {
+      communityName: order.communityName,
+      groupId:       order.groupId,
+      siteCode:      order.siteCode,
+      buyerEmail:    order.buyerEmail || '',
+      tokenCount:    order.tokens.length,
+      tokens:        order.tokens,
+      fecha:         order.fecha,
+      savedAt:       now
+    });
+  } catch(e) {
+    console.warn('[fbSaveOrder] tok-familiar write skipped (non-critical):', e.message);
+  }
+
+  // 5. Write order to to-k-games/orders/ so setup.html can link to it
+  const planTypeMap = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace' };
+  const planType = planTypeMap[order.accessMode] || 'nfc';
+  const setupToken = order.setupToken || crypto.randomUUID();
+  try {
+    await set(ref(dbPorra, 'porra_mundial_2026/orders/' + setupToken), {
+      id:            order.id,
+      setupToken:    setupToken,
+      status:        'completed',
+      planType:      planType,
+      nfcCount:      planType === 'enlace' ? 0 : order.tokens.length,
+      linksCount:    planType === 'nfc'    ? 0 : (order.maxParticipants || 0),
+      maxMiembros:   order.maxParticipants || order.tokens.length,
+      maxGroups:     order.maxGroups || 0,
+      groupNames:    order.groupNames || [],
+      adminEmail:    order.buyerEmail || '',
+      communityId:   comunidadId,
+      communityName: order.communityName,
+      linkCode:      planType !== 'nfc' ? siteCodeKey : '',
+      nfcTokens:     order.tokens,
+      createdAt:     order.fecha || now,
+      completedAt:   now
+    });
+  } catch(e) {
+    console.warn('[fbSaveOrder] orders write skipped (non-critical):', e.message);
+  }
+  return setupToken;
+};
+
+// Upgrade a community's access mode from the historial
+window.fbUpgradeOrder = async function(comunidadId, newAccessMode, maxParticipants) {
+  await update(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + comunidadId + '/settings'), {
+    accessMode:      newAccessMode,
+    maxParticipants: maxParticipants || 0,
+    updatedAt:       Date.now()
+  });
+};
+
+// Load order history from tok-familiar Firebase
+window.fbLoadHistory = async function() {
+  const snap = await get(ref(dbAdmin, 'admin/tok-game-orders'));
+  if (!snap.exists()) return [];
+  return Object.entries(snap.val())
+    .map(([id, v]) => ({ id, ...v }))
+    .sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+};
+</script>
+</body>
+</html>

@@ -49,7 +49,11 @@ export async function guardPage(redirectTo = "login.html") {
   return new Promise((resolve) => {
     const unsub = onAuthStateChanged(auth, async (user) => {
       unsub();
-      if (!user) { window.location.replace(redirectTo); return; }
+      if (!user) {
+        const origin = encodeURIComponent(window.location.pathname + window.location.search);
+        window.location.replace(`${redirectTo}?redirect=${origin}`);
+        return;
+      }
       try {
         const snap = await getDoc(_accessRef);
         if (snap.exists()) {
