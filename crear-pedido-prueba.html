@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Crear Pedido de Prueba</title>
+  <style>
+    body { font-family: monospace; background: #0f172a; color: #e2e8f0; padding: 2rem; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 1rem; padding: 1.5rem; max-width: 600px; margin: auto; }
+    h2 { color: #34d399; margin: 0 0 1rem; }
+    .url { background: #020617; border: 1px solid #334155; border-radius: .5rem; padding: .75rem 1rem; font-size: .85rem; color: #34d399; word-break: break-all; margin: .5rem 0; }
+    button { background: #34d399; color: #0f172a; font-weight: bold; border: none; border-radius: .5rem; padding: .75rem 1.5rem; cursor: pointer; font-size: 1rem; margin-top: 1rem; }
+    button:disabled { opacity: .5; cursor: default; }
+    .log { margin-top: 1rem; font-size: .8rem; color: #94a3b8; }
+    .ok  { color: #34d399; }
+    .err { color: #f87171; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <h2>⚽ Pedido de Prueba — Porra Mundial 2026</h2>
+  <p style="color:#94a3b8;font-size:.85rem;margin:0 0 1rem">Plan: NFC+Web · 2 NFC · 3 Web · Límite 5 · Grupos: Madrid / Sevilla</p>
+  <button id="btn" onclick="crearPedido()">🚀 Crear pedido en Firebase</button>
+  <div class="log" id="log"></div>
+  <div id="result" style="display:none;margin-top:1.5rem">
+    <div style="color:#fbbf24;font-weight:bold;margin-bottom:.5rem">✅ Pedido creado. Enlace de setup:</div>
+    <div class="url" id="setup-url"></div>
+    <button onclick="navigator.clipboard.writeText(document.getElementById('setup-url').textContent).then(()=>this.textContent='¡Copiado!')" style="background:#3b82f6">📋 Copiar enlace</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey:            "AIzaSyBnhxHkfFRGgalOqBk1OW6vUAtAbW5Ikhs",
+    authDomain:        "to-k-games.firebaseapp.com",
+    databaseURL:       "https://to-k-games-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId:         "to-k-games",
+    storageBucket:     "to-k-games.appspot.com",
+    messagingSenderId: "957152494533",
+    appId:             "1:957152494533:web:a78d75b13f8b21ab4ad4b8"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const DB_ROOT = "porra_mundial_2026";
+
+  function uuid() {
+    return ([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, c =>
+      (c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+    );
+  }
+
+  function log(msg, cls) {
+    var el = document.getElementById("log");
+    el.innerHTML += '<div class="'+(cls||"")+'">' + msg + '</div>';
+  }
+
+  async function crearPedido() {
+    var btn = document.getElementById("btn");
+    btn.disabled = true;
+    btn.textContent = "⏳ Creando…";
+    document.getElementById("log").innerHTML = "";
+
+    try {
+      var setupToken = uuid();
+      var nfc1 = uuid(), nfc2 = uuid();
+      var now = Date.now();
+
+      // ── Order ──────────────────────────────────────────────────────────────────
+      var order = {
+        setupToken:    setupToken,
+        status:        "pending",
+        planType:      "nfc-enlace",
+        nfcCount:      2,
+        linksCount:    3,
+        maxMiembros:   5,
+        maxGroups:     2,
+        groupNames:    ["Madrid", "Sevilla"],
+        adminEmail:    "mcksaez510@gmail.com",
+        nfcTokens:     [nfc1, nfc2],
+        communityName: "FamiliaFinal",
+        createdAt:     now
+      };
+
+      log("📝 Escribiendo order en Firebase…");
+      await db.ref(DB_ROOT + "/orders/" + setupToken).set(order);
+      log("✅ Order guardada", "ok");
+
+      // ── NFC tokens (reservedFor pre-asignado) ──────────────────────────────────
+      var nfcWrites = {};
+      nfcWrites[DB_ROOT + "/nfc_tokens/" + nfc1] = {
+        activo: true, communityName: "FamiliaFinal",
+        comunidadId: "", grupoId: "MADRID",
+        reservedFor: "Maria", status: "pending",
+        maxUses: 1, usedCount: 0, createdAt: now
+      };
+      nfcWrites[DB_ROOT + "/nfc_tokens/" + nfc2] = {
+        activo: true, communityName: "FamiliaFinal",
+        comunidadId: "", grupoId: "SEVILLA",
+        reservedFor: "Sebas", status: "pending",
+        maxUses: 1, usedCount: 0, createdAt: now
+      };
+      log("🔑 Escribiendo tokens NFC (Maria → Madrid, Sebas → Sevilla)…");
+      await db.ref().update(nfcWrites);
+      log("✅ Tokens NFC guardados", "ok");
+
+      // ── Mostrar resultado ──────────────────────────────────────────────────────
+      var setupUrl = "https://to-k-games.web.app/setup.html?token=" + setupToken;
+      document.getElementById("setup-url").textContent = setupUrl;
+      document.getElementById("result").style.display = "block";
+      log("🎉 Todo listo. Copia el enlace y pásaselo a 'Juan' para completar el setup.", "ok");
+
+      log("<br>📋 Datos del pedido:", "");
+      log("• Plan: NFC+Web", "");
+      log("• NFC token 1 (Maria/Madrid): " + nfc1, "");
+      log("• NFC token 2 (Sebas/Sevilla): " + nfc2, "");
+      log("• 3 accesos web libres", "");
+      log("• Límite total: 5 personas", "");
+
+    } catch(e) {
+      log("❌ Error: " + e.message, "err");
+      btn.disabled = false;
+      btn.textContent = "🚀 Crear pedido en Firebase";
+    }
+  }
+</script>
+</body>
+</html>

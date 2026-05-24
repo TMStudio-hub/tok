@@ -1019,12 +1019,30 @@ function setSaveStatus(state) {
     btn.textContent = '⏳ Guardando…';
   } else if (state === 'saved') {
     icon.textContent = '✅';
-    const _setupUrl = currentOrder && currentOrder.setupToken
-      ? 'https://to-k-games.web.app/setup.html?order=' + currentOrder.setupToken
+    // Enlace admin para Juan (usa adminCode privado)
+    const _adminCode = currentOrder && currentOrder.adminCode ? currentOrder.adminCode : '';
+    const _adminUrl  = _adminCode
+      ? 'https://to-k-games.web.app/porra-mundial-2026.html?code=' + encodeURIComponent(_adminCode)
       : '';
-    text.innerHTML = 'Pedido guardado ✓' + (_setupUrl
-      ? ' &nbsp;·&nbsp; <a href="' + escHtml(_setupUrl) + '" target="_blank" style="color:#86efac;text-decoration:underline;">Enlace cliente →</a> <button onclick="copiarUrl(\'' + escHtml(_setupUrl) + '\',this)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:2px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">Copiar</button>'
-      : ' &nbsp;Tokens pre-registrados en Porra');
+    // Código de acceso web para participantes (solo en modo enlace / mixto)
+    const _accessMode = currentOrder && currentOrder.accessMode ? currentOrder.accessMode : '';
+    const _siteCode   = currentOrder && currentOrder.siteCode ? currentOrder.siteCode.trim().toUpperCase() : '';
+    const _webUrl     = (_accessMode === 'code' || _accessMode === 'mixed') && _siteCode
+      ? 'https://to-k-games.web.app/porra-mundial-2026.html?code=' + encodeURIComponent(_siteCode)
+      : '';
+    let savedHtml = 'Comunidad creada ✓';
+    if (_adminUrl) {
+      savedHtml += ' &nbsp;·&nbsp; <strong style="color:#fbbf24;">Enlace admin (Juan):</strong> '
+        + '<a href="' + escHtml(_adminUrl) + '" target="_blank" style="color:#86efac;text-decoration:underline;font-family:var(--mono);font-size:0.75rem;">' + escHtml(_adminUrl) + '</a>'
+        + ' <button onclick="copiarUrl(\'' + escHtml(_adminUrl) + '\',this)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:2px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">Copiar</button>';
+    }
+    if (_webUrl) {
+      savedHtml += '<br>🌐 <strong style="color:#93c5fd;">Código acceso web:</strong> '
+        + '<span style="font-family:var(--mono);color:#fff;">' + escHtml(_siteCode) + '</span>'
+        + ' · <a href="' + escHtml(_webUrl) + '" target="_blank" style="color:#86efac;text-decoration:underline;font-size:0.75rem;">ver enlace</a>'
+        + ' <button onclick="copiarUrl(\'' + escHtml(_webUrl) + '\',this)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:2px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">Copiar</button>';
+    }
+    text.innerHTML = savedHtml;
     text.style.color = 'rgba(120,255,150,0.9)';
     btn.disabled = true; btn.style.opacity = '0.5';
     btn.textContent = '✓ Guardado';
@@ -1042,8 +1060,8 @@ async function guardarPedido() {
   if (!window.fbSaveOrder) { toast('Firebase aún no disponible, espera un momento'); return; }
   setSaveStatus('saving');
   try {
-    const savedToken = await window.fbSaveOrder(currentOrder);
-    if (savedToken && !currentOrder.setupToken) currentOrder.setupToken = savedToken;
+    const savedAdminCode = await window.fbSaveOrder(currentOrder);
+    if (savedAdminCode) currentOrder.adminCode = savedAdminCode;
     _pedidoGuardado = true;
     guardarEnHistorial(currentOrder); // cache local
     setSaveStatus('saved');
@@ -1091,93 +1109,134 @@ const appPorra = getApps().find(a => a.name === 'tok-porra') || initializeApp(FB
 const dbAdmin  = getDatabase(appAdmin);
 const dbPorra  = getDatabase(appPorra);
 
-// Save order record + pre-register each token + register the pase de juego
+// ── NUEVA ARQUITECTURA: escribe la comunidad completa en Firebase, sin setup.html ──
 window.fbSaveOrder = async function(order) {
-  const now          = Date.now();
-  const siteCodeKey  = order.siteCode.trim().toUpperCase();
-  const comunidadId  = order.groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+  const now         = Date.now();
+  const siteCodeKey = order.siteCode.trim().toUpperCase();
+  const comunidadId = order.groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 
-  // 1. Pre-register each NFC token — comunidadId enables isolated community lookup in porra app
-  const maxGrps        = order.maxGroups || 0;
-  const defaultGrupoId = maxGrps >= 2 ? (comunidadId + '_g1') : order.groupId;
-  if (order.tokens && order.tokens.length > 0) {
-    await Promise.all(order.tokens.map(uuid =>
-      set(ref(dbPorra, 'porra_mundial_2026/nfc_tokens/' + uuid), {
-        comunidadId:   comunidadId,
-        grupoId:       defaultGrupoId,
-        siteCode:      order.siteCode,
-        communityName: order.communityName,
-        status:        'pending',
-        createdAt:     now
-      })
-    ));
+  // ── Plan type ──────────────────────────────────────────────────────────
+  const planTypeMap = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace' };
+  const planType    = planTypeMap[order.accessMode] || 'nfc';
+
+  // ── Grupos ─────────────────────────────────────────────────────────────
+  const maxGroups  = order.maxGroups || 0;
+  const rawNames   = order.groupNames || [];
+  const isMulti    = maxGroups >= 2;
+
+  // Convierte nombre de grupo en siteKey normalizado (sin acentos, solo a-z0-9_)
+  function toSiteKey(groupName, idx) {
+    const slug = groupName.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    return comunidadId + '_' + (slug || 'g' + (idx + 1));
   }
 
-  // 2. Register the pase de juego — includes comunidadId for community-scoped access
-  await set(ref(dbPorra, 'porra_mundial_2026/pases_juego/' + siteCodeKey), {
-    activo:      true,
-    comunidadId: comunidadId,
-    grupoId:     order.groupId,
-    siteId:      order.groupId,
-    label:       order.communityName,
-    createdAt:   now
+  const groups = isMulti
+    ? Array.from({ length: maxGroups }, (_, i) => {
+        const name = (rawNames[i] && rawNames[i].trim()) ? rawNames[i].trim() : ('Grupo ' + (i + 1));
+        return { name, siteKey: toSiteKey(name, i) };
+      })
+    : [{ name: order.communityName, siteKey: comunidadId }];
+
+  const firstSiteKey = groups[0].siteKey;
+
+  // ── Distribuye tokens NFC entre grupos (round-robin) ───────────────────
+  const nfcTokens     = order.nfcTokens || order.tokens || [];
+  const tokensByGroup = groups.map(() => []);
+  nfcTokens.forEach((uuid, i) => tokensByGroup[i % groups.length].push(uuid));
+
+  // ── Código privado de acceso admin (Juan entra directo, sin NFC) ───────
+  // UPPERCASE porque validatePaseCode() hace .toUpperCase() antes de buscar en Firebase
+  const adminCode = (comunidadId + '_' + crypto.randomUUID().slice(0, 8)).toUpperCase();
+
+  // ── 1. Community meta — incluye tipoVenta, maxMiembros, linkCode ───────
+  await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/meta'), {
+    generalAdminEmail: order.buyerEmail || '',
+    label:             order.communityName,
+    tipoVenta:         planType,
+    maxMiembros:       order.maxParticipants || 0,
+    nfcCount:          nfcTokens.length,
+    linksCount:        order.webCount || 0,
+    linkCode:          (planType !== 'nfc') ? siteCodeKey : '',
+    adminCode:         adminCode,
+    createdAt:         now,
+    updatedAt:         now
   });
 
-  // 3. Create community meta (admin email) + root site within the community
-  // Non-critical: skip if already exists
-  try {
-    // Community meta — stores the Admin General email (set once, immutable)
-    await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/meta'), {
-      generalAdminEmail: order.buyerEmail || '',
-      label:             order.communityName,
-      createdAt:         now,
-      updatedAt:         now
+  // ── 2. Sites — uno por grupo, con nombre real y allowlist vacío ─────────
+  const maxPerGroup = isMulti
+    ? Math.ceil((order.maxParticipants || 0) / groups.length)
+    : (order.maxParticipants || 0);
+
+  for (let i = 0; i < groups.length; i++) {
+    const { name, siteKey } = groups[i];
+    await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + siteKey + '/settings'), {
+      id:              siteKey,
+      label:           name,
+      siteCode:        order.siteCode,
+      accessMode:      planType,
+      maxParticipants: maxPerGroup,
+      adminEmail:      order.buyerEmail || '',
+      allowlist:       {},
+      active:          true,
+      createdAt:       now,
+      updatedAt:       now
     });
-    // Create site(s) within the community
-    const maxGrpsC  = order.maxGroups || 0;
-    const grpNames  = order.groupNames || [];
-    if (maxGrpsC >= 2) {
-      // Multi-group: one site per group, flagged setupPending so buyer can rename
-      for (let i = 0; i < maxGrpsC; i++) {
-        const siteKey    = comunidadId + '_g' + (i + 1);
-        const groupLabel = (grpNames[i] || '').trim() || ('Grupo ' + (i + 1));
-        await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + siteKey + '/settings'), {
-          id:              siteKey,
-          label:           groupLabel,
-          siteCode:        order.siteCode,
-          accessMode:      order.accessMode || 'nfc',
-          maxParticipants: Math.floor((order.maxParticipants || 0) / maxGrpsC),
-          active:          true,
-          setupPending:    true,
-          createdAt:       now,
-          updatedAt:       now
-        });
-      }
-    } else {
-      // Single site — same ID as community
-      await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + comunidadId + '/settings'), {
-        id:              comunidadId,
-        label:           order.communityName,
-        siteCode:        order.siteCode,
-        accessMode:      order.accessMode || 'nfc',
-        maxParticipants: order.maxParticipants || 0,
-        active:          true,
-        createdAt:       now,
-        updatedAt:       now
-      });
-    }
-  } catch(e) {
-    console.info('[fbSaveOrder] Community setup skipped (may already exist):', e.message);
   }
 
-  // 4. Save order record to tok-familiar (optional — may fail if auth required)
+  // ── 3. NFC tokens — grupoId correcto por grupo ────────────────────────
+  if (nfcTokens.length > 0) {
+    const nfcWrites = {};
+    groups.forEach(({ siteKey }, gi) => {
+      tokensByGroup[gi].forEach(uuid => {
+        nfcWrites['porra_mundial_2026/nfc_tokens/' + uuid] = {
+          activo:        true,
+          comunidadId,
+          grupoId:       siteKey,
+          siteCode:      order.siteCode,
+          communityName: order.communityName,
+          status:        'pending',
+          maxUses:       1,
+          usedCount:     0,
+          createdAt:     now
+        };
+      });
+    });
+    await update(ref(dbPorra), nfcWrites);
+  }
+
+  // ── 4. pases_juego ─────────────────────────────────────────────────────
+  // Entrada privada para Juan (siempre, independientemente del modo)
+  await set(ref(dbPorra, 'porra_mundial_2026/pases_juego/' + adminCode), {
+    activo:      true,
+    comunidadId,
+    grupoId:     firstSiteKey,
+    siteId:      firstSiteKey,
+    label:       order.communityName + ' — Admin',
+    isAdminOnly: true,
+    createdAt:   now
+  });
+  // Entrada web para participantes (solo en modo enlace / mixto)
+  if (planType === 'enlace' || planType === 'nfc-enlace') {
+    await set(ref(dbPorra, 'porra_mundial_2026/pases_juego/' + siteCodeKey), {
+      activo:      true,
+      comunidadId,
+      grupoId:     firstSiteKey,
+      siteId:      firstSiteKey,
+      label:       order.communityName,
+      createdAt:   now
+    });
+  }
+
+  // ── 5. Registro en tok-familiar (historial interno, no crítico) ─────────
   try {
     await set(ref(dbAdmin, 'admin/tok-game-orders/' + order.id), {
       communityName: order.communityName,
       groupId:       order.groupId,
       siteCode:      order.siteCode,
       buyerEmail:    order.buyerEmail || '',
-      tokenCount:    order.tokens.length,
+      tokenCount:    nfcTokens.length,
       tokens:        order.tokens,
       fecha:         order.fecha,
       savedAt:       now
@@ -1186,33 +1245,8 @@ window.fbSaveOrder = async function(order) {
     console.warn('[fbSaveOrder] tok-familiar write skipped (non-critical):', e.message);
   }
 
-  // 5. Write order to to-k-games/orders/ so setup.html can link to it
-  const planTypeMap = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace' };
-  const planType = planTypeMap[order.accessMode] || 'nfc';
-  const setupToken = order.setupToken || crypto.randomUUID();
-  try {
-    await set(ref(dbPorra, 'porra_mundial_2026/orders/' + setupToken), {
-      id:            order.id,
-      setupToken:    setupToken,
-      status:        'completed',
-      planType:      planType,
-      nfcCount:      planType === 'enlace' ? 0 : order.tokens.length,
-      linksCount:    planType === 'nfc'    ? 0 : (order.maxParticipants || 0),
-      maxMiembros:   order.maxParticipants || order.tokens.length,
-      maxGroups:     order.maxGroups || 0,
-      groupNames:    order.groupNames || [],
-      adminEmail:    order.buyerEmail || '',
-      communityId:   comunidadId,
-      communityName: order.communityName,
-      linkCode:      planType !== 'nfc' ? siteCodeKey : '',
-      nfcTokens:     order.tokens,
-      createdAt:     order.fecha || now,
-      completedAt:   now
-    });
-  } catch(e) {
-    console.warn('[fbSaveOrder] orders write skipped (non-critical):', e.message);
-  }
-  return setupToken;
+  // Devuelve el adminCode para construir el enlace de Juan
+  return adminCode;
 };
 
 // Upgrade a community's access mode from the historial
