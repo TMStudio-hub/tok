@@ -260,6 +260,7 @@ body::before{
       </div>
     </div>
 
+
     <div class="form-row">
       <div class="form-group">
         <span class="lbl">Modo de acceso</span>
@@ -267,6 +268,7 @@ body::before{
           <option value="nfc">🔑 Solo NFC — solo llaveros físicos</option>
           <option value="code">🌐 Solo web — cualquiera con el código</option>
           <option value="mixed">🔀 Mixto — NFC + web</option>
+          <option value="abierto">🏫 Web Libre — registro abierto sin allowlist (colegios, grupos grandes)</option>
         </select>
         <div id="access-mode-hint" style="font-size:0.7rem;color:var(--muted);margin-top:5px;line-height:1.5;">Solo los participantes con llavero NFC pueden registrarse.</div>
       </div>
@@ -371,6 +373,7 @@ body::before{
     </div>
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn" style="background:rgba(37,211,102,0.28);color:#fff;border:1.5px solid rgba(37,211,102,0.5);" onclick="compartirWhatsApp()">💬 WhatsApp</button>
+      <button class="btn" style="background:rgba(99,179,237,0.28);color:#fff;border:1.5px solid rgba(99,179,237,0.5);" onclick="generarHojaQR()">📲 Hoja QR</button>
       <button class="btn" style="background:rgba(255,255,255,0.15);color:#fff;border:1.5px solid rgba(255,255,255,0.22);" onclick="imprimirFicha()">🖨️ Imprimir</button>
       <button class="btn" style="background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.8);" onclick="exportarCSV()">📥 CSV</button>
       <button class="btn btn-ghost" onclick="resetForm()" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">↺ Nueva</button>
@@ -449,7 +452,11 @@ function generarLlaveros() {
   const name     = (document.getElementById('community-name').value || '').trim();
   const groupId  = (document.getElementById('community-id').value  || '').trim().toUpperCase();
   const siteCode = (document.getElementById('site-code').value     || '').trim();
-  const buyerEmail = (document.getElementById('buyer-email').value || '').trim().toLowerCase();
+  const buyerEmail   = (document.getElementById('buyer-email').value || '').trim().toLowerCase();
+  const _titularEl  = document.getElementById('titular-name');
+  const titularName  = _titularEl ? (_titularEl.value || '').trim() : '';
+  const titularGroupSel = document.getElementById('titular-group-select');
+  const titularGroupIdx = titularGroupSel && titularGroupSel.style.display !== 'none' ? parseInt(titularGroupSel.value) || 0 : 0;
   if (!name)       { toast('Introduce el nombre de la comunidad'); return; }
   if (!groupId)    { toast('Introduce el ID de grupo (Ej: MUNDIAL2026)'); return; }
   if (!siteCode)   { toast('Introduce el código de acceso de la comunidad'); return; }
@@ -470,7 +477,10 @@ function generarLlaveros() {
     webCount = parseInt(document.getElementById('web-count').value) || 0;
     if (nfcCount < 1 && webCount < 1) { toast('Debes asignar al menos 1 llavero NFC o acceso web'); return; }
   }
-  const maxParticipants = (accessMode === 'nfc') ? nfcCount : (accessMode === 'code' ? webCount : nfcCount + webCount);
+  // abierto: sin límite de plazas (0 = ilimitado), sin NFC
+  const maxParticipants = accessMode === 'nfc'     ? nfcCount :
+                          accessMode === 'code'    ? webCount :
+                          accessMode === 'mixed'   ? nfcCount + webCount : 0;
   const maxGroups = parseInt(document.getElementById('max-groups').value) || 0;
   const groupNames = [];
   for (let i = 1; i <= maxGroups; i++) {
@@ -495,6 +505,8 @@ function generarLlaveros() {
     groupId,
     siteCode,
     buyerEmail,
+    titularName,
+    titularGroupIdx,
     accessMode,
     maxParticipants,
     maxGroups,
@@ -518,9 +530,10 @@ function renderResultado(name, groupId, siteCode, nfcTokens, webCount, accessMod
   document.getElementById('res-badge').textContent = 'COMUNIDAD · ' + groupId;
   document.getElementById('res-title').textContent = name;
   let meta = '';
-  if (accessMode === 'nfc')        meta = nfcTokens.length + ' llaveros NFC';
-  else if (accessMode === 'code')  meta = webCount + ' accesos web (código)';
-  else                             meta = nfcTokens.length + ' llaveros NFC + ' + webCount + ' accesos web (código)';
+  if (accessMode === 'nfc')           meta = nfcTokens.length + ' llaveros NFC';
+  else if (accessMode === 'code')     meta = webCount + ' accesos web (código)';
+  else if (accessMode === 'abierto')  meta = 'Web Libre · registro abierto · sin límite de plazas';
+  else                                meta = nfcTokens.length + ' llaveros NFC + ' + webCount + ' accesos web (código)';
   document.getElementById('res-meta').textContent = meta + ' · LIGA DE PRONÓSTICOS MUNDIAL 2026';
   document.getElementById('res-sitecode').innerHTML =
     escHtml(siteCode) + '<button class="codigo-copy-btn" onclick="copiarSiteCode()">Copiar</button>';
@@ -662,6 +675,132 @@ function imprimirFicha() {
   setTimeout(() => window.print(), 400);
 }
 
+// ── HOJA QR ───────────────────────────────────────────────────────────
+function generarHojaQR() {
+  const order = currentOrder;
+  if (!order) { toast('Genera un pedido primero'); return; }
+
+  const communityName = order.communityName || '';
+  const groupId       = order.groupId || '';
+  const accessMode    = order.accessMode || 'nfc';
+  const siteCode      = (order.siteCode || '').trim().toUpperCase();
+  const nfcTokens     = order.nfcTokens || order.tokens || generatedTokens || [];
+  const maxGroups     = order.maxGroups || 0;
+  const rawNames      = order.groupNames || [];
+  const isMulti       = maxGroups >= 2;
+  const comunidadId   = groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+
+  function toSiteKey(name, idx) {
+    const slug = (name||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+      .replace(/[^a-z0-9]/g,'_').replace(/_+/g,'_').replace(/^_|_$/g,'');
+    return comunidadId + '_' + (slug || 'g'+(idx+1));
+  }
+  const groups = isMulti
+    ? Array.from({length: maxGroups}, (_,i) => {
+        const n = (rawNames[i]||'').trim() || ('Grupo '+(i+1));
+        return { name: n, siteKey: toSiteKey(n,i) };
+      })
+    : [{ name: communityName, siteKey: comunidadId }];
+
+  const tokensByGroup = groups.map(() => []);
+  nfcTokens.forEach((uuid, i) => tokensByGroup[i % groups.length].push(uuid));
+
+  const QR_API = 'https://api.qrserver.com/v1/create-qr-code/?format=png&qzone=2&size=220x220&data=';
+
+  let cardsHtml = '';
+  if (nfcTokens.length > 0) {
+    let globalIdx = 0;
+    groups.forEach((g, gi) => {
+      tokensByGroup[gi].forEach((uuid) => {
+        globalIdx++;
+        const url     = 'https://to-k-games.web.app/porra-mundial-2026.html?access=nfc&token=' + uuid;
+        const qrUrl   = QR_API + encodeURIComponent(url);
+        const short   = uuid.substring(0,8).toUpperCase();
+        const grpLabel = isMulti ? g.name : '';
+        cardsHtml += `
+          <div class="qr-card">
+            <img src="${qrUrl}" alt="QR chip ${globalIdx}" class="qr-img" />
+            <div class="qr-num">#${globalIdx}</div>
+            <div class="qr-community">${escHtml(communityName)}</div>
+            ${grpLabel ? `<div class="qr-group">${escHtml(grpLabel)}</div>` : ''}
+            <div class="qr-chip-id">${short}</div>
+          </div>`;
+      });
+    });
+  }
+
+  const hasWeb = (accessMode === 'code' || accessMode === 'mixed' || accessMode === 'abierto') && siteCode;
+  if (hasWeb) {
+    const webUrl = 'https://to-k-games.web.app/porra-mundial-2026.html?code=' + encodeURIComponent(siteCode);
+    const qrUrl  = QR_API + encodeURIComponent(webUrl);
+    cardsHtml += `
+      <div class="qr-card qr-card-web">
+        <div class="qr-web-badge">🌐 ACCESO WEB</div>
+        <img src="${qrUrl}" alt="QR web" class="qr-img" />
+        <div class="qr-community">${escHtml(communityName)}</div>
+        <div class="qr-group">Código: ${escHtml(siteCode)}</div>
+        <div class="qr-chip-id">Comparte o imprime este QR</div>
+      </div>`;
+  }
+
+  if (!cardsHtml) { toast('No hay tokens ni acceso web en este pedido'); return; }
+
+  const win = window.open('', '_blank', 'width=900,height=700');
+  win.document.write(`<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>QR — ${escHtml(communityName)} · ${escHtml(groupId)}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, sans-serif; background: #fff; color: #1a202c; padding: 16px; }
+  h1  { font-size: 1rem; font-weight: 800; color: #0d3d5c; margin-bottom: 2px; }
+  .meta { font-size: 0.72rem; color: #64748b; margin-bottom: 16px; }
+  .grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-start; }
+  .qr-card {
+    width: 168px; border: 1.5px solid #e2e8f0; border-radius: 12px;
+    padding: 12px 10px 10px; text-align: center; background: #fff;
+    page-break-inside: avoid; break-inside: avoid;
+  }
+  .qr-card-web { border-color: #3b82f6; background: #eff6ff; }
+  .qr-web-badge { font-size: 0.6rem; font-weight: 800; color: #2563eb;
+    text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+  .qr-img { width: 140px; height: 140px; display: block; margin: 0 auto 8px; }
+  .qr-num { font-size: 1rem; font-weight: 900; color: #0d3d5c; line-height: 1.1; }
+  .qr-community { font-size: 0.65rem; font-weight: 700; color: #334155;
+    margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .qr-group { font-size: 0.6rem; color: #64748b; margin-top: 1px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .qr-chip-id { font-size: 0.55rem; color: #94a3b8; margin-top: 3px;
+    font-family: monospace; letter-spacing: 0.05em; }
+  .btn-print {
+    display: inline-block; margin-bottom: 16px;
+    background: #0d3d5c; color: #fff; border: none; border-radius: 8px;
+    padding: 10px 22px; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  }
+  .note { font-size: 0.7rem; color: #94a3b8; margin-top: 14px; border-top: 1px dashed #e2e8f0; padding-top: 10px; }
+  @media print {
+    .btn-print, .no-print { display: none !important; }
+    body { padding: 8px; }
+    .qr-card { width: 155px; }
+    .qr-img  { width: 128px; height: 128px; }
+  }
+</style>
+</head>
+<body>
+<button class="btn-print no-print" onclick="window.print()">🖨️ Imprimir hoja</button>
+<h1>⚽ ${escHtml(communityName)} · ${escHtml(groupId)}</h1>
+<div class="meta">Porra Mundial 2026 · ${nfcTokens.length} chips NFC${hasWeb?' + acceso web':''} · ${new Date().toLocaleDateString('es-ES')}</div>
+<div class="grid">${cardsHtml}</div>
+<div class="note no-print">
+  Recorta cada tarjeta y pégala en el llavero correspondiente (#1 = chip 1, etc.).<br>
+  Protege con resina o funda transparente para mayor durabilidad.
+</div>
+</body>
+</html>`);
+  win.document.close();
+}
+
 // ── EXPORT CSV ────────────────────────────────────────────────────────
 function exportarCSV() {
   if (!generatedTokens.length) { toast('Genera los llaveros primero'); return; }
@@ -688,6 +827,10 @@ function resetForm() {
   document.getElementById('community-id').value   = '';
   document.getElementById('site-code').value      = '';
   document.getElementById('buyer-email').value    = '';
+  const _tNameReset = document.getElementById('titular-name');
+  if (_tNameReset) _tNameReset.value = '';
+  const _tgRow = document.getElementById('titular-group-row');
+  if (_tgRow) _tgRow.style.display = 'none';
   document.getElementById('nfc-count').value      = 10;
   document.getElementById('web-count').value      = 0;
   updatePresetHighlight(10, 0);
@@ -809,8 +952,8 @@ function renderHistItem(order) {
   const fecha = d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}) +
     ' ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
   const safeId = escHtml(order.id);
-  const modeLabel = { nfc: '🔑 NFC', code: '🔓 Código', mixed: '🔀 Mixto' }[order.accessMode] || '🔑 NFC';
-  const modeColor = order.accessMode === 'code' ? '#34d399' : order.accessMode === 'mixed' ? '#f59e0b' : '#93c5fd';
+  const modeLabel = { nfc: '🔑 NFC', code: '🔓 Código', mixed: '🔀 Mixto', abierto: '🏫 Web Libre' }[order.accessMode] || '🔑 NFC';
+  const modeColor = order.accessMode === 'code' ? '#34d399' : order.accessMode === 'mixed' ? '#f59e0b' : order.accessMode === 'abierto' ? '#a78bfa' : '#93c5fd';
   const upgradeBtn = (!order.accessMode || order.accessMode === 'nfc')
     ? `<button class="hi-btn" onclick="upgradeToOpen('${safeId}')" title="Activar juego abierto" style="color:#f59e0b;">🔓</button>`
     : '';
@@ -877,6 +1020,8 @@ function reimprimirOrden(id) {
   document.getElementById('community-id').value     = order.groupId;
   document.getElementById('site-code').value        = order.siteCode;
   document.getElementById('buyer-email').value      = order.buyerEmail || '';
+  const _tNameLoad = document.getElementById('titular-name');
+  if (_tNameLoad) _tNameLoad.value = order.titularName || '';
   document.getElementById('access-mode').value      = order.accessMode || 'nfc';
   document.getElementById('max-participants').value = order.maxParticipants || '';
   document.getElementById('max-groups').value        = order.maxGroups || '0';
@@ -910,7 +1055,7 @@ function onMaxGroupsChange() {
     section.style.display = '';
     const prev = container ? Array.from(container.querySelectorAll('input')).map(el => el.value) : [];
     container.innerHTML = Array.from({ length: n }, (_, i) =>
-      `<input class="inp" id="group-name-${i+1}" type="text" maxlength="32" placeholder="Grupo ${i+1}" style="margin-bottom:8px;" autocomplete="off"/>`
+      `<input class="inp" id="group-name-${i+1}" type="text" maxlength="32" placeholder="Grupo ${i+1}" style="margin-bottom:8px;" autocomplete="off" oninput="updateTitularGroupVisibility()"/>`
     ).join('');
     prev.forEach(function(v, i) {
       const el = document.getElementById('group-name-' + (i + 1));
@@ -919,6 +1064,31 @@ function onMaxGroupsChange() {
   } else {
     if (section)    section.style.display = 'none';
     if (container)  container.innerHTML = '';
+  }
+  updateTitularGroupVisibility();
+}
+
+function updateTitularGroupVisibility() {
+  const n       = parseInt(document.getElementById('max-groups').value) || 0;
+  const _titularVisEl = document.getElementById('titular-name');
+  const titular = _titularVisEl ? (_titularVisEl.value || '').trim() : '';
+  const row     = document.getElementById('titular-group-row');
+  const sel     = document.getElementById('titular-group-select');
+  if (!row || !sel) return;
+  if (n >= 2 && titular) {
+    // Reconstruye opciones con los nombres actuales de los grupos
+    const prevVal = sel.value;
+    sel.innerHTML = Array.from({ length: n }, (_, i) => {
+      const el   = document.getElementById('group-name-' + (i + 1));
+      const name = (el && el.value.trim()) ? el.value.trim() : ('Grupo ' + (i + 1));
+      return `<option value="${i}">${name}</option>`;
+    }).join('');
+    // Restaura selección si sigue siendo válida
+    if (prevVal && parseInt(prevVal) < n) sel.value = prevVal;
+    row.style.display = '';
+  } else {
+    row.style.display = 'none';
+    sel.innerHTML = '';
   }
 }
 
@@ -931,16 +1101,18 @@ function onAccessModeChange() {
   const webGroup    = document.getElementById('web-count-group');
   const nfcPresets  = document.getElementById('nfc-presets');
   const mixedPresets= document.getElementById('mixed-presets');
-  if (maxGrp)     maxGrp.style.display    = (mode === 'code' || mode === 'mixed') ? 'block' : 'none';
-  if (nfcSection) nfcSection.style.display = (mode === 'code') ? 'none' : '';
-  if (btnGenerar) btnGenerar.textContent   = (mode === 'code') ? '🌐 Crear comunidad web' : '⚡ Generar llaveros / participantes';
-  if (webGroup)   webGroup.style.display   = (mode === 'mixed') ? 'block' : 'none';
-  if (nfcPresets) nfcPresets.style.display = (mode === 'nfc') ? 'flex' : 'none';
+  const isAbierto = mode === 'abierto';
+  if (maxGrp)       maxGrp.style.display       = (mode === 'code' || mode === 'mixed') ? 'block' : 'none';
+  if (nfcSection)   nfcSection.style.display   = (mode === 'code' || isAbierto) ? 'none' : '';
+  if (btnGenerar)   btnGenerar.textContent     = (mode === 'code' || isAbierto) ? '🌐 Crear comunidad web' : '⚡ Generar llaveros / participantes';
+  if (webGroup)     webGroup.style.display     = (mode === 'mixed') ? 'block' : 'none';
+  if (nfcPresets)   nfcPresets.style.display   = (mode === 'nfc') ? 'flex' : 'none';
   if (mixedPresets) mixedPresets.style.display = (mode === 'mixed') ? 'flex' : 'none';
   const hints = {
-    nfc:   'Solo los participantes con llavero NFC pueden registrarse.',
-    code:  'Cualquiera con el código de acceso puede registrarse (con límite opcional).',
-    mixed: 'Puedes asignar cuántos participantes tendrán llavero NFC y cuántos solo acceso web.'
+    nfc:    'Solo los participantes con llavero NFC pueden registrarse.',
+    code:   'Cualquiera con el código de acceso puede registrarse (con límite opcional).',
+    mixed:  'Puedes asignar cuántos participantes tendrán llavero NFC y cuántos solo acceso web.',
+    abierto:'Registro completamente abierto — cualquier alumno entra, elige su clase y se registra. Sin lista de control ni límite de plazas.'
   };
   if (hint) hint.textContent = hints[mode] || hints.nfc;
 }
@@ -970,15 +1142,25 @@ function upgradeToOpen(id) {
 function compartirWhatsAppOrden(id) {
   const order = _historial.find(o => o.id === id);
   if (!order) return;
-  let msg = '\uD83C\uDFC6 *LIGA DE PRON\u00D3STICOS MUNDIAL 2026*\n';
-  msg += '*' + order.communityName + '* \u00b7 ' + order.groupId + '\n';
-  msg += 'C\u00f3digo de acceso: `' + order.siteCode + '`\n\n';
-  msg += '\uD83D\uDCF1 URLs para grabar en chips NFC\n';
-  msg += '(usa la app *NFC Tools* en tu m\u00f3vil):\n\n';
-  order.tokens.forEach((uuid, i) => {
-    msg += (i+1) + '. ' + GAME_BASE_URL + '?access=nfc&token=' + uuid + '\n';
-  });
-  msg += '\n_to-k-games.web.app_';
+  const accessMode = order.accessMode || 'nfc';
+  const tokens     = order.tokens || [];
+  const siteCode   = order.siteCode || '';
+  const webUrl     = GAME_BASE_URL + '?code=' + encodeURIComponent(siteCode);
+  let msg = '';
+  if (accessMode === 'abierto' || accessMode === 'code') {
+    msg = '\uD83C\uDFC6 *LIGA DE PRON\u00D3STICOS MUNDIAL 2026*\n'
+        + '*' + order.communityName + '*\n\n'
+        + '\uD83D\uDD17 Entra a la porra desde aqu\u00ED:\n'
+        + webUrl + '\n\n'
+        + (siteCode ? 'O usa el c\u00f3digo de acceso: *' + siteCode + '*\n\n' : '')
+        + '_Reg\u00EDstrate con tu apodo y un PIN \u00b7 to-k-games.web.app_';
+  } else {
+    msg = '\uD83C\uDFC6 *LIGA DE PRON\u00D3STICOS MUNDIAL 2026*\n*' + order.communityName + '* \u00b7 ' + order.groupId
+        + '\nC\u00f3digo de acceso: `' + siteCode + '`\n\n\uD83D\uDCF1 URLs para grabar en chips NFC\n(usa la app *NFC Tools* en tu m\u00f3vil):\n\n';
+    tokens.forEach((uuid, i) => { msg += (i+1) + '. ' + GAME_BASE_URL + '?access=nfc&token=' + uuid + '\n'; });
+    if (accessMode === 'mixed') { msg += '\n\uD83C\uDF10 Acceso web (participantes sin llavero):\n' + webUrl + '\n'; }
+    msg += '\n_to-k-games.web.app_';
+  }
   window.open('https://wa.me/?text=' + encodeURIComponent(msg), '_blank');
 }
 
@@ -1027,7 +1209,7 @@ function setSaveStatus(state) {
     // Código de acceso web para participantes (solo en modo enlace / mixto)
     const _accessMode = currentOrder && currentOrder.accessMode ? currentOrder.accessMode : '';
     const _siteCode   = currentOrder && currentOrder.siteCode ? currentOrder.siteCode.trim().toUpperCase() : '';
-    const _webUrl     = (_accessMode === 'code' || _accessMode === 'mixed') && _siteCode
+    const _webUrl     = (_accessMode === 'code' || _accessMode === 'mixed' || _accessMode === 'abierto') && _siteCode
       ? 'https://to-k-games.web.app/porra-mundial-2026.html?code=' + encodeURIComponent(_siteCode)
       : '';
     let savedHtml = 'Comunidad creada ✓';
@@ -1082,6 +1264,7 @@ cargarHistorial();
 <script type="module">
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // tok-familiar Firebase — stores order records for tok-admin
 const FB_ADMIN = {
@@ -1109,14 +1292,50 @@ const appPorra = getApps().find(a => a.name === 'tok-porra') || initializeApp(FB
 const dbAdmin  = getDatabase(appAdmin);
 const dbPorra  = getDatabase(appPorra);
 
+// ── Firebase Auth (to-k-games) ──────────────────────────────────────────────
+const authPorra   = getAuth(appPorra);
+const _gProv      = new GoogleAuthProvider();
+_gProv.setCustomParameters({ login_hint: 'mcksaez510@gmail.com' });
+let _fbUser = null;
+
+function _updateFbAuthUI(user) {
+  const nav = document.querySelector('.admin-nav');
+  if (!nav) return;
+  let btn = document.getElementById('fb-auth-btn');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'fb-auth-btn'; btn.type = 'button'; btn.className = 'nav-btn';
+    nav.insertBefore(btn, nav.firstChild);
+  }
+  if (user) {
+    btn.textContent = '🔐 ' + (user.email || 'OK');
+    btn.style.cssText = 'border-color:rgba(74,222,128,0.35);color:#4ade80;cursor:default;font-size:0.7rem;';
+    btn.onclick = null;
+  } else {
+    btn.textContent = '🔑 Conectar Firebase';
+    btn.style.cssText = 'border-color:rgba(251,191,36,0.5);color:#fbbf24;';
+    btn.onclick = () => signInWithPopup(authPorra, _gProv).catch(e => {
+      console.warn('[FB Auth]', e);
+      if (typeof window.toast === 'function') window.toast('Error al conectar Firebase: ' + (e.message || e));
+    });
+  }
+}
+
+onAuthStateChanged(authPorra, (user) => {
+  _fbUser = user;
+  _updateFbAuthUI(user);
+});
+// ────────────────────────────────────────────────────────────────────────────
+
 // ── NUEVA ARQUITECTURA: escribe la comunidad completa en Firebase, sin setup.html ──
 window.fbSaveOrder = async function(order) {
+  if (!_fbUser) throw new Error('Debes conectar Firebase primero. Pulsa el botón "🔑 Conectar Firebase" en la barra superior.');
   const now         = Date.now();
   const siteCodeKey = order.siteCode.trim().toUpperCase();
   const comunidadId = order.groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 
   // ── Plan type ──────────────────────────────────────────────────────────
-  const planTypeMap = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace' };
+  const planTypeMap = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace', abierto: 'abierto' };
   const planType    = planTypeMap[order.accessMode] || 'nfc';
 
   // ── Grupos ─────────────────────────────────────────────────────────────
@@ -1164,13 +1383,32 @@ window.fbSaveOrder = async function(order) {
     updatedAt:         now
   });
 
-  // ── 2. Sites — uno por grupo, con nombre real y allowlist vacío ─────────
+  // ── 2. Sites — uno por grupo, allowlist inicial con titular si aplica ────
   const maxPerGroup = isMulti
     ? Math.ceil((order.maxParticipants || 0) / groups.length)
     : (order.maxParticipants || 0);
 
+  // Titular: se escribe dentro del allowlist del set() inicial para evitar
+  // un update() separado que requeriría auth (las reglas bloquean writes a
+  // settings ya existentes sin auth del proyecto to-k-games).
+  // Solo se añade al grupo elegido por el organizador (titularGroupIdx).
+  const titularName     = order.titularName || '';
+  const titularGroupIdx = order.titularGroupIdx || 0;
+  const titularAllowlist = {};
+  if (titularName && (planType === 'enlace' || planType === 'nfc-enlace')) {
+    const titularKey = titularName.toLowerCase()
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[\s]/g, '_').replace(/[^a-z0-9_]/g, '').replace(/_+/g, '_').replace(/^_|_$/g, '')
+      || titularName.toLowerCase().slice(0, 20);
+    titularAllowlist[titularKey] = {
+      displayName: titularName, addedAt: now, addedBy: 'order', source: 'titular'
+    };
+  }
+
   for (let i = 0; i < groups.length; i++) {
     const { name, siteKey } = groups[i];
+    // El titular solo va en su grupo elegido; el resto arrancan con allowlist vacío
+    const allowlist = (i === titularGroupIdx) ? titularAllowlist : {};
     await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + siteKey + '/settings'), {
       id:              siteKey,
       label:           name,
@@ -1178,7 +1416,7 @@ window.fbSaveOrder = async function(order) {
       accessMode:      planType,
       maxParticipants: maxPerGroup,
       adminEmail:      order.buyerEmail || '',
-      allowlist:       {},
+      allowlist,
       active:          true,
       createdAt:       now,
       updatedAt:       now
@@ -1217,8 +1455,8 @@ window.fbSaveOrder = async function(order) {
     isAdminOnly: true,
     createdAt:   now
   });
-  // Entrada web para participantes (solo en modo enlace / mixto)
-  if (planType === 'enlace' || planType === 'nfc-enlace') {
+  // Entrada web para participantes (enlace, mixto y abierto)
+  if (planType === 'enlace' || planType === 'nfc-enlace' || planType === 'abierto') {
     await set(ref(dbPorra, 'porra_mundial_2026/pases_juego/' + siteCodeKey), {
       activo:      true,
       comunidadId,
@@ -1251,6 +1489,7 @@ window.fbSaveOrder = async function(order) {
 
 // Upgrade a community's access mode from the historial
 window.fbUpgradeOrder = async function(comunidadId, newAccessMode, maxParticipants) {
+  if (!_fbUser) throw new Error('Debes conectar Firebase primero.');
   await update(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/sites/' + comunidadId + '/settings'), {
     accessMode:      newAccessMode,
     maxParticipants: maxParticipants || 0,
