@@ -1,0 +1,27 @@
+/* To-K Business: Aroma To-K Hogar */
+:root {
+  --tok-turquesa: #49C5B6;
+  --tok-dorado: #FFD700;
+  --tok-bg: #f7f7f7;
+  --tok-surface: #fff;
+  --tok-text: #222;
+  --tok-muted: #888;
+  --tok-accent: var(--tok-turquesa);
+  --tok-shadow: 0 4px 24px rgba(73,197,182,0.07);
+}
+body {
+  font-family: 'Roboto', Arial, sans-serif;
+  background: var(--tok-bg);
+  color: var(--tok-text);
+  margin: 0;
+  min-height: 100vh;
+}
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--tok-surface);
+  box-shadow: var(--tok-shadow);
+  border-radius: 10px;
+  padding: 0 0 60px;
+}
+/* Más estilos a medida que se desarrollen los módulos */

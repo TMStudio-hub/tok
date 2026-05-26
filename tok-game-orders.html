@@ -212,6 +212,7 @@ body::before{
   </div>
   <div class="admin-nav">
     <button class="nav-btn active" id="tab-btn-nuevo" onclick="setTab('nuevo')">⚡ Nuevo pedido</button>
+    <button class="nav-btn" id="tab-btn-solicitudes" onclick="setTab('solicitudes')">📥 Solicitudes <span id="solic-count-badge" style="display:none;background:rgba(251,191,36,0.35);border-radius:999px;padding:1px 8px;font-size:0.65rem;margin-left:2px;color:#fbbf24;"></span></button>
     <button class="nav-btn" id="tab-btn-historial" onclick="setTab('historial')">📋 Historial <span id="hist-count-badge" style="display:none;background:rgba(255,255,255,0.25);border-radius:999px;padding:1px 8px;font-size:0.65rem;margin-left:2px;"></span></button>
     <a href="tok-admin.html" class="nav-btn">← TO-K Admin</a>
   </div>
@@ -427,6 +428,16 @@ body::before{
     </div>
   </div>
   </div><!-- /panel-nuevo -->
+
+  <div class="tab-panel" id="panel-solicitudes">
+    <div class="section-title">Solicitudes recibidas desde el formulario público</div>
+    <div id="solic-empty" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 24px;gap:10px;color:var(--muted);text-align:center;">
+      <div style="font-size:2.8rem;margin-bottom:4px;">📥</div>
+      <div style="font-size:0.9rem;font-weight:800;color:var(--ink);">Sin solicitudes pendientes</div>
+      <div style="font-size:0.8rem;line-height:1.6;">Las solicitudes del formulario <strong>to-k-games.web.app/solicitud-porra.html</strong> aparecerán aquí.</div>
+    </div>
+    <div id="solic-list"></div>
+  </div>
 
   <div class="tab-panel" id="panel-historial">
     <div class="section-title">Historial de pedidos</div>
@@ -893,8 +904,91 @@ function setTab(name) {
   const btn = document.getElementById('tab-btn-' + name);
   if (btn) btn.classList.add('active');
   if (name === 'historial') renderHistorial();
+  if (name === 'solicitudes') renderSolicitudes();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+// ── Solicitudes ──────────────────────────────────────────────────────────────
+const PLAN_LABEL = { free:'🆓 Gratuito', web:'🌐 Web Privada', mixed:'🔀 Mixto NFC+Web', copa:'🏆 Copa Premium' };
+const PLAN_COLOR = { free:'#4ade80', web:'#60a5fa', mixed:'#f59e0b', copa:'#fbbf24' };
+
+async function renderSolicitudes() {
+  const list  = document.getElementById('solic-list');
+  const empty = document.getElementById('solic-empty');
+  if (!list) return;
+  if (!window.fbLoadSolicitudes) { list.innerHTML = '<p style="padding:20px;color:var(--muted);font-family:var(--mono);font-size:0.8rem;">Conecta Firebase para ver las solicitudes.</p>'; return; }
+  list.innerHTML = '<p style="padding:20px;color:var(--muted);font-family:var(--mono);font-size:0.78rem;">Cargando…</p>';
+  try {
+    const items = await window.fbLoadSolicitudes();
+    const badge = document.getElementById('solic-count-badge');
+    const pending = items.filter(s => s.status !== 'completed');
+    if (badge) { if (pending.length > 0) { badge.textContent = pending.length; badge.style.display='inline-flex'; } else { badge.style.display='none'; } }
+    if (!items.length) { list.innerHTML = ''; if (empty) empty.style.display='flex'; return; }
+    if (empty) empty.style.display = 'none';
+    list.innerHTML = items.map(renderSolicItem).join('');
+  } catch(e) { list.innerHTML = '<p style="padding:20px;color:var(--red);font-family:var(--mono);font-size:0.78rem;">Error al cargar: ' + escHtml(e.message||e) + '</p>'; }
+}
+
+function renderSolicItem(s) {
+  const d = new Date(s.createdAt);
+  const fecha = d.toLocaleDateString('es-ES',{day:'2-digit',month:'2-digit',year:'numeric'}) + ' ' + d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  const color = PLAN_COLOR[s.plan] || '#93c5fd';
+  const label = PLAN_LABEL[s.plan] || s.plan;
+  const isDone = s.status === 'completed';
+  return `<div class="hist-item" style="${isDone?'opacity:0.55;':''}">
+    <div class="hist-item-header" style="cursor:default;">
+      <div class="hist-item-main">
+        <div class="hist-item-name">${escHtml(s.nombre)} <span style="font-family:var(--mono);font-size:0.65rem;padding:1px 7px;border-radius:5px;background:rgba(255,255,255,0.08);color:${color};margin-left:6px;">${escHtml(label)}</span>${isDone?'<span style="font-family:var(--mono);font-size:0.6rem;color:#4ade80;margin-left:6px;">✓ Completado</span>':''}</div>
+        <div class="hist-item-meta" style="margin-top:6px;gap:10px;">
+          <span class="hi-code">👤 ${escHtml(s.organizador||'—')}</span>
+          <span class="hi-code">📞 ${escHtml(s.contacto)}</span>
+          ${s.participantes ? `<span class="hi-code">👥 ${s.participantes} pers.</span>` : ''}
+          ${s.subgrupos ? `<span class="hi-code">🗂️ ${escHtml(s.subgrupos)}</span>` : ''}
+          ${s.llaveros ? `<span class="hi-code">🔑 ${escHtml(s.llaveros)}</span>` : ''}
+          <span class="hi-fecha">${fecha}</span>
+        </div>
+        ${s.mensaje ? `<div style="margin-top:8px;padding:8px 10px;background:rgba(29,111,164,0.05);border-radius:8px;font-size:0.78rem;color:var(--muted);line-height:1.5;">"${escHtml(s.mensaje)}"</div>` : ''}
+      </div>
+      <div class="hist-item-actions" style="flex-shrink:0;display:flex;gap:6px;">
+        ${!isDone ? `<button class="btn btn-primary" style="padding:8px 14px;font-size:0.78rem;" onclick="completarSolicitud('${escHtml(s._id)}')">⚡ Completar</button>` : ''}
+        <button class="hi-btn" onclick="contactarSolicitud('${escHtml(s.contacto)}','${escHtml(s.nombre)}')" title="WhatsApp / contactar" style="color:#25d366;">📲</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function completarSolicitud(id) {
+  const items = window._solicitudesCache || [];
+  const s = items.find(x => x._id === id); if (!s) return;
+  document.getElementById('community-name').value = s.nombre || '';
+  document.getElementById('buyer-email').value = s.contacto && s.contacto.includes('@') ? s.contacto : '';
+  const planToAccessMode = { free:'abierto', web:'code', mixed:'mixed', copa:'nfc' };
+  document.getElementById('access-mode').value = planToAccessMode[s.plan] || 'code';
+  onAccessModeChange();
+  if (s.participantes) document.getElementById('max-participants').value = s.participantes;
+  if (s.subgrupos) {
+    const gs = s.subgrupos.split(',').map(x => x.trim()).filter(Boolean);
+    if (gs.length >= 2) {
+      document.getElementById('max-groups').value = gs.length;
+      onMaxGroupsChange();
+      gs.forEach((n, i) => { const el = document.getElementById('group-name-'+(i+1)); if(el) el.value = n; });
+    }
+  }
+  window._pendingSolicitudId = id;
+  setTab('nuevo');
+  toast('Formulario pre-rellenado con la solicitud de ' + s.nombre + ' · Revisa y pulsa Guardar');
+}
+
+function contactarSolicitud(contacto, nombre) {
+  const msg = 'Hola ' + nombre + ', te escribo desde El Taller de Memorias sobre tu solicitud de porra para el Mundial 2026. ¡Ya lo tenemos todo listo!';
+  if (contacto.match(/^\d/)) {
+    const num = contacto.replace(/\s/g,'');
+    window.open('https://wa.me/' + (num.startsWith('34')?num:'34'+num) + '?text=' + encodeURIComponent(msg), '_blank');
+  } else {
+    window.open('mailto:' + encodeURIComponent(contacto) + '?subject=Tu%20Porra%20Mundial%202026&body=' + encodeURIComponent(msg));
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ── HISTORIAL ─────────────────────────────────────────────────────────
 const HIST_KEY = 'tok_game_orders_hist';
@@ -1224,6 +1318,13 @@ function setSaveStatus(state) {
         + ' · <a href="' + escHtml(_webUrl) + '" target="_blank" style="color:#86efac;text-decoration:underline;font-size:0.75rem;">ver enlace</a>'
         + ' <button onclick="copiarUrl(\'' + escHtml(_webUrl) + '\',this)" style="background:rgba(255,255,255,0.15);border:none;color:#fff;padding:2px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">Copiar</button>';
     }
+    const _copaToken = currentOrder && currentOrder.copaToken ? currentOrder.copaToken : '';
+    if (_copaToken) {
+      const _copaUrl = 'https://to-k-games.web.app/porra-mundial-2026.html?access=copa&token=' + _copaToken;
+      savedHtml += '<br>🏆 <strong style="color:#fbbf24;">URL Copa NFC</strong> (grábala en el llavero Copa):'
+        + ' <a href="' + escHtml(_copaUrl) + '" target="_blank" style="color:#fde68a;text-decoration:underline;font-family:var(--mono);font-size:0.72rem;">' + escHtml(_copaUrl) + '</a>'
+        + ' <button onclick="copiarUrl(\'' + escHtml(_copaUrl) + '\',this)" style="background:rgba(251,191,36,0.2);border:1px solid rgba(251,191,36,0.4);color:#fbbf24;padding:2px 8px;border-radius:5px;cursor:pointer;font-size:0.7rem;font-family:var(--mono);">Copiar</button>';
+    }
     text.innerHTML = savedHtml;
     text.style.color = 'rgba(120,255,150,0.9)';
     btn.disabled = true; btn.style.opacity = '0.5';
@@ -1248,6 +1349,11 @@ async function guardarPedido() {
     guardarEnHistorial(currentOrder); // cache local
     setSaveStatus('saved');
     toast('¡Pedido guardado en Firebase ✓');
+    // Si el pedido venía de una solicitud pendiente, márcarla como completada
+    if (window._pendingSolicitudId && window.fbMarcarSolicitudCompletada) {
+      window.fbMarcarSolicitudCompletada(window._pendingSolicitudId).catch(() => {});
+      window._pendingSolicitudId = null;
+    }
   } catch(err) {
     console.error('[guardarPedido]', err);
     setSaveStatus('error');
@@ -1259,6 +1365,16 @@ async function guardarPedido() {
 updatePresetHighlight();
 onMaxGroupsChange();
 cargarHistorial();
+// Pre-cargar badge de solicitudes en background
+setTimeout(function() {
+  if (window.fbLoadSolicitudes) {
+    window.fbLoadSolicitudes().then(function(items) {
+      const badge = document.getElementById('solic-count-badge');
+      const pending = (items||[]).filter(function(s){ return s.status !== 'completed'; });
+      if (badge && pending.length > 0) { badge.textContent = pending.length; badge.style.display = 'inline-flex'; }
+    }).catch(function(){});
+  }
+}, 2000);
 </script>
 <!-- FIREBASE MODULE: tok-admin orders + porra token pre-registration -->
 <script type="module">
@@ -1335,8 +1451,11 @@ window.fbSaveOrder = async function(order) {
   const comunidadId = order.groupId.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 
   // ── Plan type ──────────────────────────────────────────────────────────
-  const planTypeMap = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace', abierto: 'abierto' };
-  const planType    = planTypeMap[order.accessMode] || 'nfc';
+  const planTypeMap   = { nfc: 'nfc', code: 'enlace', mixed: 'nfc-enlace', abierto: 'abierto', copa: 'copa' };
+  const planType      = planTypeMap[order.accessMode] || 'nfc';
+  const planComercial = order.planComercial || (order.accessMode === 'abierto' ? 'free' : order.accessMode === 'copa' ? 'copa' : order.accessMode === 'mixed' ? 'mixed' : 'web');
+  const isCopa        = planComercial === 'copa';
+  const copaTokenUUID = isCopa ? crypto.randomUUID() : null;
 
   // ── Grupos ─────────────────────────────────────────────────────────────
   const maxGroups  = order.maxGroups || 0;
@@ -1369,19 +1488,38 @@ window.fbSaveOrder = async function(order) {
   // UPPERCASE porque validatePaseCode() hace .toUpperCase() antes de buscar en Firebase
   const adminCode = (comunidadId + '_' + crypto.randomUUID().slice(0, 8)).toUpperCase();
 
-  // ── 1. Community meta — incluye tipoVenta, maxMiembros, linkCode ───────
+  // ── 1. Community meta — incluye tipoVenta, planType comercial, setupPending ─
   await set(ref(dbPorra, 'porra_mundial_2026/comunidades/' + comunidadId + '/meta'), {
     generalAdminEmail: order.buyerEmail || '',
     label:             order.communityName,
+    planType:          planComercial,
     tipoVenta:         planType,
+    setupPending:      isCopa ? true : false,
+    setupToken:        isCopa ? copaTokenUUID : '',
     maxMiembros:       order.maxParticipants || 0,
     nfcCount:          nfcTokens.length,
     linksCount:        order.webCount || 0,
-    linkCode:          (planType !== 'nfc') ? siteCodeKey : '',
+    linkCode:          (planType !== 'nfc' && planType !== 'copa') ? siteCodeKey : '',
     adminCode:         adminCode,
     createdAt:         now,
     updatedAt:         now
   });
+
+  // Copa: registrar el token maestro en nfc_tokens
+  if (isCopa && copaTokenUUID) {
+    await set(ref(dbPorra, 'porra_mundial_2026/nfc_tokens/' + copaTokenUUID), {
+      activo:        true,
+      type:          'copa',
+      comunidadId:   comunidadId,
+      grupoId:       firstSiteKey,
+      communityName: order.communityName,
+      status:        'pending',
+      maxUses:       1,
+      usedCount:     0,
+      createdAt:     now
+    });
+    order.copaToken = copaTokenUUID;
+  }
 
   // ── 2. Sites — uno por grupo, allowlist inicial con titular si aplica ────
   const maxPerGroup = isMulti
@@ -1504,6 +1642,23 @@ window.fbLoadHistory = async function() {
   return Object.entries(snap.val())
     .map(([id, v]) => ({ id, ...v }))
     .sort((a, b) => (b.fecha || 0) - (a.fecha || 0));
+};
+
+window.fbLoadSolicitudes = async function() {
+  const snap = await get(ref(dbPorra, 'porra_mundial_2026/solicitudes'));
+  if (!snap.exists()) return [];
+  const items = Object.entries(snap.val())
+    .map(([id, v]) => ({ _id: id, ...v }))
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  window._solicitudesCache = items;
+  return items;
+};
+
+window.fbMarcarSolicitudCompletada = async function(solicitudId) {
+  if (!solicitudId) return;
+  await update(ref(dbPorra, 'porra_mundial_2026/solicitudes/' + solicitudId), {
+    status: 'completed', updatedAt: Date.now()
+  });
 };
 </script>
 </body>

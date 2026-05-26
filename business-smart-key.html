@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <meta name="theme-color" content="#cc0000"/>
+  <title>Business Smart Key · El Taller de Memorias</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:ital,wght@0,300;0,400;0,500;1,300;1,400&display=swap" rel="stylesheet"/>
+
+  <style>
+    /* ============================================================
+       BUSINESS SMART KEY — CONFIGURACIÓN DEL NEGOCIO
+       Edita este bloque para personalizar cada cliente
+       ============================================================ */
+    /* (Ver sección CONFIG en el JS al final) */
+
+    :root {
+      /* Paleta fast food — vibrante y energética */
+      --bg:          #111111;
+      --bg2:         #1a1a1a;
+      --surface:     #222222;
+      --surface2:    #2a2a2a;
+      --text:        #ffffff;
+      --text-soft:   #cccccc;
+      --text-muted:  #888888;
+      --gold:        #e8001d;
+      --gold2:       #ff4d4d;
+      --gold-dim:    rgba(232,0,29,0.12);
+      --border:      rgba(232,0,29,0.35);
+      --border2:     rgba(232,0,29,0.15);
+      --rojo:        #e8001d;
+      --verde:       #27ae60;
+      --sombra:      rgba(0,0,0,0.5);
+      --amarillo:    #ffc300;
+    }
+
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    html { scroll-behavior:smooth; }
+
+    body {
+      font-family:'Roboto',Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100dvh;
+      overflow-x:hidden;
+    }
+
+    /* Textura de fondo */
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+      background:
+        radial-gradient(ellipse at 20% 0%,   rgba(232,0,29,.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 100%, rgba(255,195,0,.05) 0%, transparent 50%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+    }
+
+    /* ── TOAST ────────────────────────────────── */
+    #toast {
+      position:fixed; bottom:28px; left:50%; transform:translateX(-50%);
+      background:var(--surface2); color:var(--gold);
+      border:1px solid var(--border);
+      font-family:'Oswald',sans-serif; font-size:10px; letter-spacing:.13em;
+      padding:10px 22px; border-radius:2px;
+      box-shadow:0 4px 20px rgba(0,0,0,.6);
+      z-index:300; white-space:nowrap;
+      opacity:0; pointer-events:none; transition:opacity .35s ease;
+    }
+    #toast.show { opacity:1; }
+
+    /* ── LAYOUT ───────────────────────────────── */
+    #app {
+      position:relative; z-index:1;
+      max-width:440px; margin:0 auto;
+      padding:0 0 60px;
+      animation:fadeUp .8s ease both;
+    }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── HERO HEADER ──────────────────────────── */
+    .hero {
+      position:relative; text-align:center;
+      padding:48px 24px 36px;
+      border-bottom:1px solid var(--border2);
+      overflow:hidden;
+    }
+
+    /* Líneas decorativas art deco */
+    .hero::before, .hero::after {
+      content:''; position:absolute; left:24px; right:24px; height:1px;
+      background:linear-gradient(90deg,transparent,var(--gold),transparent);
+      opacity:.3;
+    }
+    .hero::before { top:20px; }
+    .hero::after  { bottom:0; opacity:.15; }
+
+    .business-logo-wrap {
+      width:80px; height:80px; margin:0 auto 16px;
+      border-radius:50%;
+      border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      background:var(--surface);
+      box-shadow:0 0 0 4px rgba(201,169,110,.06), 0 8px 32px rgba(0,0,0,.4);
+      font-size:36px;
+      overflow:hidden;
+    }
+
+    .business-logo-wrap img {
+      width:100%; height:100%; object-fit:cover;
+    }
+
+    .business-type {
+      font-family:'Oswald',sans-serif; font-size:8px;
+      letter-spacing:.4em; text-transform:uppercase;
+      color:var(--gold); opacity:.7; margin-bottom:8px;
+    }
+
+    .business-name {
+      font-family:'Oswald',sans-serif;
+      font-size:clamp(26px,7vw,34px); font-weight:500;
+      color:var(--text); line-height:1.15; letter-spacing:.02em;
+      margin-bottom:6px;
+    }
+
+    .business-tagline {
+      font-family:'Roboto',sans-serif; font-style:italic;
+      font-size:15px; color:var(--text-soft); letter-spacing:.02em;
+      margin-bottom:16px;
+    }
+
+    /* Info de contacto rápida */
+    .hero-info {
+      display:flex; justify-content:center; gap:20px; flex-wrap:wrap;
+    }
+    .hero-info-item {
+      font-size:12px; color:var(--text-muted);
+      font-family:'Oswald',sans-serif; letter-spacing:.08em;
+    }
+    .hero-info-item a { color:var(--gold); text-decoration:none; }
+    .hero-info-item a:hover { color:var(--gold2); }
+
+    /* Decoración dorada central */
+    .hero-ornament {
+      margin:18px auto 0; display:block;
+      width:160px; opacity:.35;
+    }
+
+    /* ── NAV PILLS (secciones) ────────────────── */
+    .nav-pills {
+      display:flex; gap:0;
+      border-bottom:1px solid var(--border2);
+      position:sticky; top:0; z-index:50;
+      background:rgba(17,17,17,.95);
+      backdrop-filter:blur(12px);
+    }
+
+    .nav-pill {
+      flex:1; padding:14px 8px; text-align:center;
+      font-family:'Oswald',sans-serif; font-size:8.5px; letter-spacing:.18em; text-transform:uppercase;
+      color:var(--text-muted); background:none; border:none; cursor:pointer;
+      border-bottom:2px solid transparent;
+      transition:color .25s, border-color .25s;
+    }
+    .nav-pill.active { color:var(--gold); border-bottom-color:var(--gold); }
+    .nav-pill:hover:not(.active) { color:var(--text-soft); }
+
+    /* ── SECCIONES ────────────────────────────── */
+    .section { display:none; padding:24px 20px; }
+    .section.active { display:block; animation:fadeUp .35s ease both; }
+
+    .section-title {
+      font-family:'Oswald',sans-serif; font-size:22px; font-weight:400;
+      color:var(--text); margin-bottom:4px;
+    }
+    .section-sub {
+      font-family:'Roboto',sans-serif; font-style:italic;
+      font-size:13px; color:var(--text-muted); margin-bottom:20px;
+    }
+
+    /* ── WIFI ─────────────────────────────────── */
+    .wifi-card {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:3px; padding:20px;
+      display:flex; align-items:center; gap:16px;
+      margin-bottom:14px;
+    }
+    .wifi-icon {
+      width:48px; height:48px; border-radius:50%;
+      background:var(--gold-dim); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:22px; flex-shrink:0;
+    }
+    .wifi-info { flex:1; }
+    .wifi-ssid {
+      font-family:'Oswald',sans-serif; font-size:13px; letter-spacing:.05em;
+      color:var(--text); margin-bottom:2px;
+    }
+    .wifi-label {
+      font-size:11px; color:var(--text-muted); font-style:italic;
+    }
+
+    .btn {
+      width:100%; padding:13px 20px; border:none; border-radius:2px;
+      cursor:pointer; font-family:'Oswald',sans-serif; font-size:10px;
+      letter-spacing:.18em; text-transform:uppercase;
+      transition:background .25s, transform .15s;
+      position:relative; overflow:hidden;
+    }
+    .btn::after {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(135deg,rgba(255,255,255,.06) 0%,transparent 60%);
+      pointer-events:none;
+    }
+    .btn:active { transform:scale(.98); }
+    .btn-gold   { background:var(--amarillo); color:#111111; font-weight:700; }
+    .btn-gold:hover { background:#ffcd33; }
+    .btn-ghost  { background:transparent; color:var(--gold); border:1px solid var(--border); margin-top:8px; }
+    .btn-ghost:hover { background:var(--gold-dim); }
+    .btn-call   { background:var(--verde); color:#fff; }
+    .btn-call:hover { background:#3d8f6a; }
+
+    .wifi-confirm {
+      display:none; align-items:center; gap:8px;
+      margin-top:10px; padding:10px 14px;
+      background:rgba(45,106,79,.15); border:1px solid rgba(45,106,79,.3);
+      border-radius:2px; font-size:13px; color:#5fba8a;
+    }
+    .wifi-confirm.show { display:flex; animation:slideIn .3s ease both; }
+    @keyframes slideIn { from{opacity:0;transform:translateY(-5px)} to{opacity:1;transform:translateY(0)} }
+
+    /* ── CARTA / MENÚ ─────────────────────────── */
+    .menu-category {
+      margin-bottom:28px;
+    }
+    .menu-cat-header {
+      display:flex; align-items:center; gap:12px;
+      margin-bottom:14px; padding-bottom:10px;
+      border-bottom:1px solid var(--border2);
+    }
+    .menu-cat-icon { font-size:18px; }
+    .menu-cat-name {
+      font-family:'Oswald',sans-serif; font-size:18px; font-style:italic;
+      color:var(--gold); flex:1;
+    }
+    .menu-cat-count {
+      font-family:'Oswald',sans-serif; font-size:8px; letter-spacing:.15em;
+      color:var(--text-muted);
+    }
+
+    .menu-item {
+      padding:12px 0; border-bottom:1px solid var(--border2);
+      cursor:pointer; transition:background .15s;
+    }
+    .menu-item:last-child { border-bottom:none; }
+    .menu-item:hover { background:rgba(201,169,110,.03); margin:0 -8px; padding:12px 8px; }
+
+    .menu-item-top {
+      display:flex; justify-content:space-between; align-items:baseline; gap:12px;
+    }
+    .menu-item-name {
+      font-family:'Oswald',sans-serif; font-size:16px;
+      color:var(--text); line-height:1.3;
+    }
+    .menu-item-price {
+      font-family:'Oswald',sans-serif; font-size:14px; font-weight:700;
+      color:var(--amarillo); flex-shrink:0;
+    }
+    .menu-item-desc {
+      font-size:13px; color:var(--text-muted); font-style:italic;
+      margin-top:3px; line-height:1.4;
+    }
+
+    /* Tags de alérgenos */
+    .allergen-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:6px; }
+    .allergen-tag {
+      font-family:'Oswald',sans-serif; font-size:7px; letter-spacing:.1em;
+      padding:2px 7px; border-radius:1px;
+      background:rgba(201,169,110,.08); border:1px solid rgba(201,169,110,.2);
+      color:var(--text-muted);
+    }
+    .allergen-tag.alert {
+      background:rgba(192,57,43,.12); border-color:rgba(192,57,43,.3);
+      color:#e07060;
+    }
+
+    /* ── ALÉRGENOS INFO ───────────────────────── */
+    .allergen-legend {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:3px; padding:18px; margin-bottom:20px;
+    }
+    .allergen-legend-title {
+      font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:.22em;
+      text-transform:uppercase; color:var(--gold); margin-bottom:14px;
+    }
+    .allergen-grid {
+      display:grid; grid-template-columns:1fr 1fr; gap:8px;
+    }
+    .allergen-item {
+      display:flex; align-items:center; gap:8px;
+      padding:6px 8px; border-radius:2px;
+      background:rgba(255,255,255,.02);
+    }
+    .allergen-emoji { font-size:18px; flex-shrink:0; }
+    .allergen-name  { font-size:12px; color:var(--text-soft); }
+
+    .allergen-note {
+      font-size:11px; color:var(--text-muted); font-style:italic;
+      margin-top:14px; line-height:1.55; text-align:center;
+    }
+
+    /* ── CONTACTO ─────────────────────────────── */
+    .contact-block {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:3px; padding:20px; margin-bottom:14px;
+    }
+    .contact-block-title {
+      font-family:'Oswald',sans-serif; font-size:8.5px; letter-spacing:.25em;
+      text-transform:uppercase; color:var(--gold); margin-bottom:12px;
+    }
+    .contact-row {
+      display:flex; align-items:center; gap:12px;
+      padding:8px 0; border-bottom:1px solid var(--border2);
+      font-size:15px; color:var(--text);
+    }
+    .contact-row:last-child { border-bottom:none; }
+    .contact-row-icon { font-size:16px; width:24px; text-align:center; flex-shrink:0; }
+    .contact-row a { color:var(--text); text-decoration:none; border-bottom:1px solid rgba(201,169,110,.3); }
+    .contact-row a:hover { color:var(--gold); }
+
+    .map-placeholder {
+      background:var(--surface2); border:1px solid var(--border2);
+      border-radius:3px; height:120px; margin-top:14px;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Oswald',sans-serif; font-size:9px; letter-spacing:.2em;
+      color:var(--text-muted); text-transform:uppercase; cursor:pointer;
+      transition:background .2s;
+      text-decoration:none;
+    }
+    .map-placeholder:hover { background:rgba(201,169,110,.06); color:var(--gold); }
+
+    /* Horario */
+    .schedule-row {
+      display:flex; justify-content:space-between;
+      padding:7px 0; border-bottom:1px solid var(--border2);
+      font-size:14px;
+    }
+    .schedule-row:last-child { border-bottom:none; }
+    .schedule-day   { color:var(--text-soft); }
+    .schedule-hours { color:var(--text); font-style:italic; }
+    .schedule-closed { color:var(--text-muted); font-style:italic; }
+
+    /* ── FOOTER ───────────────────────────────── */
+    footer {
+      margin:0 20px; padding:24px 0 0;
+      border-top:1px solid var(--border2);
+      text-align:center;
+    }
+    .footer-powered {
+      font-family:'Oswald',sans-serif; font-size:7.5px; letter-spacing:.22em;
+      text-transform:uppercase; color:var(--text-muted); opacity:.5;
+      margin-bottom:4px;
+    }
+    .footer-brand {
+      font-family:'Roboto',sans-serif; font-style:italic;
+      font-size:12px; color:var(--text-muted); opacity:.6;
+    }
+    .footer-brand a { color:var(--gold); text-decoration:none; opacity:.8; }
+    .footer-brand a:hover { opacity:1; }
+
+    /* ── QR WRAP ──────────────────────────────── */
+    #qr-wrap { background:#fff; display:inline-block; padding:8px; border-radius:2px; margin-bottom:10px; }
+  </style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="app">
+
+  <!-- ══ HERO ════════════════════════════════════════════ -->
+  <div class="hero">
+    <div class="business-logo-wrap" id="logo-wrap">
+      <span id="logo-emoji">🍽️</span>
+    </div>
+    <p class="business-type" id="hero-type">Restaurante · Madrid</p>
+    <h1 class="business-name" id="hero-name">Casa Botín</h1>
+    <p class="business-tagline" id="hero-tagline">El restaurante más antiguo del mundo desde 1725</p>
+    <div class="hero-info">
+      <span class="hero-info-item"><a href="#" id="hero-tel-link">📞 <span id="hero-tel">+34 913 664 217</span></a></span>
+      <span class="hero-info-item" id="hero-address-short">Calle Cuchilleros, 17</span>
+    </div>
+
+    <!-- Ornamento -->
+    <svg class="hero-ornament" viewBox="0 0 160 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="0" y1="8" x2="62" y2="8" stroke="#e8001d" stroke-width="0.6"/>
+      <path d="M74 8 C77 3 80 1 80 8 C80 1 83 3 86 8 C83 13 80 15 80 8 C80 15 77 13 74 8Z" fill="#e8001d"/>
+      <line x1="98" y1="8" x2="160" y2="8" stroke="#e8001d" stroke-width="0.6"/>
+      <circle cx="80" cy="8" r="1.5" fill="#ffc300"/>
+    </svg>
+  </div>
+
+  <!-- ══ NAV ═════════════════════════════════════════════ -->
+  <nav class="nav-pills" role="tablist">
+    <button class="nav-pill active" onclick="showSection('wifi')"   role="tab">📶 WiFi</button>
+    <button class="nav-pill"        onclick="showSection('menu')"   role="tab">🍴 Carta</button>
+    <button class="nav-pill"        onclick="showSection('alerg')"  role="tab">⚠️ Alérgenos</button>
+    <button class="nav-pill"        onclick="showSection('info')"   role="tab">📍 Info</button>
+  </nav>
+
+  <!-- ══ SECCIÓN WIFI ════════════════════════════════════ -->
+  <div class="section active" id="sec-wifi">
+    <p class="section-title">Bienvenido</p>
+    <p class="section-sub">Conéctate a nuestra red mientras disfrutas</p>
+
+    <div class="wifi-card">
+      <div class="wifi-icon">📶</div>
+      <div class="wifi-info">
+        <p class="wifi-ssid" id="wifi-ssid-display">CasaBotin_Guests</p>
+        <p class="wifi-label">Red de invitados · Sin límite</p>
+      </div>
+    </div>
+
+    <div style="text-align:center; margin-bottom:14px">
+      <div id="qr-wrap"></div>
+      <p style="font-family:'Oswald',sans-serif;font-size:8px;letter-spacing:.18em;color:var(--text-muted)">ESCANEA PARA CONECTAR</p>
+    </div>
+
+    <button class="btn btn-gold" onclick="copiarWifi()">Copiar contraseña</button>
+    <div class="wifi-confirm" id="wifi-confirm">
+      <span>✓</span><span>¡Copiado! Ve a Ajustes → WiFi y pégala.</span>
+    </div>
+  </div>
+
+  <!-- ══ SECCIÓN CARTA ════════════════════════════════════ -->
+  <div class="section" id="sec-menu">
+    <p class="section-title">Nuestra Carta</p>
+    <p class="section-sub" id="menu-season">Temporada Otoño · 2025</p>
+    <div id="menu-container"></div>
+  </div>
+
+  <!-- ══ SECCIÓN ALÉRGENOS ══════════════════════════════ -->
+  <div class="section" id="sec-alerg">
+    <p class="section-title">Información de Alérgenos</p>
+    <p class="section-sub">Según el Reglamento UE 1169/2011</p>
+
+    <div class="allergen-legend">
+      <p class="allergen-legend-title">Los 14 alérgenos de declaración obligatoria</p>
+      <div class="allergen-grid" id="allergen-legend"></div>
+      <p class="allergen-note">Si tienes alguna alergia o intolerancia alimentaria, por favor comunícaselo a nuestro personal antes de pedir. Podemos adaptar algunos platos.</p>
+    </div>
+
+    <button class="btn btn-ghost" onclick="showSection('menu')">Ver carta con alérgenos →</button>
+  </div>
+
+  <!-- ══ SECCIÓN INFO ════════════════════════════════════ -->
+  <div class="section" id="sec-info">
+    <p class="section-title">Encuéntranos</p>
+    <p class="section-sub">Estamos esperándote</p>
+
+    <div class="contact-block">
+      <p class="contact-block-title">Contacto & Reservas</p>
+      <div id="contact-rows"></div>
+    </div>
+
+    <a class="map-placeholder" id="map-link" href="#" target="_blank" rel="noopener">
+      🗺 Ver en Google Maps
+    </a>
+
+    <div class="contact-block" style="margin-top:14px">
+      <p class="contact-block-title">Horario</p>
+      <div id="schedule-rows"></div>
+    </div>
+
+    <button class="btn btn-call" style="margin-top:14px" id="btn-reserva" onclick="llamar()">
+      📞 Reservar mesa
+    </button>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    <p class="footer-powered">Powered by</p>
+    <p class="footer-brand">
+      <a href="https://tr.ee/hKkdCoxUtN" target="_blank" rel="noopener">El Taller de Memorias</a>
+      · Business Smart Key
+    </p>
+  </footer>
+
+</div><!-- /app -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+/* ============================================================
+   ████  CONFIGURACIÓN DEL NEGOCIO — EDITA AQUÍ
+   ============================================================ */
+const CONFIG = {
+
+  // ── IDENTIDAD ─────────────────────────────────────────────
+  nombre:   "Casa Botín",
+  tipo:     "Restaurante · Madrid",
+  tagline:  "El restaurante más antiguo del mundo desde 1725",
+  emoji:    "🍽️",           // Emoji como logo (o usa logoUrl)
+  logoUrl:  "",             // URL de imagen de logo (deja vacío para usar emoji)
+  color:    "#e8001d",      // Color de acento (rojo fast food)
+
+  // ── CONTACTO ──────────────────────────────────────────────
+  telefono:   "+34 913 664 217",
+  email:      "reservas@botin.es",
+  web:        "https://www.botin.es",
+  instagram:  "@casabotin1725",
+  direccion:  "Calle Cuchilleros, 17, Madrid",
+  mapsUrl:    "https://maps.google.com/?q=Casa+Botin+Madrid",
+
+  // ── WIFI ──────────────────────────────────────────────────
+  wifi: {
+    ssid:       "CasaBotin_Guests",
+    password:   "bienvenido1725",
+    tipo:       "WPA",
+  },
+
+  // ── TEMPORADA ─────────────────────────────────────────────
+  temporada: "Temporada Otoño · 2025",
+
+  // ── CARTA ─────────────────────────────────────────────────
+  // allergens: GL=Gluten, LC=Lácteos, HV=Huevo, PE=Pescado,
+  //            CR=Crustáceos, MO=Moluscos, CA=Cacahuetes,
+  //            FS=Frutos secos, AP=Apio, MO=Mostaza, SS=Sésamo,
+  //            SO=Soja, AL=Altramuces, DX=Dióxido de azufre
+  carta: [
+    {
+      categoria: "Entrantes",
+      icon: "🥗",
+      platos: [
+        {
+          nombre:      "Jamón Ibérico de Bellota",
+          descripcion: "Loncheado al momento, con pan de cristal y tomate",
+          precio:      "24,00 €",
+          alergenos:   ["GL"],
+        },
+        {
+          nombre:      "Croquetas de la abuela",
+          descripcion: "Bechamel cremosa con jamón serrano, pan rallado artesanal",
+          precio:      "12,00 €",
+          alergenos:   ["GL","LC","HV"],
+        },
+        {
+          nombre:      "Gazpacho andaluz",
+          descripcion: "Tomate, pepino, pimiento y pan, servido bien frío",
+          precio:      "9,50 €",
+          alergenos:   ["GL"],
+          vegano:      true,
+        },
+      ],
+    },
+    {
+      categoria: "Principales",
+      icon: "🥩",
+      platos: [
+        {
+          nombre:      "Cochinillo asado al horno de leña",
+          descripcion: "Cochinillo segoviano horneado 3 horas, con su jugo natural",
+          precio:      "32,00 €",
+          alergenos:   [],
+          estrella:    true,
+        },
+        {
+          nombre:      "Cordero lechal asado",
+          descripcion: "Cordero de Castilla, patatas panadera y pimientos del piquillo",
+          precio:      "29,50 €",
+          alergenos:   [],
+        },
+        {
+          nombre:      "Merluza a la vasca",
+          descripcion: "Merluza del Cantábrico, almejas, espárragos y salsa verde",
+          precio:      "26,00 €",
+          alergenos:   ["PE","MO","GL"],
+        },
+      ],
+    },
+    {
+      categoria: "Postres",
+      icon: "🍮",
+      platos: [
+        {
+          nombre:      "Flan de huevo casero",
+          descripcion: "Con caramelo líquido y nata montada",
+          precio:      "7,50 €",
+          alergenos:   ["HV","LC"],
+        },
+        {
+          nombre:      "Torrijas de temporada",
+          descripcion: "Pan brioche, leche infusionada con vainilla y canela",
+          precio:      "8,00 €",
+          alergenos:   ["GL","LC","HV"],
+        },
+        {
+          nombre:      "Sorbete de mango y maracuyá",
+          descripcion: "Sin gluten · Apto veganos",
+          precio:      "6,50 €",
+          alergenos:   [],
+          vegano:      true,
+        },
+      ],
+    },
+  ],
+
+  // ── HORARIO ───────────────────────────────────────────────
+  horario: [
+    { dia: "Lunes",     horas: "13:00 – 16:00 · 20:00 – 23:30" },
+    { dia: "Martes",    horas: "13:00 – 16:00 · 20:00 – 23:30" },
+    { dia: "Miércoles", horas: "13:00 – 16:00 · 20:00 – 23:30" },
+    { dia: "Jueves",    horas: "13:00 – 16:00 · 20:00 – 23:30" },
+    { dia: "Viernes",   horas: "13:00 – 16:00 · 20:00 – 00:00" },
+    { dia: "Sábado",    horas: "13:00 – 16:30 · 20:00 – 00:00" },
+    { dia: "Domingo",   horas: "13:00 – 16:30 · 20:00 – 23:00" },
+  ],
+};
+/* ============================================================
+   FIN CONFIGURACIÓN
+   ============================================================ */
+
+const ALLERGENS_INFO = [
+  { code:"GL", emoji:"🌾", name:"Gluten"         },
+  { code:"LC", emoji:"🥛", name:"Lácteos"        },
+  { code:"HV", emoji:"🥚", name:"Huevo"          },
+  { code:"PE", emoji:"🐟", name:"Pescado"        },
+  { code:"CR", emoji:"🦀", name:"Crustáceos"     },
+  { code:"MO", emoji:"🦪", name:"Moluscos"       },
+  { code:"CA", emoji:"🥜", name:"Cacahuetes"     },
+  { code:"FS", emoji:"🌰", name:"Frutos secos"   },
+  { code:"AP", emoji:"🌿", name:"Apio"           },
+  { code:"MS", emoji:"🌻", name:"Mostaza"        },
+  { code:"SS", emoji:"🫘", name:"Sésamo"         },
+  { code:"SO", emoji:"🫛", name:"Soja"           },
+  { code:"AL", emoji:"🌱", name:"Altramuces"     },
+  { code:"DX", emoji:"🍷", name:"SO₂ / Sulfitos" },
+];
+
+/* ── INIT ─────────────────────────────────────────────────── */
+(function init() {
+  applyConfig();
+  buildQR();
+  buildMenu();
+  buildAllergenLegend();
+  buildContact();
+  buildSchedule();
+})();
+
+function applyConfig() {
+  const C = CONFIG;
+  document.title = `${C.nombre} · Smart Key`;
+
+  // Hero
+  document.getElementById('hero-type').textContent     = C.tipo;
+  document.getElementById('hero-name').textContent     = C.nombre;
+  document.getElementById('hero-tagline').textContent  = C.tagline;
+  document.getElementById('hero-tel').textContent      = C.telefono;
+  document.getElementById('hero-tel-link').href        = `tel:${C.telefono.replace(/\s/g,'')}`;
+  document.getElementById('hero-address-short').textContent = C.direccion.split(',').slice(0,2).join(',');
+  document.getElementById('menu-season').textContent   = C.temporada;
+
+  // Logo
+  const logoWrap = document.getElementById('logo-wrap');
+  if (C.logoUrl) {
+    logoWrap.innerHTML = `<img src="${C.logoUrl}" alt="${C.nombre}"/>`;
+  } else {
+    document.getElementById('logo-emoji').textContent = C.emoji;
+  }
+
+  // WiFi
+  document.getElementById('wifi-ssid-display').textContent = C.wifi.ssid;
+
+  // Mapa
+  document.getElementById('map-link').href = C.mapsUrl;
+  document.getElementById('btn-reserva').onclick = llamar;
+}
+
+function buildQR() {
+  const { ssid, password, tipo } = CONFIG.wifi;
+  new QRCode(document.getElementById('qr-wrap'), {
+    text: `WIFI:S:${ssid};T:${tipo};P:${password};;`,
+    width: 110, height: 110,
+    colorDark: '#111111', colorLight: '#ffffff',
+  });
+}
+
+function buildMenu() {
+  const container = document.getElementById('menu-container');
+  CONFIG.carta.forEach(cat => {
+    const catDiv = document.createElement('div');
+    catDiv.className = 'menu-category';
+
+    const header = document.createElement('div');
+    header.className = 'menu-cat-header';
+    header.innerHTML = `
+      <span class="menu-cat-icon">${cat.icon}</span>
+      <span class="menu-cat-name">${cat.categoria}</span>
+      <span class="menu-cat-count">${cat.platos.length} platos</span>
+    `;
+    catDiv.appendChild(header);
+
+    cat.platos.forEach(plato => {
+      const item = document.createElement('div');
+      item.className = 'menu-item';
+
+      const allergenHTML = plato.alergenos.length
+        ? plato.alergenos.map(a => {
+            const info = ALLERGENS_INFO.find(x => x.code === a);
+            return info
+              ? `<span class="allergen-tag alert" title="${info.name}">${info.emoji} ${info.code}</span>`
+              : '';
+          }).join('')
+        : '';
+
+      const badges = [
+        plato.estrella ? '<span class="allergen-tag" style="color:var(--gold);border-color:var(--gold)">⭐ Firma</span>' : '',
+        plato.vegano   ? '<span class="allergen-tag" style="color:#5fba8a;border-color:rgba(95,186,138,.3)">🌱 Vegano</span>' : '',
+      ].filter(Boolean).join('');
+
+      item.innerHTML = `
+        <div class="menu-item-top">
+          <span class="menu-item-name">${plato.nombre}</span>
+          <span class="menu-item-price">${plato.precio}</span>
+        </div>
+        <p class="menu-item-desc">${plato.descripcion}</p>
+        ${allergenHTML || badges ? `<div class="allergen-tags">${badges}${allergenHTML}</div>` : ''}
+      `;
+      catDiv.appendChild(item);
+    });
+
+    container.appendChild(catDiv);
+  });
+}
+
+function buildAllergenLegend() {
+  const grid = document.getElementById('allergen-legend');
+  ALLERGENS_INFO.forEach(a => {
+    const item = document.createElement('div');
+    item.className = 'allergen-item';
+    item.innerHTML = `<span class="allergen-emoji">${a.emoji}</span><span class="allergen-name">${a.name}</span>`;
+    grid.appendChild(item);
+  });
+}
+
+function buildContact() {
+  const rows = document.getElementById('contact-rows');
+  const C = CONFIG;
+  const items = [
+    { icon:'📞', content:`<a href="tel:${C.telefono.replace(/\s/g,'')}">${C.telefono}</a>` },
+    { icon:'✉️', content:`<a href="mailto:${C.email}">${C.email}</a>` },
+    { icon:'🌐', content:`<a href="${C.web}" target="_blank" rel="noopener">${C.web.replace('https://','')}</a>` },
+    { icon:'📸', content:C.instagram },
+    { icon:'📍', content:C.direccion },
+  ].filter(i => i.content && i.content !== 'undefined');
+
+  items.forEach(i => {
+    const row = document.createElement('div');
+    row.className = 'contact-row';
+    row.innerHTML = `<span class="contact-row-icon">${i.icon}</span><span>${i.content}</span>`;
+    rows.appendChild(row);
+  });
+}
+
+function buildSchedule() {
+  const container = document.getElementById('schedule-rows');
+  const hoy = new Date().toLocaleDateString('es-ES', { weekday:'long' });
+  CONFIG.horario.forEach(h => {
+    const row = document.createElement('div');
+    row.className = 'schedule-row';
+    const esHoy = hoy.toLowerCase().startsWith(h.dia.toLowerCase());
+    row.innerHTML = `
+      <span class="schedule-day" style="${esHoy ? 'color:var(--gold);font-weight:500' : ''}">${h.dia}${esHoy ? ' ·hoy' : ''}</span>
+      <span class="${h.horas === 'Cerrado' ? 'schedule-closed' : 'schedule-hours'}">${h.horas}</span>
+    `;
+    container.appendChild(row);
+  });
+}
+
+/* ── INTERACCIÓN ──────────────────────────────────────────── */
+let activeSection = 'wifi';
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-pill').forEach(p => p.classList.remove('active'));
+  document.getElementById(`sec-${id}`).classList.add('active');
+  document.querySelectorAll('.nav-pill').forEach(p => {
+    if (p.getAttribute('onclick').includes(`'${id}'`)) p.classList.add('active');
+  });
+  activeSection = id;
+  window.scrollTo({ top: document.querySelector('.nav-pills').offsetTop - 1, behavior:'smooth' });
+}
+
+async function copiarWifi() {
+  try {
+    await navigator.clipboard.writeText(CONFIG.wifi.password);
+    document.getElementById('wifi-confirm').classList.add('show');
+    toast('✓ Contraseña copiada');
+    setTimeout(() => document.getElementById('wifi-confirm').classList.remove('show'), 4000);
+  } catch {
+    prompt('Contraseña WiFi:', CONFIG.wifi.password);
+  }
+}
+
+function llamar() {
+  window.location.href = `tel:${CONFIG.telefono.replace(/\s/g,'')}`;
+}
+
+function toast(msg, ms = 3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), ms);
+}
+</script>
+</body>
+</html>
