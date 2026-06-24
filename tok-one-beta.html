@@ -655,6 +655,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, push, update } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import { getMessaging, getToken, onMessage } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js";
+import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-functions.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAhPGA3JmrN_ltHhm22OfqbsVONkSb8TSI",
@@ -668,6 +669,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
+const fns = getFunctions(app, 'us-central1');
 let messaging = null;
 try { messaging = getMessaging(app); } catch(e) {}
 const VAPID_KEY = 'REEMPLAZA_CON_TU_VAPID_KEY';
@@ -738,114 +740,8 @@ async function resolverFIDPorAIDOne() {
   }
 }
 
-async function activarOneDirecto(token) {
-  const tokenSnap = await get(ref(db, `admin/familyTokens/${token}`));
-  if(!tokenSnap.exists()) throw new Error('Token no encontrado. Comprueba que lo has escrito bien.');
-  const tokenData = tokenSnap.val() || {};
-  if((tokenData.mode || 'initial') !== 'initial') throw new Error('Este token no corresponde a una activación inicial.');
-  if(tokenData.status && tokenData.status !== 'available') throw new Error('Este token ya fue usado o ya no está disponible.');
-  if(tokenData.assignedEmail) throw new Error('Este regalo está reservado a un email concreto.');
-
-  const assetSnap = await get(ref(db, `admin/assets/${AID}`));
-  if(!assetSnap.exists()) throw new Error('Este TO-K ONE no tiene identificador válido. Reprograma la pieza.');
-  const assetData = assetSnap.val() || {};
-  if((assetData.productType || '').toUpperCase() !== 'ONE') throw new Error('La pieza identificada no corresponde a un TO-K ONE.');
-  if(assetData.familyId || assetData.status === 'active') throw new Error('Este TO-K ONE ya fue activado.');
-  if(tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) throw new Error('El token no corresponde con este TO-K ONE.');
-
-  const familyRef = push(ref(db, 'familias'));
-  const fid = familyRef.key;
-  const ts = Date.now();
-  const theme = CFG.tema || 'dia';
-  const updates = {};
-
-  updates[`familias/${fid}/meta`] = {
-    fid,
-    status: 'active',
-    ownerUid: null,
-    ownerEmail: null,
-    createdFromToken: token,
-    createdFromAid: AID,
-    createdFromProduct: 'ONE',
-    createdAt: ts,
-    updatedAt: ts,
-  };
-  updates[`familias/${fid}/hogar`] = {
-    nombre: 'Mi hogar TO-K',
-    emoji: '🏠',
-    tema: theme,
-    wifi: { ssid: '', pass: '', type: 'WPA' },
-    redirect: '',
-    creadoDesde: 'ONE',
-    fechaCreacion: ts,
-  };
-  updates[`familias/${fid}/miembros/${MID}`] = {
-    ...CFG,
-    tema: theme,
-  };
-  updates[`familias/${fid}/assets/${AID}`] = {
-    aid: AID,
-    productType: 'ONE',
-    status: 'active',
-    linkedMid: MID,
-    linkedMidType: 'person',
-    orderId: assetData.orderId || tokenData.orderId || null,
-    packId: assetData.packId || tokenData.packId || null,
-    addedAt: ts,
-    activatedAt: ts,
-  };
-  updates[`admin/familyTokens/${token}`] = {
-    ...tokenData,
-    familyId: fid,
-    status: 'redeemed',
-    redeemedByUid: null,
-    redeemedByEmail: null,
-    redeemedAt: ts,
-    updatedAt: ts,
-  };
-  updates[`admin/assets/${AID}`] = {
-    ...assetData,
-    familyId: fid,
-    linkedMid: MID,
-    linkedMidType: 'person',
-    mid: MID,
-    status: 'active',
-    activatedAt: ts,
-    updatedAt: ts,
-  };
-  updates[`assetIndex/${AID}`] = {
-    fid,
-    productType: 'ONE',
-    status: 'active',
-    linkedMid: MID,
-    updatedAt: ts,
-  };
-  if(tokenData.orderId) {
-    updates[`admin/orders/${tokenData.orderId}/familyId`] = fid;
-    updates[`admin/orders/${tokenData.orderId}/status`] = 'redeemed';
-    updates[`admin/orders/${tokenData.orderId}/updatedAt`] = ts;
-    updates[`admin/pedidos/${tokenData.orderId}/familyId`] = fid;
-    updates[`admin/pedidos/${tokenData.orderId}/fidAmpliacion`] = fid;
-    updates[`admin/pedidos/${tokenData.orderId}/estado`] = 'activado';
-  }
-  if(tokenData.packId) {
-    updates[`admin/packs/${tokenData.packId}/familyId`] = fid;
-    updates[`admin/packs/${tokenData.packId}/updatedAt`] = ts;
-  }
-  updates[`activaciones/${token}`] = {
-    usado: true,
-    modo: 'initial',
-    familyId: fid,
-    pedido: tokenData.orderId || assetData.orderId || null,
-    orderId: tokenData.orderId || assetData.orderId || null,
-    cliente: tokenData.customerName || 'Regalo TO-K ONE',
-    fecha_activacion: new Date(ts).toISOString(),
-    fecha_creacion: tokenData.createdAt ? new Date(tokenData.createdAt).toISOString() : new Date(ts).toISOString(),
-  };
-
-  await update(ref(db), updates);
-  return fid;
-}
+// activarOneDirecto eliminado — la lógica vive ahora en la Cloud Function activarToken
+// para que admin/** esté completamente cerrado en las Security Rules.
 
 async function init() {
   lang = (navigator.language||'es').slice(0,2);
@@ -920,13 +816,16 @@ window.activarOneRegalo = async function() {
   setGiftStatusOne('Activando TO-K ONE...');
   if(btn) btn.disabled = true;
   try {
-    const fid = await activarOneDirecto(token);
+    const activarToken = httpsCallable(fns, 'activarToken');
+    const result = await activarToken({ token, aid: AID, mid: MID });
+    const { fid } = result.data;
     localStorage.setItem('tok_fid', fid);
     setGiftStatusOne('TO-K ONE activado. Entrando...');
     location.href = `${location.pathname}?fid=${encodeURIComponent(fid)}&mid=${encodeURIComponent(MID)}&aid=${encodeURIComponent(AID)}`;
   } catch(e) {
     console.error('[ONE] Activación regalo fallida:', e);
-    setGiftStatusOne(e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.', true);
+    const msg = e?.message || 'No se pudo activar el regalo. Inténtalo de nuevo.';
+    setGiftStatusOne(msg, true);
     if(btn) btn.disabled = false;
   }
 }
