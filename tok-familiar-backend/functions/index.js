@@ -278,6 +278,134 @@ function buildAlertTemplateParameters(familyId, home, alert) {
   return normalizeTemplateParameters([label, subject, familyId, when, location]);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// activarToken — Callable desde tok-one-beta.html
+//
+// Mueve la lógica de activación al servidor para que admin/** pueda
+// estar completamente bloqueado en las Security Rules.
+//
+// Input:  { token: "TOK-XXXX-XXXX", aid: "AID-ONE-001", mid: "one_1" }
+// Output: { fid: "<firebase-push-key>" }
+// ─────────────────────────────────────────────────────────────────────────────
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+
+exports.activarToken = onCall(
+  { region: REGION },
+  async (request) => {
+    const { token, aid, mid = "one_1" } = request.data || {};
+
+    if (!token || typeof token !== "string") {
+      throw new HttpsError("invalid-argument", "Introduce el token incluido con el regalo.");
+    }
+    if (!aid || typeof aid !== "string") {
+      throw new HttpsError("invalid-argument", "Identificador de pieza no válido. Reprograma el NFC.");
+    }
+
+    const db = admin.database();
+    const ts = nowTs();
+
+    // 1 · Verificar token
+    const tokenSnap = await db.ref(`admin/familyTokens/${token}`).get();
+    if (!tokenSnap.exists()) {
+      throw new HttpsError("not-found", "Token no encontrado. Comprueba que lo has escrito bien.");
+    }
+    const tokenData = asObject(tokenSnap.val());
+
+    if ((tokenData.mode || "initial") !== "initial") {
+      throw new HttpsError("failed-precondition", "Este token no corresponde a una activación inicial.");
+    }
+    if (tokenData.status && tokenData.status !== "available") {
+      throw new HttpsError("already-exists", "Este token ya fue usado o ya no está disponible.");
+    }
+    if (tokenData.assignedEmail) {
+      throw new HttpsError("permission-denied", "Este regalo está reservado a un email concreto. Contacta con El Taller de Memorias.");
+    }
+
+    // 2 · Verificar asset
+    const assetSnap = await db.ref(`admin/assets/${aid}`).get();
+    if (!assetSnap.exists()) {
+      throw new HttpsError("not-found", "Esta pieza no tiene identificador válido. Reprograma el NFC antes de entregarla.");
+    }
+    const assetData = asObject(assetSnap.val());
+
+    if ((assetData.productType || "").toUpperCase() !== "ONE") {
+      throw new HttpsError("failed-precondition", "La pieza identificada no corresponde a un TO-K ONE.");
+    }
+    if (assetData.familyId || assetData.status === "active") {
+      throw new HttpsError("already-exists", "Este TO-K ONE ya fue activado anteriormente.");
+    }
+    if (tokenData.orderId && assetData.orderId && tokenData.orderId !== assetData.orderId) {
+      throw new HttpsError("failed-precondition", "El token no corresponde a esta pieza. Usa el token que viene con este llavero.");
+    }
+
+    // 3 · Crear familia y escribir todo atómicamente
+    const familyRef = db.ref("familias").push();
+    const fid = familyRef.key;
+    const updates = {};
+
+    updates[`familias/${fid}/meta`] = {
+      fid, status: "active", ownerUid: null, ownerEmail: null,
+      createdFromToken: token, createdFromAid: aid, createdFromProduct: "ONE",
+      createdAt: ts, updatedAt: ts,
+    };
+    updates[`familias/${fid}/hogar`] = {
+      nombre: "Mi hogar TO-K", emoji: "🏠", tema: "dia",
+      wifi: { ssid: "", pass: "", type: "WPA" },
+      redirect: "", creadoDesde: "ONE", fechaCreacion: ts,
+    };
+    updates[`familias/${fid}/miembros/${mid}`] = {
+      nombre: "", bio: "", foto: "", pin: "1234", sesion_min: 0, tema: "dia",
+      mostrar: { wifi: false, tel: false, wa: false, tg: false, email: false, ig: false, tt: false, web: false },
+      wifi: { ssid: "", pass: "", type: "WPA" },
+      contactos: { tel: "", wa: "", tg: "", email: "" },
+      redes: { ig: "", tt: "", web: "" },
+      ice: { sangre: "", alergias: "", condiciones: "", tel_emergencia: "" },
+    };
+    updates[`familias/${fid}/assets/${aid}`] = {
+      aid, productType: "ONE", status: "active", linkedMid: mid, linkedMidType: "person",
+      orderId: assetData.orderId || tokenData.orderId || null,
+      packId: assetData.packId || tokenData.packId || null,
+      addedAt: ts, activatedAt: ts,
+    };
+    updates[`admin/familyTokens/${token}`] = {
+      ...tokenData, familyId: fid, status: "redeemed",
+      redeemedByUid: null, redeemedAt: ts, updatedAt: ts,
+    };
+    updates[`admin/assets/${aid}`] = {
+      ...assetData, familyId: fid, linkedMid: mid, linkedMidType: "person",
+      mid, status: "active", activatedAt: ts, updatedAt: ts,
+    };
+    updates[`assetIndex/${aid}`] = {
+      fid, productType: "ONE", status: "active", linkedMid: mid, updatedAt: ts,
+    };
+    if (tokenData.orderId) {
+      updates[`admin/orders/${tokenData.orderId}/familyId`]   = fid;
+      updates[`admin/orders/${tokenData.orderId}/status`]     = "redeemed";
+      updates[`admin/orders/${tokenData.orderId}/updatedAt`]  = ts;
+      updates[`admin/pedidos/${tokenData.orderId}/familyId`]  = fid;
+      updates[`admin/pedidos/${tokenData.orderId}/estado`]    = "activado";
+      updates[`admin/pedidos/${tokenData.orderId}/updatedAt`] = ts;
+    }
+    if (tokenData.packId) {
+      updates[`admin/packs/${tokenData.packId}/familyId`]  = fid;
+      updates[`admin/packs/${tokenData.packId}/updatedAt`] = ts;
+    }
+    updates[`activaciones/${token}`] = {
+      usado: true, modo: "initial", familyId: fid, aid, mid,
+      orderId: tokenData.orderId || assetData.orderId || null,
+      fecha_activacion: new Date(ts).toISOString(),
+      fecha_creacion: tokenData.createdAt
+        ? new Date(tokenData.createdAt).toISOString()
+        : new Date(ts).toISOString(),
+    };
+
+    await db.ref().update(updates);
+    logger.info("[activarToken] Familia creada.", { token, aid, mid, fid });
+    return { fid, mid };
+  }
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 exports.sendFamilyAlertWhatsApp = onValueCreated(
   {
     region: REGION,

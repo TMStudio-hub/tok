@@ -1,0 +1,47 @@
+{
+  "rules": {
+
+    ".read":  false,
+    ".write": false,
+
+    "admin": {
+      ".read":  "auth != null && auth.token.tokAdmin === true",
+      ".write": "auth != null && auth.token.tokAdmin === true"
+    },
+
+    "familias": {
+      "$fid": {
+        ".read":  true,
+        ".write": true
+      }
+    },
+
+    "assetIndex": {
+      ".read":  true,
+      ".write": true
+    },
+
+    "activaciones": {
+      ".read":  false,
+      ".write": false
+    },
+
+    "midIndex": {
+      ".read":  "auth != null && auth.token.tokAdmin === true",
+      ".write": "auth != null && auth.token.tokAdmin === true"
+    },
+
+    "emailIndex": {
+      ".read":  "auth != null && auth.token.tokAdmin === true",
+      ".write": "auth != null && auth.token.tokAdmin === true"
+    },
+
+    "userFamilies": {
+      "$uid": {
+        ".read":  "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    }
+
+  }
+}
